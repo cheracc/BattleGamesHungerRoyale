@@ -1,0 +1,9 @@
+jumper:
+  name: Jumper
+  description: "He carries around a big rocket and uses it to jump around. A lot. No really, it's kind of annoying."
+  icon: firework_rocket
+  abilities:
+    Jump:
+      item type: firework_rocket
+      item name: Wee!
+      cooldown: 2
