@@ -1,12 +1,21 @@
 package me.stipe.battlegameshungerroyale.tools;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Tools {
+    public static TextColor RED = TextColor.color(255,0,0);
+    public static TextColor WHITE = TextColor.color(255,255,255);
+    public static TextColor BLUE = TextColor.color(0,0,255);
+    public static TextColor GREEN = TextColor.color(0,255,0);
+    public static TextColor GRAY = TextColor.color(180,180,180);
+    public static TextColor YELLOW = TextColor.color(0,255,255);
+    public static TextColor GOLD = TextColor.color(255,255,0);
+
     public static List<String> wrapText(String longText, ChatColor color) {
         List<String> wrappedText = new ArrayList<>();
         String[] words = longText.split(" ");

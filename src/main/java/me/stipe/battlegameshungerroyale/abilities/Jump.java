@@ -5,6 +5,7 @@ import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -12,44 +13,39 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class Jump extends Ability implements ActiveAbility {
-    private final Material itemType;
-    private final String itemName;
-
-    public Jump(int cooldown, Material itemType, String itemName) {
-        super("Jump", "Makes the player jump high", cooldown);
-        this.itemType = itemType;
-        this.itemName = itemName;
-    }
+    private Material itemType;
+    private String itemName;
+    private double amplifier;
+    private int cooldown;
 
     public Jump() {
-        super("Jump", "Makes the player jump high", 30);
+        super("Jump", "Makes the player jump high");
         this.itemType = Material.FIREWORK_ROCKET;
         this.itemName = "Jump Rocket";
+        this.amplifier = 0;
+        this.cooldown = 0;
     }
 
     @Override
-    public void doAbility(Player source, @Nullable Player target, double amplifier, int durationModifier) {
+    public boolean doAbility(Player source) {
         Vector newTrajectory = source.getVelocity();
         double y = source.getLocation().getY();
 
-        if (Math.floor(y) == y) {
-            newTrajectory.add(new Vector(0,1 + amplifier,0));
-            source.setVelocity(newTrajectory);
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    source.setFallDistance(-500);
-                }
-            }.runTaskLater(BGHR.getPlugin(), 20L);
-        }
-
+        newTrajectory.add(new Vector(0,1 + amplifier,0));
+        source.setVelocity(newTrajectory);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                source.setFallDistance(-50);
+            }
+        }.runTaskLater(BGHR.getPlugin(), 20L);
+        return true;
     }
 
     @Override
@@ -61,14 +57,13 @@ public class Jump extends Ability implements ActiveAbility {
         if (meta == null)
             return abilityItem;
 
-        meta.displayName(Component.text(itemName));
+        meta.displayName(Component.text(ChatColor.WHITE + itemName));
         attachNewUuid(meta, UUID.randomUUID().toString());
 
         lore.add(Component.text(""));
-        lore.add(Component.text("  Use this item while on the ground"));
-        lore.add(Component.text("  to jump high into the air!"));
+        lore.add(Component.text(ChatColor.RESET + "  Use this to give you a little boost!").color(Tools.GRAY));
         lore.add(Component.text(""));
-        lore.add(Component.text("Cooldown: " + Tools.secondsToMinutesAndSeconds(getCooldown())));
+        lore.add(Tools.toC("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(getCooldown())));
 
         meta.lore(lore);
         abilityItem.setItemMeta(meta);
@@ -77,7 +72,15 @@ public class Jump extends Ability implements ActiveAbility {
     }
 
     @Override
-    public void load(ConfigurationSection section) {
+    public int getCooldown() {
+        return cooldown;
+    }
 
+    @Override
+    public void load(ConfigurationSection section) {
+        this.itemType = Material.valueOf(section.getString("item type", "firework_rocket").toUpperCase());
+        this.itemName = section.getString("item name", "Generic Rocket");
+        this.cooldown = section.getInt("cooldown", 2);
+        this.amplifier = section.getDouble("amplifier", 0);
     }
 }

@@ -1,8 +1,7 @@
 package me.stipe.battlegameshungerroyale;
 
-import me.stipe.battlegameshungerroyale.commands.MapConfig;
-import me.stipe.battlegameshungerroyale.commands.Maps;
-import me.stipe.battlegameshungerroyale.commands.SaveMap;
+import me.stipe.battlegameshungerroyale.commands.*;
+import me.stipe.battlegameshungerroyale.listeners.AbilityListeners;
 import me.stipe.battlegameshungerroyale.listeners.GeneralPlayerEventListener;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
 import me.stipe.battlegameshungerroyale.managers.MapManager;
@@ -15,9 +14,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class BGHR extends JavaPlugin {
     private FileConfiguration mainConfig = new YamlConfiguration();
     private static BGHR plugin;
-    private MapManager mapManager;
-    private KitManager kitManager;
-    private PlayerManager playerManager;
+    private static MapManager mapManager;
+    private static KitManager kitManager;
+    private static PlayerManager playerManager;
 
     @Override
     public void onEnable() {
@@ -26,12 +25,16 @@ public class BGHR extends JavaPlugin {
         mainConfig = getConfig();
         mapManager = new MapManager();
         kitManager = new KitManager();
+        kitManager.loadKits();
         playerManager = new PlayerManager();
 
         this.getCommand("maps").setExecutor(new Maps());
         this.getCommand("savemap").setExecutor(new SaveMap());
         this.getCommand("mapconfig").setExecutor(new MapConfig());
+        this.getCommand("kit").setExecutor(new KitCommand());
+        this.getCommand("kitmenu").setExecutor(new KitMenu());
         Bukkit.getPluginManager().registerEvents(new GeneralPlayerEventListener(), this);
+        Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
     }
 
     @Override
@@ -48,15 +51,15 @@ public class BGHR extends JavaPlugin {
         return mainConfig;
     }
 
-    public MapManager getMapManager() {
+    public static MapManager getMapManager() {
         return mapManager;
     }
 
-    public KitManager getKitManager() {
+    public static KitManager getKitManager() {
         return kitManager;
     }
 
-    public PlayerManager getPlayerManager() {
+    public static PlayerManager getPlayerManager() {
         return playerManager;
     }
 }

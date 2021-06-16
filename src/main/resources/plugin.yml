@@ -14,3 +14,9 @@ commands:
     usage: "/mapconfig"
     description: "opens a gui to modify a map's configuration"
     permission: bghr.admin.maps
+  kit:
+    usage: "/kit <kit>"
+    description: "equip yourself with the chosen kit"
+  kitmenu:
+    usage: "/kitmenu"
+    description: "shows a menu of available kits"

@@ -1,6 +1,7 @@
 package me.stipe.battlegameshungerroyale.datatypes;
 
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -13,30 +14,47 @@ public class PlayerData {
 
     Game currentGame;
     Kit kit;
-    Map<Kit, List<ItemStack>> abilityItems = new HashMap<>();
+    Map<Ability, ItemStack> abilityItems = new HashMap<>();
 
     public PlayerData(Player p) {
         uuid = p.getUniqueId();
     }
 
+    public List<ItemStack> getAbilityItems() {
+        return new ArrayList<>(abilityItems.values());
+    }
+
+    public Ability getAbilityFromItem(ItemStack item) {
+        UUID id = Ability.getUuid(item);
+        if (id == null) {
+            return null;
+        }
+        for (Map.Entry<Ability, ItemStack> e : abilityItems.entrySet()) {
+            if (Ability.getUuid(e.getValue()) != null)
+                if (Objects.equals(Ability.getUuid(e.getValue()), id))
+                    return e.getKey();
+        }
+        return null;
+    }
+
+    public Kit getKit() {
+        return kit;
+    }
+
     public void registerKit(Kit kit, boolean clearInventory) {
-        if (!(this.kit == null || this.kit.equals(kit))) {
+        if (this.kit != null) {
             removeKitItems(this.kit);
+            getPlayer().sendMessage(Component.text("Removed Kit " + this.kit.getName()));
         }
         if (clearInventory)
             getPlayer().getInventory().clear();
         this.kit = kit;
         kit.outfitPlayer(getPlayer(), this);
+        getPlayer().sendMessage(Component.text("You have been given Kit " + kit.getName()));
     }
 
-    public void registerAbilityItem(Kit kit, ItemStack item) {
-        List<ItemStack> items = new ArrayList<>();
-
-        if (abilityItems.containsKey(kit))
-            items.addAll(abilityItems.get(kit));
-
-        items.add(item);
-        abilityItems.put(kit, items);
+    public void registerAbilityItem(Ability ability, ItemStack item) {
+        abilityItems.put(ability, item);
     }
 
     public Player getPlayer() {
@@ -44,7 +62,8 @@ public class PlayerData {
     }
 
     public void removeKitItems(Kit kit) {
-        for (ItemStack item : abilityItems.get(kit)) {
+        for (Ability a : kit.getAbilities()) {
+            ItemStack item = abilityItems.get(a);
             int slot = findHotbarSlot(kit, item);
             if (slot < 0) {
                 Bukkit.getLogger().warning("cannot find a kit item"); //TODO
@@ -57,8 +76,9 @@ public class PlayerData {
     private int findHotbarSlot(Kit kit, ItemStack item) {
         for (int i = 0; i < 9; i++) {
             ItemStack ithItem = getPlayer().getInventory().getItem(i);
-            if (Ability.getUuid(item).equals(Ability.getUuid(ithItem)))
-                return i;
+            if (item != null && ithItem != null)
+                if (Objects.equals(Ability.getUuid(item), Ability.getUuid(ithItem)))
+                    return i;
         }
         return -1;
     }

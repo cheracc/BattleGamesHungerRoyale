@@ -13,15 +13,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class KitManager {
+    BGHR plugin = BGHR.getPlugin();
     private final List<Kit> loadedKits = new ArrayList<>();
-    private final List<Ability> genericAbilities = new ArrayList<>();
 
-    public List<Ability> getGenericAbilities() {
-        if (genericAbilities.isEmpty())
-            loadGenericAbilities();
-        return new ArrayList<>(genericAbilities);
+    public List<Kit> getLoadedKits() {
+        return new ArrayList<>(loadedKits);
     }
 
     public Kit getKit(String name) {
@@ -32,14 +31,25 @@ public class KitManager {
         return null;
     }
 
-    private void loadGenericAbilities() {
-        BGHR plugin = BGHR.getPlugin();
-        File configFile = new File(plugin.getDataFolder(), "abilities.yml");
+    public Ability getGenericAbility(String name) {
+        if (name == null || name.equals(""))
+            return null;
+        try {
+            Class<?> c = Class.forName("me.stipe.battlegameshungerroyale.abilities." + name);
+            Constructor<?> con = c.getDeclaredConstructor();
+            return (Ability) con.newInstance();
+        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void loadKits() {
+        File configFile = new File(plugin.getDataFolder(), "kits.yml");
+        FileConfiguration config = new YamlConfiguration();
 
         if (!configFile.exists())
-            plugin.saveResource("abilities.yml", false);
-
-        FileConfiguration config = new YamlConfiguration();
+            plugin.saveResource("kits.yml", false);
 
         try {
             config.load(configFile);
@@ -47,19 +57,12 @@ public class KitManager {
             e.printStackTrace();
         }
 
-        if (config.contains("abilities")) // TODO instead of this, use the key under abilities in kits.yml to look for the ability classes
-            for (String s : config.getStringList("abilities")) {
-                if (s == null || s.equals(""))
-                    continue;
-                try {
-                    Class<?> c = Class.forName("me.stipe.battlegameshungerroyale.abilities." + s);
-                    Constructor<?> con = c.getDeclaredConstructor();
-                    Ability ability = (Ability) con.newInstance();
-                    genericAbilities.add(ability);
-                } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-    }
+        for (String s : config.getKeys(false)) {
+            if (s != null && config.getConfigurationSection(s) != null) {
+                Kit kit = new Kit(Objects.requireNonNull(config.getConfigurationSection(s)));
 
+                loadedKits.add(kit);
+            }
+        }
+    }
 }

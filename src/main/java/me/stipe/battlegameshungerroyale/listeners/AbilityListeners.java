@@ -1,0 +1,86 @@
+package me.stipe.battlegameshungerroyale.listeners;
+
+import me.stipe.battlegameshungerroyale.BGHR;
+import me.stipe.battlegameshungerroyale.datatypes.PlayerData;
+import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
+import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
+import me.stipe.battlegameshungerroyale.managers.PlayerManager;
+import net.kyori.adventure.text.Component;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
+
+public class AbilityListeners implements Listener {
+    PlayerManager playerManager = BGHR.getPlayerManager();
+
+    @EventHandler
+    public void doNotDropKitItems(PlayerDeathEvent event) {
+        Player p = event.getEntity();
+        PlayerData data = playerManager.getPlayerData(p);
+
+        if (data.getKit() != null) {
+            for (ItemStack item : data.getAbilityItems()) {
+                event.getItemsToKeep().add(item);
+                event.getDrops().remove(item);
+                if (p.hasCooldown(item.getType()))
+                    p.setCooldown(item.getType(), 0);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onUseActiveAbility(PlayerInteractEvent event) {
+        if (event.getAction().name().contains("RIGHT")) {
+            Player p = event.getPlayer();
+            ItemStack activeItem = p.getActiveItem();
+            if (!Ability.isThisAnAbilityItem(activeItem))
+                activeItem = p.getInventory().getItemInMainHand();
+            if (!Ability.isThisAnAbilityItem(activeItem))
+                activeItem = p.getInventory().getItemInOffHand();
+            if (!Ability.isThisAnAbilityItem(activeItem))
+                return;
+
+            PlayerData data = playerManager.getPlayerData(p);
+            Ability ability = data.getAbilityFromItem(activeItem);
+            event.setCancelled(true);
+
+            if (ability instanceof ActiveAbility && activeItem != null && !p.hasCooldown(activeItem.getType())) {
+                ActiveAbility activeAbility = (ActiveAbility) ability;
+                if (activeAbility.doAbility(p))
+                    p.setCooldown(activeItem.getType(), activeAbility.getCooldown() * 20);
+            }
+        }
+    }
+
+    // these listeners are looking for items tied to abilities and ensuring that they stay in the hotbar.
+    @EventHandler
+    public void abilityItemsStayInHotbar(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof Player) {
+            Player p = (Player) event.getWhoClicked();
+            ItemStack clicked = event.getCurrentItem();
+
+            if (clicked != null) {
+                if (Ability.isThisAnAbilityItem(clicked)) {
+                    p.sendMessage(Component.text("Ability items must remain in your hotbar or offhand. You can use the 'swap hands' (default 'F') button to move them around"));
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void doNotDropAbilityItems(PlayerDropItemEvent event) {
+        Player p = event.getPlayer();
+        ItemStack item = event.getItemDrop().getItemStack();
+
+        if (Ability.isThisAnAbilityItem(item)) {
+            event.setCancelled(true);
+            p.sendMessage(Component.text("That's kind of important, you should keep it."));
+        }
+    }
+}

@@ -5,5 +5,14 @@ jumper:
   abilities:
     Jump:
       item type: firework_rocket
-      item name: Wee!
+      item name: Jump Jet
       cooldown: 2
+flash:
+  name: Flash
+  description: "He can zip instantly up to 30 blocks away!"
+  icon: soul_torch
+  abilities:
+    Teleport:
+      cooldown: 30
+      max distance: 30
+      item name: Flash Rod

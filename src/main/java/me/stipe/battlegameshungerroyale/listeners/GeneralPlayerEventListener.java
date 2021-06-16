@@ -11,8 +11,8 @@ import org.bukkit.event.block.BlockCanBuildEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 
 public class GeneralPlayerEventListener implements Listener {
-    MapManager mapManager = BGHR.getPlugin().getMapManager();
-    PlayerManager playerManager = BGHR.getPlugin().getPlayerManager();
+    MapManager mapManager = BGHR.getMapManager();
+    PlayerManager playerManager = BGHR.getPlayerManager();
 
     @EventHandler
     public void noBreakingBlocks(BlockBreakEvent event) {
