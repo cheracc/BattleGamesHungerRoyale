@@ -32,6 +32,7 @@ public class KitCommand implements CommandExecutor {
                     }
 
                     data.registerKit(kit, false);
+                    p.closeInventory();
                     return true;
                 }
             }

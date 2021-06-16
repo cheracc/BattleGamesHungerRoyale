@@ -16,8 +16,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class KitManager {
-    BGHR plugin = BGHR.getPlugin();
+    private final BGHR plugin = BGHR.getPlugin();
     private final List<Kit> loadedKits = new ArrayList<>();
+    private final List<Ability> loadedAbilities = new ArrayList<>();
 
     public List<Kit> getLoadedKits() {
         return new ArrayList<>(loadedKits);
@@ -42,6 +43,10 @@ public class KitManager {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void registerAbility(Ability ability) {
+        loadedAbilities.add(ability);
     }
 
     public void loadKits() {

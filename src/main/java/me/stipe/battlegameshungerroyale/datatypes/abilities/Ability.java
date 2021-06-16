@@ -1,12 +1,16 @@
 package me.stipe.battlegameshungerroyale.datatypes.abilities;
 
 import me.stipe.battlegameshungerroyale.BGHR;
+import me.stipe.battlegameshungerroyale.datatypes.Kit;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -17,10 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class Ability {
+public abstract class Ability implements Listener {
     public static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_key");
     private final String description;
     private final String name;
+    private Kit forKit = null;
 
     public Ability(String name, String description) {
         this.description = description;
@@ -33,6 +38,14 @@ public abstract class Ability {
 
     public String getDescription() {
         return description;
+    }
+
+    public Kit getAssignedKit() {
+        return forKit;
+    }
+
+    public boolean isAssignedToAKit() {
+        return forKit != null;
     }
 
     public void attachNewUuid(ItemMeta meta, String value) {
@@ -70,7 +83,8 @@ public abstract class Ability {
         lore.add(Component.text(""));
         lore.addAll(Tools.toC(Tools.wrapText(description, ChatColor.GRAY)));
         lore.add(Component.text(""));
-        lore.add(Tools.toC("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(cooldown)));
+        if (cooldown > 0)
+            lore.add(Tools.toC("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(cooldown)));
 
         meta.lore(lore);
         abilityItem.setItemMeta(meta);
@@ -81,4 +95,14 @@ public abstract class Ability {
 
     public abstract void load(ConfigurationSection section);
 
+    public void load(ConfigurationSection section, Kit forKit) {
+        this.forKit = forKit;
+        load(section);
+    }
+
+
+    @EventHandler
+    public void registerAllAblities(ServerLoadEvent event) {
+        BGHR.getKitManager().registerAbility(this);
+    }
 }

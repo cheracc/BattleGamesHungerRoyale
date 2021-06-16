@@ -16,3 +16,17 @@ flash:
       cooldown: 30
       max distance: 30
       item name: Flash Rod
+jumpflash:
+  name: JumpFlash
+  description: "He can jump with his rocket and teleport with his rod!"
+  icon: ender_pearl
+  abilities:
+    Jump:
+      cooldown: 2
+    Teleport:
+      max distance: 100
+      allow unsafe teleporting: false
+      cooldown: 5
+    AddPotionEffect:
+      effect: regeneration
+      toggleable: true

@@ -1,6 +1,7 @@
 package me.stipe.battlegameshungerroyale.datatypes;
 
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
+import me.stipe.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -43,7 +44,7 @@ public class PlayerData {
 
     public void registerKit(Kit kit, boolean clearInventory) {
         if (this.kit != null) {
-            removeKitItems(this.kit);
+            removeKit(this.kit);
             getPlayer().sendMessage(Component.text("Removed Kit " + this.kit.getName()));
         }
         if (clearInventory)
@@ -61,7 +62,7 @@ public class PlayerData {
         return Bukkit.getPlayer(uuid);
     }
 
-    public void removeKitItems(Kit kit) {
+    public void removeKit(Kit kit) {
         for (Ability a : kit.getAbilities()) {
             ItemStack item = abilityItems.get(a);
             int slot = findHotbarSlot(kit, item);
@@ -70,6 +71,10 @@ public class PlayerData {
                 return;
             }
             getPlayer().getInventory().setItem(slot, null);
+
+            if (a instanceof PassiveAbility) {
+                ((PassiveAbility) a).deactivate(getPlayer());
+            }
         }
     }
 
@@ -81,5 +86,9 @@ public class PlayerData {
                     return i;
         }
         return -1;
+    }
+
+    public boolean hasKit(Kit kit) {
+        return this.kit != null && this.kit.equals(kit);
     }
 }

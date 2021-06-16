@@ -3,6 +3,7 @@ package me.stipe.battlegameshungerroyale.datatypes;
 import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
+import me.stipe.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -34,6 +35,15 @@ public class Kit {
                 ItemStack abilityItem = ((ActiveAbility) a).createAbilityItem();
                 p.getInventory().setItem(getLastEmptyHotbarSlot(p), abilityItem);
                 data.registerAbilityItem(a, abilityItem);
+            }
+            if (a instanceof PassiveAbility) {
+                if (((PassiveAbility) a).hasToggleItem()) {
+                    ItemStack toggleItem = ((PassiveAbility) a).makeToggleItem();
+                    p.getInventory().setItem(getLastEmptyHotbarSlot(p), toggleItem);
+                    data.registerAbilityItem(a, toggleItem);
+                } else {
+                    ((PassiveAbility) a).activate(p);
+                }
             }
         }
     }
@@ -67,7 +77,7 @@ public class Kit {
             if (key != null) {
                 Ability ability = kits.getGenericAbility(key);
                 if (ability != null) {
-                    ability.load(section.getConfigurationSection(key));
+                    ability.load(section.getConfigurationSection(key), this);
                     abilities.add(ability);
                 }
             }

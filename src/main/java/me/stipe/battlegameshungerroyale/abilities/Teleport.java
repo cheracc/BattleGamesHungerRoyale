@@ -47,7 +47,7 @@ public class Teleport extends Ability implements ActiveAbility {
         Location teleportLocation = null;
 
         if (result != null && result.getHitBlock() != null) {
-            teleportLocation = result.getHitBlock().getLocation();
+            teleportLocation = result.getHitBlock().getLocation().add(0.5,1,0.5);
         } else if (unsafeTeleporting) {
             teleportLocation = source.getLocation().add(source.getLocation().getDirection().normalize().multiply(maxDistance));
         }
