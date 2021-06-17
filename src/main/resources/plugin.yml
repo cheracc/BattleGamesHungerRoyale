@@ -24,3 +24,7 @@ commands:
     usage: "/kitconfig"
     description: "opens a gui to configure a kit"
     permission: bghr.admin.kits
+  abilities:
+    usage: "/abilities"
+    description: "shows all of the available base abilities and their options"
+    permission: bghr.admin.kits

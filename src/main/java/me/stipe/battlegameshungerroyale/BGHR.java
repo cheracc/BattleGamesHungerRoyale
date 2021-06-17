@@ -11,6 +11,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.InvocationTargetException;
+
 public class BGHR extends JavaPlugin {
     private FileConfiguration mainConfig = new YamlConfiguration();
     private static BGHR plugin;
@@ -25,6 +27,12 @@ public class BGHR extends JavaPlugin {
         mainConfig = getConfig();
         mapManager = new MapManager();
         kitManager = new KitManager();
+        try {
+            kitManager.findAndLoadDefaultAbilities();
+        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+            System.out.println(e.getCause().toString());
+        }
         kitManager.loadKits();
         playerManager = new PlayerManager();
 
@@ -34,6 +42,7 @@ public class BGHR extends JavaPlugin {
         this.getCommand("kit").setExecutor(new KitCommand());
         this.getCommand("kitmenu").setExecutor(new KitMenu());
         this.getCommand("kitconfig").setExecutor(new KitConfig());
+        this.getCommand("abilities").setExecutor(new AbilityList());
         Bukkit.getPluginManager().registerEvents(new GeneralPlayerEventListener(), this);
         Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
     }

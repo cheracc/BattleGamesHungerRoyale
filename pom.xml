@@ -33,6 +33,8 @@
                                     <include>com.h2database:h2</include>
                                     <include>commons-io:commons-io</include>
                                     <include>dev.triumphteam:triumph-gui</include>
+                                    <include>org.reflections:*</include>
+                                    <include>org.javassist:javassist</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
@@ -79,6 +81,11 @@
             <groupId>dev.triumphteam</groupId>
             <artifactId>triumph-gui</artifactId>
             <version>3.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.12</version>
         </dependency>
     </dependencies>
 

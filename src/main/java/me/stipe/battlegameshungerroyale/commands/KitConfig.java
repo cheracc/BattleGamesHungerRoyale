@@ -106,8 +106,8 @@ public class KitConfig implements CommandExecutor {
         lore.add("");
         lore.add("&bClick here to save these changes");
 
-        return ItemBuilder.from(kit.getIcon()).name(Tools.toC("&eSave and Exit"))
-                .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(kit.getIcon()).name(Tools.componentalize("&eSave and Exit"))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
                         // send another gui to get an icon
@@ -123,8 +123,8 @@ public class KitConfig implements CommandExecutor {
         lore.add("");
         lore.add("&bClick here to change this kit's icon");
 
-        return ItemBuilder.from(kit.getIcon()).name(Tools.toC("&eKit Icon"))
-                .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(kit.getIcon()).name(Tools.componentalize("&eKit Icon"))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
                         // send another gui to get an icon
@@ -140,12 +140,12 @@ public class KitConfig implements CommandExecutor {
         List<Component> lore = new ArrayList<>();
 
         lore.add(Component.text(""));
-        lore.addAll(Tools.toC(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
+        lore.addAll(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
         lore.add(Component.text(""));
-        lore.add(Tools.toC("&bLeft Click to change the name of this kit"));
-        lore.add(Tools.toC("&bRight Click to change the description of this kit"));
+        lore.add(Tools.componentalize("&bLeft Click to change the name of this kit"));
+        lore.add(Tools.componentalize("&bRight Click to change the description of this kit"));
 
-        return ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.toC("&eKit Name: &f" + kit.getName())).lore(lore).flags(ItemFlag.HIDE_ATTRIBUTES)
+        return ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.componentalize("&eKit Name: &f" + kit.getName())).lore(lore).flags(ItemFlag.HIDE_ATTRIBUTES)
                 .asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();

@@ -1,32 +1,4 @@
-jumper:
-  name: Jumper
-  description: "He carries around a big rocket and uses it to jump around. A lot. No really, it's kind of annoying."
+debugger:
+  name: Debugger
+  description: "It doesn't do anything"
   icon: firework_rocket
-  abilities:
-    Jump:
-      item type: firework_rocket
-      item name: Jump Jet
-      cooldown: 2
-flash:
-  name: Flash
-  description: "He can zip instantly up to 30 blocks away!"
-  icon: soul_torch
-  abilities:
-    Teleport:
-      cooldown: 30
-      max distance: 30
-      item name: Flash Rod
-jumpflash:
-  name: JumpFlash
-  description: "He can jump with his rocket and teleport with his rod!"
-  icon: ender_pearl
-  abilities:
-    Jump:
-      cooldown: 2
-    Teleport:
-      max distance: 100
-      allow unsafe teleporting: false
-      cooldown: 5
-    AddPotionEffect:
-      effect: regeneration
-      toggleable: true

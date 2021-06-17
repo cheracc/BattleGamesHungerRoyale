@@ -13,28 +13,28 @@ import org.bukkit.util.RayTraceResult;
 public class Teleport extends Ability implements ActiveAbility {
     int cooldown;
     int maxDistance;
-    boolean unsafeTeleporting;
+    boolean allowUnsafeTeleporting;
     boolean leaveTracer;
     Material itemType;
     String itemName;
     String itemDescription;
 
     public Teleport() {
-        super("Teleport", "Teleports the player in the direction they are looking");
         this.maxDistance = 30;
         this.cooldown = 30;
-        this.unsafeTeleporting = true;
+        this.allowUnsafeTeleporting = true;
         this.leaveTracer = true;
         this.itemType = Material.SOUL_TORCH;
         this.itemName = "Teleport Rod";
         this.itemDescription = String.format("Use this item to teleport up to %s blocks away!", maxDistance);
+        setDescription("This will teleport a player instantly in the direction they are facing. Either to the block they are looking at (if it is in range). Or the max distance in that direction (if unsafe teleporting is enabled - this can end badly)");
     }
 
     @Override
     public void load(ConfigurationSection section) {
         this.cooldown = section.getInt("cooldown", 30);
         this.maxDistance = section.getInt("max distance", 30);
-        this.unsafeTeleporting = section.getBoolean("allow unsafe teleporting", true);
+        this.allowUnsafeTeleporting = section.getBoolean("allow unsafe teleporting", true);
         this.leaveTracer = section.getBoolean("leave tracer", true);
         this.itemType = Material.valueOf(section.getString("item type", "soul_torch").toUpperCase());
         this.itemName = section.getString("item name", "Teleport Rod");
@@ -48,7 +48,7 @@ public class Teleport extends Ability implements ActiveAbility {
 
         if (result != null && result.getHitBlock() != null) {
             teleportLocation = result.getHitBlock().getLocation().add(0.5,1,0.5);
-        } else if (unsafeTeleporting) {
+        } else if (allowUnsafeTeleporting) {
             teleportLocation = source.getLocation().add(source.getLocation().getDirection().normalize().multiply(maxDistance));
         }
 

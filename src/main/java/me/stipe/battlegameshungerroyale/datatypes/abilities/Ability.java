@@ -4,32 +4,35 @@ import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.server.ServerLoadEvent;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+import java.util.*;
 
-public abstract class Ability implements Listener {
-    public static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_key");
-    private final String description;
-    private final String name;
+public abstract class Ability {
+    private static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_key");
+    private final ConfigurationSection section;
+    String description = "";
+    String name = getClass().getSimpleName();
     private Kit forKit = null;
 
-    public Ability(String name, String description) {
-        this.description = description;
-        this.name = name;
+    public Ability() {
+        this.section = null;
+    }
+
+    public static NamespacedKey getAbilityKey() {
+        return ABILITY_KEY;
     }
 
     public String getName() {
@@ -38,6 +41,10 @@ public abstract class Ability implements Listener {
 
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String text) {
+        description = text;
     }
 
     public Kit getAssignedKit() {
@@ -54,6 +61,14 @@ public abstract class Ability implements Listener {
 
     public static boolean isThisAnAbilityItem(ItemStack item) {
         return getUuid(item) != null;
+    }
+
+    public boolean isActive() {
+        return this instanceof ActiveAbility;
+    }
+
+    public boolean isPassive() {
+        return this instanceof PassiveAbility;
     }
 
     public static @Nullable UUID getUuid(ItemStack item) {
@@ -81,10 +96,10 @@ public abstract class Ability implements Listener {
         attachNewUuid(meta, UUID.randomUUID().toString());
 
         lore.add(Component.text(""));
-        lore.addAll(Tools.toC(Tools.wrapText(description, ChatColor.GRAY)));
+        lore.addAll(Tools.componentalize(Tools.wrapText(description, ChatColor.GRAY)));
         lore.add(Component.text(""));
         if (cooldown > 0)
-            lore.add(Tools.toC("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(cooldown)));
+            lore.add(Tools.componentalize("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(cooldown)));
 
         meta.lore(lore);
         abilityItem.setItemMeta(meta);
@@ -97,12 +112,90 @@ public abstract class Ability implements Listener {
 
     public void load(ConfigurationSection section, Kit forKit) {
         this.forKit = forKit;
+        for (String s : section.getKeys(false)) {
+            String fieldName = Tools.configOptionToFieldName(s);
+            try {
+                Field f = getClass().getField(fieldName);
+                setFieldToValue(f, section.get(s));
+            } catch (NoSuchFieldException e) {
+                Bukkit.getLogger().warning("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + s);
+            }
+        }
         load(section);
     }
 
-
-    @EventHandler
-    public void registerAllAblities(ServerLoadEvent event) {
-        BGHR.getKitManager().registerAbility(this);
+    private void setFieldToValue(Field field, Object value) {
+        try {
+            field.set(this, value);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        getConfig().set(Tools.fieldNameToConfigOption(field.getName()), value);
     }
+
+    public Map<String, Type> getConfigurableOptions() {
+        Map<String, Type> availableOptions = new HashMap<>();
+
+        for (Field f : this.getClass().getFields()) {
+            availableOptions.put(Tools.fieldNameToConfigOption(f.getName()), f.getType());
+        }
+        return availableOptions;
+    }
+
+    public void setConfigurableOption(String option, String value) {
+        String type = getConfigurableOptions().get(option).getTypeName();
+
+        if (type == null) {
+            Bukkit.getLogger().warning("There is no configurable option: " + option);
+            return;
+        }
+
+        if (type.toLowerCase().contains("boolean"))
+            getConfig().set(option, Boolean.valueOf(value));
+        if (type.toLowerCase().contains("int"))
+            getConfig().set(option, Integer.valueOf(value));
+        if (type.toLowerCase().contains("double"))
+            getConfig().set(option, Double.valueOf(value));
+        else
+            getConfig().set(option, value);
+    }
+
+    public ConfigurationSection getConfig() {
+        if (section == null)
+            return getDefaultConfig();
+        return section;
+    }
+
+    public ConfigurationSection getDefaultConfig() {
+        try {
+            ConfigurationSection section = new YamlConfiguration();
+
+            for (Field f : getClass().getDeclaredFields()) {
+                f.setAccessible(true);
+                section.addDefault(fieldNameToConfigOption(f.getName()), f.get(this));
+                section.set(fieldNameToConfigOption(f.getName()), f.get(this));
+            }
+
+            return section;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String fieldNameToConfigOption(String string) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < string.length(); i++) {
+            Character c = string.charAt(i);
+            if (Character.isUpperCase(c)) {
+                sb.append(" ");
+                sb.append(Character.toLowerCase(c));
+            }
+            else
+                sb.append(c);
+        }
+        return sb.toString();
+    }
+
 }

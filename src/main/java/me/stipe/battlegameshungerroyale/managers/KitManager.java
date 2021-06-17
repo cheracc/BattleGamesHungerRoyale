@@ -6,19 +6,19 @@ import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class KitManager {
     private final BGHR plugin = BGHR.getPlugin();
     private final List<Kit> loadedKits = new ArrayList<>();
-    private final List<Ability> loadedAbilities = new ArrayList<>();
+    private final List<Ability> defaultAbilities = new ArrayList<>();
 
     public List<Kit> getLoadedKits() {
         return new ArrayList<>(loadedKits);
@@ -33,20 +33,24 @@ public class KitManager {
     }
 
     public Ability getGenericAbility(String name) {
+        if (!defaultAbilities.isEmpty())
+            for (Ability a : defaultAbilities) {
+                if (a.getName().equalsIgnoreCase(name))
+                    return a;
+            }
+
         if (name == null || name.equals(""))
             return null;
         try {
             Class<?> c = Class.forName("me.stipe.battlegameshungerroyale.abilities." + name);
             Constructor<?> con = c.getDeclaredConstructor();
-            return (Ability) con.newInstance();
+            Ability ability = (Ability) con.newInstance();
+            defaultAbilities.add(ability);
+            return ability;
         } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public void registerAbility(Ability ability) {
-        loadedAbilities.add(ability);
     }
 
     public void loadKits() {
@@ -68,6 +72,22 @@ public class KitManager {
 
                 loadedKits.add(kit);
             }
+        }
+    }
+
+    public List<Ability> getDefaultAbilities() {
+        return new ArrayList<>(defaultAbilities);
+    }
+
+    public void findAndLoadDefaultAbilities() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        Set<Class<?>> abilityClasses = new HashSet<>((new Reflections("me.stipe.battlegameshungerroyale.abilities", new SubTypesScanner(false))).getSubTypesOf(Ability.class));
+
+        for (Class<?> c : abilityClasses) {
+            if (c == null) continue;
+            Constructor<?> con = c.getDeclaredConstructor();
+            Object o = con.newInstance();
+            if (o instanceof Ability)
+                defaultAbilities.add((Ability) o);
         }
     }
 }

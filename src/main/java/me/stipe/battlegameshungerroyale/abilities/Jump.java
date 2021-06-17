@@ -14,9 +14,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Jump extends Ability implements ActiveAbility {
     private Material itemType;
@@ -25,11 +23,11 @@ public class Jump extends Ability implements ActiveAbility {
     private int cooldown;
 
     public Jump() {
-        super("Jump", "Makes the player jump high");
         this.itemType = Material.FIREWORK_ROCKET;
         this.itemName = "Jump Rocket";
         this.amplifier = 0;
         this.cooldown = 0;
+        setDescription("This will make a player jump about 4 blocks into the air. The amplifier affects only the height of the jump");
     }
 
     @Override
@@ -63,7 +61,7 @@ public class Jump extends Ability implements ActiveAbility {
         lore.add(Component.text(""));
         lore.add(Component.text(ChatColor.RESET + "  Use this to give you a little boost!").color(Tools.GRAY));
         lore.add(Component.text(""));
-        lore.add(Tools.toC("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(getCooldown())));
+        lore.add(Tools.componentalize("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(getCooldown())));
 
         meta.lore(lore);
         abilityItem.setItemMeta(meta);

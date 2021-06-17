@@ -11,30 +11,29 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 public class AddPotionEffect extends Ability implements PassiveAbility {
-    PotionEffectType effectType;
-    int amplifier;
-    boolean toggleable;
-    boolean showParticles;
-    boolean showEffectIcon;
-    Material itemType;
-    String itemName;
-    String itemDescription;
+    PotionEffectType effectType = PotionEffectType.REGENERATION;
+    int amplifier = 0;
+    boolean toggleable = false;
+    boolean showParticles = false;
+    boolean showEffectIcon = false;
+    Material itemType = Material.POTION;
+    String itemName = effectType.getName().toLowerCase() + " switch";
+    String itemDescription = "Toggles the " + effectType.getName().toLowerCase() + " effect on or off";
 
     public AddPotionEffect() {
-        super("AddPotionEffect", "Adds a permanent potion effect to the player, or optionally give the player an item to turn the effect on and off.");
+        setDescription("Adds a configurable potion effect to the player. The effect can either be toggled by the player (with the provided item) or on all the time (no item needed)");
     }
 
     @Override
     public void load(ConfigurationSection section) {
         if (section.contains("effect")) {
-            effectType = PotionEffectType.getByName(section.getString("effect"));
-            amplifier = section.getInt("amplifier", 0);
-            showParticles = section.getBoolean("show particles", false);
-            showEffectIcon = section.getBoolean("show effect icon", false);
-            toggleable = section.getBoolean("toggleable", false);
+            effectType = PotionEffectType.getByName(section.getString("effect type"));
+            amplifier = section.getInt("amplifier");
+            showParticles = section.getBoolean("show particles");
+            showEffectIcon = section.getBoolean("show effect icon");
+            toggleable = section.getBoolean("toggleable");
             itemType = Material.valueOf(section.getString("item type", "potion").toUpperCase());
             itemName = "Effect Inducer";
-            itemDescription = "Toggles the " + effectType.getName() + " effect on or off";
         } else {
             Bukkit.getLogger().warning("Tried to load AddPotionEffect ability with no effect specified");
         }

@@ -55,7 +55,7 @@ public class KitMenu implements CommandExecutor {
     }
 
     private GuiItem createKitIcon(Kit kit) {
-        List<Component> lore = new ArrayList<>(Tools.toC(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
+        List<Component> lore = new ArrayList<>(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
         lore.add(0, Component.text(""));
 
         return ItemBuilder.from(kit.getIcon()).name(Component.text(ChatColor.WHITE + kit.getName())).lore(lore)

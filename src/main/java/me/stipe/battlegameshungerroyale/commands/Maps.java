@@ -29,7 +29,7 @@ public class Maps implements CommandExecutor {
             return true;
 
         Player p = (Player) commandSender;
-        MapManager mapManager = BGHR.getPlugin().getMapManager();
+        MapManager mapManager = BGHR.getMapManager();
         int rows = mapManager.getMaps().size() / 9 + 1;
 
         Gui gui = Gui.gui().title(Component.text("All Maps")).rows(rows).create();
@@ -108,19 +108,19 @@ public class Maps implements CommandExecutor {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(ChatColor.WHITE + "Creator: " + ChatColor.GRAY + mapData.getMapCreator()));
         lore.add(Component.text(""));
-        lore.addAll(Tools.toC(Tools.wrapText(mapData.getMapDescription(), ChatColor.DARK_PURPLE)));
+        lore.addAll(Tools.componentalize(Tools.wrapText(mapData.getMapDescription(), ChatColor.DARK_PURPLE)));
         lore.add(Component.text(""));
         if (mapData.isLoaded()) {
             if (p.getWorld().equals(mapData.getWorld()))
-                lore.add(Tools.toC("&5[&dYou are on this map&5]"));
+                lore.add(Tools.componentalize("&5[&dYou are on this map&5]"));
             else
-                lore.add(Tools.toC("&bLeft Click: &3Teleport to This Map"));
+                lore.add(Tools.componentalize("&bLeft Click: &3Teleport to This Map"));
             if (!mapData.isLobby())
-                lore.add(Tools.toC("&bRight Click: &4Unload this Map"));
+                lore.add(Tools.componentalize("&bRight Click: &4Unload this Map"));
         } else {
-            lore.add(Tools.toC("&bLeft Click: &2Load this Map"));
+            lore.add(Tools.componentalize("&bLeft Click: &2Load this Map"));
         }
-        lore.add(Tools.toC("&bShift+Click: &6Configure This Map"));
+        lore.add(Tools.componentalize("&bShift+Click: &6Configure This Map"));
 
         return lore;
     }

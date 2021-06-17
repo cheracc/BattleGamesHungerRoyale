@@ -92,8 +92,8 @@ public class MapConfig implements CommandExecutor {
         lore.add("");
         lore.add("&bClick here to change the name of this map");
 
-        return ItemBuilder.from(Material.ITEM_FRAME).name(Tools.toC("&eMap Name: &f" + data.getMapName()))
-            .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(Material.ITEM_FRAME).name(Tools.componentalize("&eMap Name: &f" + data.getMapName()))
+            .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                 if (e.getWhoClicked() instanceof Player) {
                     Player p = (Player) e.getWhoClicked();
                     p.closeInventory();
@@ -104,7 +104,7 @@ public class MapConfig implements CommandExecutor {
 
     private void changeName(Player p, MapData data, String[] args) {
         if (!configurators.containsKey(p.getUniqueId())) {
-            p.sendMessage(Tools.toC("You are not currently editing a map configuration"));
+            p.sendMessage(Tools.componentalize("You are not currently editing a map configuration"));
             return;
         }
         StringBuilder sb = new StringBuilder();
@@ -129,8 +129,8 @@ public class MapConfig implements CommandExecutor {
         lore.add("");
         lore.add("&bClick here to change the description for this map");
 
-        return ItemBuilder.from(Material.BOOK).name(Tools.toC("&eMap Description: &f"))
-                .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(Material.BOOK).name(Tools.componentalize("&eMap Description: &f"))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
                         p.closeInventory();
@@ -141,7 +141,7 @@ public class MapConfig implements CommandExecutor {
 
     private void changeDescription(Player p, MapData data, String[] args) {
         if (!configurators.containsKey(p.getUniqueId())) {
-            p.sendMessage(Tools.toC("You are not currently editing a map configuration"));
+            p.sendMessage(Tools.componentalize("You are not currently editing a map configuration"));
             return;
         }
         StringBuilder sb = new StringBuilder();
@@ -165,8 +165,8 @@ public class MapConfig implements CommandExecutor {
         lore.add("&bClick here to change the name of the creator");
         lore.add("&bof this map");
 
-        return ItemBuilder.from(Material.TOTEM_OF_UNDYING).name(Tools.toC("&fCreator: &7" + data.getMapCreator()))
-                .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(Material.TOTEM_OF_UNDYING).name(Tools.componentalize("&fCreator: &7" + data.getMapCreator()))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
                         p.closeInventory();
@@ -177,7 +177,7 @@ public class MapConfig implements CommandExecutor {
 
     private void changeCreator(Player p, MapData data, String[] args) {
         if (!configurators.containsKey(p.getUniqueId())) {
-            p.sendMessage(Tools.toC("You are not currently editing a map configuration"));
+            p.sendMessage(Tools.componentalize("You are not currently editing a map configuration"));
             return;
         }
         StringBuilder sb = new StringBuilder();
@@ -200,8 +200,8 @@ public class MapConfig implements CommandExecutor {
         lore.add("");
         lore.add("&bClick here to change this map's icon");
 
-        return ItemBuilder.from(data.getIcon()).name(Tools.toC("&eMap Icon"))
-                .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(data.getIcon()).name(Tools.componentalize("&eMap Icon"))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
                         // send another gui to get an icon
@@ -213,7 +213,7 @@ public class MapConfig implements CommandExecutor {
 
     private void changeIcon(Player p, MapData data, String[] args) {
         if (!configurators.containsKey(p.getUniqueId())) {
-            p.sendMessage(Tools.toC("You are not currently editing a map configuration"));
+            p.sendMessage(Tools.componentalize("You are not currently editing a map configuration"));
             return;
         }
         if (args[1] != null) {
@@ -241,8 +241,8 @@ public class MapConfig implements CommandExecutor {
             lore.add("&bShift+Click to center the border at your location");
         }
 
-        return ItemBuilder.from(icon).name(Tools.toC("&eMap Border: " + (data.isUseBorder() ? "&aON" : "&cOFF")))
-                .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(icon).name(Tools.componentalize("&eMap Border: " + (data.isUseBorder() ? "&aON" : "&cOFF")))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
 
@@ -279,8 +279,8 @@ public class MapConfig implements CommandExecutor {
         lore.add("&bLeft Click to &aincrease");
         lore.add("&bRight Click to &cdecrease");
 
-        return ItemBuilder.from(Material.END_CRYSTAL).name(Tools.toC("&eBorder Radius: &f" + data.getBorderRadius()))
-                .lore(Tools.toC(lore)).asGuiItem(e -> {
+        return ItemBuilder.from(Material.END_CRYSTAL).name(Tools.componentalize("&eBorder Radius: &f" + data.getBorderRadius()))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
                         int newRadius = data.getBorderRadius();

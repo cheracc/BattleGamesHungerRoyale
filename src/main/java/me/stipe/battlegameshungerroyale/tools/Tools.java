@@ -5,12 +5,15 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Tools {
+    public static TextComponent BLANK_LINE = Component.text("");
     public static TextColor RED = TextColor.color(255,0,0);
     public static TextColor WHITE = TextColor.color(255,255,255);
     public static TextColor BLUE = TextColor.color(0,0,255);
@@ -46,16 +49,16 @@ public class Tools {
         return wrappedText;
     }
 
-    public static List<Component> toC(List<String> text) {
+    public static List<Component> componentalize(List<String> text) {
         List<Component> components = new ArrayList<>();
 
         for (String s : text)
-            components.add(Component.text(ChatColor.translateAlternateColorCodes('&', s)));
+            components.add(componentalize(s));
         return components;
     }
 
-    public static Component toC(String text) {
-        return Component.text(ChatColor.translateAlternateColorCodes('&', text));
+    public static Component componentalize(String text) {
+        return LegacyComponentSerializer.legacySection().deserialize(ChatColor.translateAlternateColorCodes('&', ChatColor.WHITE + text)).decoration(TextDecoration.ITALIC, false);
     }
 
     public static String secondsToMinutesAndSeconds(int timeInSeconds) {
@@ -122,5 +125,31 @@ public class Tools {
                 .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to save some typing!")));
     }
 
+    public static String configOptionToFieldName(String string) {
+        StringBuilder sb = new StringBuilder();
 
+        for (int i = 0; i < string.length(); i++) {
+            Character c = string.charAt(i);
+            if (c.equals(' ')) {
+                i++;
+                sb.append(Character.toUpperCase(string.charAt(i)));
+            }
+        }
+        return sb.toString();
+    }
+
+    public static String fieldNameToConfigOption(String string) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < string.length(); i++) {
+            Character c = string.charAt(i);
+            if (Character.isUpperCase(c)) {
+                sb.append(" ");
+                sb.append(Character.toLowerCase(c));
+            }
+            else
+                sb.append(c);
+        }
+        return sb.toString();
+    }
 }
