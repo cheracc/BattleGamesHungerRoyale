@@ -64,7 +64,7 @@ public class KitManager {
 
         for (String s : config.getKeys(false)) {
             if (s != null && config.getConfigurationSection(s) != null) {
-                Kit kit = new Kit(Objects.requireNonNull(config.getConfigurationSection(s)));
+                Kit kit = new Kit(s, Objects.requireNonNull(config.getConfigurationSection(s)));
 
                 loadedKits.add(kit);
             }

@@ -20,3 +20,7 @@ commands:
   kitmenu:
     usage: "/kitmenu"
     description: "shows a menu of available kits"
+  kitconfig:
+    usage: "/kitconfig"
+    description: "opens a gui to configure a kit"
+    permission: bghr.admin.kits

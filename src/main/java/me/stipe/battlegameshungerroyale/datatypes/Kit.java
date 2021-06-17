@@ -7,26 +7,50 @@ import me.stipe.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 public class Kit {
+    ConfigurationSection config;
+    String id;
     String name;
     String description;
     Material icon;
     List<Ability> abilities = new ArrayList<>();
 
-    public Kit(ConfigurationSection config) {
+    public Kit(String key, ConfigurationSection config) {
+        this.id = key;
+        this.config = config;
         name = config.getString("name", "");
         description = config.getString("description", "");
         icon = Material.valueOf(config.getString("icon", "chest").toUpperCase());
         if (config.contains("abilities"))
             loadAbilities(Objects.requireNonNull(config.getConfigurationSection("abilities")));
+    }
+
+    public void setName(String name) {
+        this.name = name;
+        config.set("name", name);
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+        config.set("description", description);
+    }
+
+    public void setIcon(Material material) {
+        this.icon = material;
+        config.set("icon", material.name().toLowerCase());
     }
 
     public void outfitPlayer(Player p, PlayerData data) {
@@ -86,6 +110,23 @@ public class Kit {
 
     public String getName() {
         return name;
+    }
+
+    public void saveConfig() {
+        BGHR plugin = BGHR.getPlugin();
+        File configFile = new File(plugin.getDataFolder(), "kits.yml");
+        if (!configFile.exists())
+            plugin.saveResource("kits.yml", false);
+
+        FileConfiguration kitsConfig = new YamlConfiguration();
+
+        try {
+            kitsConfig.load(configFile);
+            kitsConfig.set(id, this.config);
+            kitsConfig.save(configFile);
+        } catch (IOException | InvalidConfigurationException e) {
+            e.printStackTrace();
+        }
     }
 
 }

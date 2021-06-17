@@ -30,12 +30,12 @@ public class KitMenu implements CommandExecutor {
         if (commandSender instanceof Player) {
             Player p = (Player) commandSender;
 
-            showMenu(p);
+            getGui().open(p);
         }
         return true;
     }
 
-    private void showMenu(Player player) {
+    private BaseGui getGui() {
         int rows = kitManager.getLoadedKits().size() / 9 + 1;
         BaseGui gui;
 
@@ -51,7 +51,7 @@ public class KitMenu implements CommandExecutor {
         for (Kit kit : kitManager.getLoadedKits()) {
             gui.addItem(createKitIcon(kit));
         }
-        gui.open(player);
+        return gui;
     }
 
     private GuiItem createKitIcon(Kit kit) {

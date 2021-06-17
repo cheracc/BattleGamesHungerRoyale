@@ -33,6 +33,7 @@ public class BGHR extends JavaPlugin {
         this.getCommand("mapconfig").setExecutor(new MapConfig());
         this.getCommand("kit").setExecutor(new KitCommand());
         this.getCommand("kitmenu").setExecutor(new KitMenu());
+        this.getCommand("kitconfig").setExecutor(new KitConfig());
         Bukkit.getPluginManager().registerEvents(new GeneralPlayerEventListener(), this);
         Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
     }

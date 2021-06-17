@@ -37,7 +37,7 @@ public class MapConfig implements CommandExecutor {
             return true;
 
         Player p = (Player) commandSender;
-        MapManager mapManager = BGHR.getPlugin().getMapManager();
+        MapManager mapManager = BGHR.getMapManager();
         MapData data = mapManager.getPlayersCurrentMap(p);
 
         if (configurators.containsKey(p.getUniqueId()))
@@ -236,7 +236,7 @@ public class MapConfig implements CommandExecutor {
         lore.add("");
         lore.add("&bClick here to toggle the border on or off");
 
-        if (BGHR.getPlugin().getMapManager().getPlayersCurrentMap(player).equals(data)) {
+        if (BGHR.getMapManager().getPlayersCurrentMap(player).equals(data)) {
             lore.add("&bRight Click to indicate the current center");
             lore.add("&bShift+Click to center the border at your location");
         }
@@ -246,13 +246,13 @@ public class MapConfig implements CommandExecutor {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
 
-                        if (e.getClick() == ClickType.SHIFT_LEFT && BGHR.getPlugin().getMapManager().getPlayersCurrentMap(p).equals(data)) {
+                        if (e.getClick() == ClickType.SHIFT_LEFT && BGHR.getMapManager().getPlayersCurrentMap(p).equals(data)) {
                             data.setCenter(p.getLocation());
                             if (data.isLoaded())
                                 data.updateBorder();
                             getGui(p, data).updateItem(e.getSlot(), borderItem(p, data));
                         }
-                        else if (e.getClick() == ClickType.RIGHT && BGHR.getPlugin().getMapManager().getPlayersCurrentMap(p).equals(data)) {
+                        else if (e.getClick() == ClickType.RIGHT && BGHR.getMapManager().getPlayersCurrentMap(p).equals(data)) {
                             data.getWorld().strikeLightningEffect(new Location(data.getWorld(), data.getCenterX(), data.getCenterY(), data.getCenterZ()));
                         } else {
                             // change the setting and update the icon
