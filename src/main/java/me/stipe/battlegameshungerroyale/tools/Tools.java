@@ -133,7 +133,9 @@ public class Tools {
             if (c.equals(' ')) {
                 i++;
                 sb.append(Character.toUpperCase(string.charAt(i)));
+                continue;
             }
+            sb.append(c);
         }
         return sb.toString();
     }

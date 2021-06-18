@@ -7,23 +7,24 @@ import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class Jump extends Ability implements ActiveAbility {
-    private Material itemType;
+    private String abilityItemType;
     private String itemName;
     private double amplifier;
     private int cooldown;
 
     public Jump() {
-        this.itemType = Material.FIREWORK_ROCKET;
+        this.abilityItemType = "firework_rocket";
         this.itemName = "Jump Rocket";
         this.amplifier = 0;
         this.cooldown = 0;
@@ -48,7 +49,7 @@ public class Jump extends Ability implements ActiveAbility {
 
     @Override
     public ItemStack createAbilityItem() {
-        ItemStack abilityItem = new ItemStack(itemType);
+        ItemStack abilityItem = new ItemStack(Material.valueOf(abilityItemType.toUpperCase()));
         ItemMeta meta = abilityItem.getItemMeta();
         List<Component> lore = new ArrayList<>();
 
@@ -74,11 +75,4 @@ public class Jump extends Ability implements ActiveAbility {
         return cooldown;
     }
 
-    @Override
-    public void load(ConfigurationSection section) {
-        this.itemType = Material.valueOf(section.getString("item type", "firework_rocket").toUpperCase());
-        this.itemName = section.getString("item name", "Generic Rocket");
-        this.cooldown = section.getInt("cooldown", 2);
-        this.amplifier = section.getDouble("amplifier", 0);
-    }
 }

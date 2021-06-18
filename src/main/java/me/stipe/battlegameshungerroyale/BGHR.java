@@ -43,6 +43,7 @@ public class BGHR extends JavaPlugin {
         this.getCommand("kitmenu").setExecutor(new KitMenu());
         this.getCommand("kitconfig").setExecutor(new KitConfig());
         this.getCommand("abilities").setExecutor(new AbilityList());
+        this.getCommand("abilityconfig").setExecutor(new AbilityConfig());
         Bukkit.getPluginManager().registerEvents(new GeneralPlayerEventListener(), this);
         Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
     }

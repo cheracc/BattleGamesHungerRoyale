@@ -6,6 +6,8 @@ import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.ScrollingGui;
 import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
+import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
+import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -18,6 +20,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,6 +85,9 @@ public class KitConfig implements CommandExecutor {
         gui.addItem(nameAndDescriptionIcon(kit));
         gui.addItem(kitIcon(kit));
         gui.setItem(8, saveIcon(kit));
+        for (Ability a : kit.getAbilities()) {
+            gui.addItem(abilityIcon(a));
+        }
         activeGuis.put(kit, gui);
         gui.open(player);
     }
@@ -116,6 +122,31 @@ public class KitConfig implements CommandExecutor {
                     }
                 });
 
+    }
+
+    private GuiItem abilityIcon(Ability ability) {
+        String iconName = "&eAbility: &f" + ability.getName();
+        String abilityType = (ability instanceof ActiveAbility) ? "&aActive" : "&6Passive";
+        Material icon = (ability instanceof ActiveAbility) ? Material.LIME_BANNER : Material.YELLOW_BANNER;
+        List<String> lore = new ArrayList<>();
+        lore.add("&eAbility Type: &f" + abilityType);
+        lore.add("");
+        lore.addAll(Tools.wrapText(ability.getDescription(), ChatColor.GRAY));
+        lore.add("");
+        lore.add("Ability Options:");
+
+        for (String s : ability.getConfig().getKeys(false)) {
+            Object o = ability.getConfig().get(s);
+            String value = o.toString();
+            if (o instanceof PotionEffect)
+                value = ((PotionEffect) o).getType().getName().toLowerCase();
+            if (o instanceof Material)
+                value = ((Material) o).name().toLowerCase();
+
+            lore.addAll(Tools.wrapText(String.format("&6%s: &e%s", s, value), ChatColor.YELLOW));
+        }
+
+        return ItemBuilder.from(icon).name(Tools.componentalize(iconName)).lore(Tools.componentalize(lore)).asGuiItem();
     }
 
     private GuiItem kitIcon(Kit kit) {

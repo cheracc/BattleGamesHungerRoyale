@@ -25,7 +25,7 @@ public class Kit {
     String id;
     String name;
     String description;
-    Material icon;
+    String iconItemType;
     List<Ability> abilities = new ArrayList<>();
 
     public Kit(String key, ConfigurationSection config) {
@@ -33,7 +33,7 @@ public class Kit {
         this.config = config;
         name = config.getString("name", "");
         description = config.getString("description", "");
-        icon = Material.valueOf(config.getString("icon", "chest").toUpperCase());
+        iconItemType = config.getString("icon", "chest").toUpperCase();
         if (config.contains("abilities"))
             loadAbilities(Objects.requireNonNull(config.getConfigurationSection("abilities")));
     }
@@ -49,7 +49,7 @@ public class Kit {
     }
 
     public void setIcon(Material material) {
-        this.icon = material;
+        this.iconItemType = material.name().toLowerCase();
         config.set("icon", material.name().toLowerCase());
     }
 
@@ -73,7 +73,7 @@ public class Kit {
     }
 
     public Material getIcon() {
-        return icon;
+        return Material.valueOf(iconItemType.toUpperCase());
     }
 
     public String getDescription() {
@@ -117,6 +117,10 @@ public class Kit {
         File configFile = new File(plugin.getDataFolder(), "kits.yml");
         if (!configFile.exists())
             plugin.saveResource("kits.yml", false);
+
+        for (Ability a : abilities) {
+            this.config.set("abilities." + a.getName(), a.getConfig());
+        }
 
         FileConfiguration kitsConfig = new YamlConfiguration();
 

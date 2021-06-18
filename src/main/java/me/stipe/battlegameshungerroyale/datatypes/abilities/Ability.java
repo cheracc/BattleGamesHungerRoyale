@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -17,8 +18,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public abstract class Ability {
     private static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_key");
@@ -75,8 +77,8 @@ public abstract class Ability {
         if (item == null)
             return null;
 
-        if (item.getItemMeta() != null && item.getItemMeta().getPersistentDataContainer().has(Ability.ABILITY_KEY, PersistentDataType.STRING)) {
-            String uuidString = item.getItemMeta().getPersistentDataContainer().get(Ability.ABILITY_KEY, PersistentDataType.STRING);
+        if (item.getItemMeta() != null && item.getItemMeta().getPersistentDataContainer().has(ABILITY_KEY, PersistentDataType.STRING)) {
+            String uuidString = item.getItemMeta().getPersistentDataContainer().get(ABILITY_KEY, PersistentDataType.STRING);
             if (uuidString == null)
                 return null;
             return UUID.fromString(uuidString);
@@ -108,20 +110,22 @@ public abstract class Ability {
         return abilityItem;
     }
 
-    public abstract void load(ConfigurationSection section);
-
     public void load(ConfigurationSection section, Kit forKit) {
         this.forKit = forKit;
         for (String s : section.getKeys(false)) {
             String fieldName = Tools.configOptionToFieldName(s);
             try {
-                Field f = getClass().getField(fieldName);
-                setFieldToValue(f, section.get(s));
+                Field f = this.getClass().getDeclaredField(fieldName);
+                f.setAccessible(true);
+                if (f.getGenericType() instanceof ConfigurationSerializable) {
+                    Class<? extends ConfigurationSerializable> type = (Class<? extends ConfigurationSerializable>) f.getType();
+                    setFieldToValue(f, section.getSerializable(s, type));
+                } else
+                    setFieldToValue(f, section.get(s));
             } catch (NoSuchFieldException e) {
                 Bukkit.getLogger().warning("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + s);
             }
         }
-        load(section);
     }
 
     private void setFieldToValue(Field field, Object value) {
@@ -130,34 +134,11 @@ public abstract class Ability {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        getConfig().set(Tools.fieldNameToConfigOption(field.getName()), value);
-    }
-
-    public Map<String, Type> getConfigurableOptions() {
-        Map<String, Type> availableOptions = new HashMap<>();
-
-        for (Field f : this.getClass().getFields()) {
-            availableOptions.put(Tools.fieldNameToConfigOption(f.getName()), f.getType());
+        if (value instanceof ConfigurationSerializable) {
+            getConfig().set(Tools.fieldNameToConfigOption(field.getName()), ((ConfigurationSerializable) value).serialize());
         }
-        return availableOptions;
-    }
-
-    public void setConfigurableOption(String option, String value) {
-        String type = getConfigurableOptions().get(option).getTypeName();
-
-        if (type == null) {
-            Bukkit.getLogger().warning("There is no configurable option: " + option);
-            return;
-        }
-
-        if (type.toLowerCase().contains("boolean"))
-            getConfig().set(option, Boolean.valueOf(value));
-        if (type.toLowerCase().contains("int"))
-            getConfig().set(option, Integer.valueOf(value));
-        if (type.toLowerCase().contains("double"))
-            getConfig().set(option, Double.valueOf(value));
         else
-            getConfig().set(option, value);
+            getConfig().set(Tools.fieldNameToConfigOption(field.getName()), value);
     }
 
     public ConfigurationSection getConfig() {
