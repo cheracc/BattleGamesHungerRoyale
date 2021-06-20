@@ -6,23 +6,11 @@ jumper:
   name: Kangaroo
   description: "He holds a rocket and he jumps. That's pretty much it!"
   icon: firework_rocket
-  abilities:
-    Jump:
-      cooldown: 2
 flasher:
   name: Flash
   description: "He holds his rod and teleports! Zwoop!"
   icon: soul_torch
-  abilities:
-    Teleport:
-      max distance: 150
-      allow unsafe teleporting: true
-      cooldown: 5
 thepotionguy:
-  name: Effexor
+  name: Effex
   description: "He has all the effex"
   icon: splash_potion
-  abilities:
-    AddPotionEffect:
-      amplifier: 3
-      show effect icon: true

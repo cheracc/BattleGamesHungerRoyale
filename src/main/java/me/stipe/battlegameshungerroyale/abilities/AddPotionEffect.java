@@ -9,27 +9,24 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 public class AddPotionEffect extends Ability implements PassiveAbility {
-    PotionEffect effect;
+    PotionEffect potionEffect = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, false, false, false);
     boolean toggleable = false;
     String abilityItemType = "potion";
-    String itemName;
-    String itemDescription;
+    String itemName = "Toggle Item";
+    String itemDescription = "Use this to do what it does";
 
     public AddPotionEffect() {
         setDescription("Adds a configurable potion effect to the player. The effect can either be toggled by the player (with the provided item) or on all the time (no item needed)");
-        effect = new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 2, true, true, false);
-        itemName = effect.getType().getName().toLowerCase() + " toggle switch";
-        itemDescription = "Toggles the " + effect.getType().getName().toLowerCase() + " effect on or off";
     }
 
     @Override
     public void activate(Player p) {
-        p.addPotionEffect(effect);
+        p.addPotionEffect(potionEffect);
     }
 
     @Override
     public void deactivate(Player p) {
-        p.removePotionEffect(effect.getType());
+        p.removePotionEffect(potionEffect.getType());
     }
 
     @Override
@@ -46,6 +43,6 @@ public class AddPotionEffect extends Ability implements PassiveAbility {
 
     @Override
     public boolean isActive(Player player) {
-        return player.hasPotionEffect(effect.getType());
+        return player.hasPotionEffect(potionEffect.getType());
     }
 }

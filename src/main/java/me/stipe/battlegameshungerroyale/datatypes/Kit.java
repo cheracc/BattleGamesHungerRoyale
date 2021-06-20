@@ -5,6 +5,7 @@ import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -15,12 +16,10 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
-public class Kit {
+public class Kit implements Cloneable {
     ConfigurationSection config;
     String id;
     String name;
@@ -38,6 +37,23 @@ public class Kit {
             loadAbilities(Objects.requireNonNull(config.getConfigurationSection("abilities")));
     }
 
+    public Kit copyThis() {
+        try {
+            return (Kit) this.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Kit(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+
     public void setName(String name) {
         this.name = name;
         config.set("name", name);
@@ -51,6 +67,20 @@ public class Kit {
     public void setIcon(Material material) {
         this.iconItemType = material.name().toLowerCase();
         config.set("icon", material.name().toLowerCase());
+    }
+
+    public void addAbility(Ability ability) {
+        ability.setAssignedKit(this);
+        abilities.add(ability);
+    }
+
+    public void removeAbility(Ability ability) {
+        if (!abilities.contains(ability)) {
+            Bukkit.getLogger().warning("Tried to remove " + ability.getName() + " from kit " + getName() + " but it isn't there");
+            return;
+        }
+        abilities.remove(ability);
+        saveConfig();
     }
 
     public void outfitPlayer(Player p, PlayerData data) {
@@ -99,10 +129,12 @@ public class Kit {
 
         for (String key : keys) {
             if (key != null) {
-                Ability ability = kits.getGenericAbility(key);
-                if (ability != null) {
-                    ability.load(section.getConfigurationSection(key), this);
-                    abilities.add(ability);
+                for (Ability a : kits.getDefaultAbilities()) {
+                    if (key.startsWith(a.getName())) {
+                        Ability ability = a.newWithDefaults();
+                        ability.loadFromConfig(section.getConfigurationSection(key));
+                        addAbility(ability);
+                    }
                 }
             }
         }
@@ -119,7 +151,11 @@ public class Kit {
             plugin.saveResource("kits.yml", false);
 
         for (Ability a : abilities) {
-            this.config.set("abilities." + a.getName(), a.getConfig());
+            if (a.getCustomName() == null)
+                this.config.set("abilities." + a.getName(), a.getConfig());
+            else
+                this.config.set("abilities." + a.getName() + "_" + ThreadLocalRandom.current().nextInt(99999999), a.getConfig());
+
         }
 
         FileConfiguration kitsConfig = new YamlConfiguration();

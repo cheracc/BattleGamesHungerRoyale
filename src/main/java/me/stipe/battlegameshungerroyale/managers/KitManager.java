@@ -32,25 +32,16 @@ public class KitManager {
         return null;
     }
 
-    public Ability getGenericAbility(String name) {
-        if (!defaultAbilities.isEmpty())
-            for (Ability a : defaultAbilities) {
-                if (a.getName().equalsIgnoreCase(name))
-                    return a;
-            }
-
-        if (name == null || name.equals(""))
-            return null;
-        try {
-            Class<?> c = Class.forName("me.stipe.battlegameshungerroyale.abilities." + name);
-            Constructor<?> con = c.getDeclaredConstructor();
-            Ability ability = (Ability) con.newInstance();
-            defaultAbilities.add(ability);
-            return ability;
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
+    public void replaceKit(Kit kit) {
+        List<Kit> toRemove = new ArrayList<>();
+        for (Kit k : getLoadedKits()) {
+            if (kit.getId().equalsIgnoreCase(k.getId()))
+                toRemove.add(k);
         }
-        return null;
+        for (Kit k : toRemove) {
+            loadedKits.remove(k);
+        }
+        loadedKits.add(kit);
     }
 
     public void loadKits() {

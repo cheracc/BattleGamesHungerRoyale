@@ -7,6 +7,7 @@ import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.ScrollingGui;
 import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
+import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
@@ -36,7 +37,7 @@ public class KitMenu implements CommandExecutor {
     }
 
     private BaseGui getGui() {
-        int rows = kitManager.getLoadedKits().size() / 9 + 1;
+        int rows = kitManager.getLoadedKits().size() / 9 + 2;
         BaseGui gui;
 
         if (rows >= 6) {
@@ -57,6 +58,12 @@ public class KitMenu implements CommandExecutor {
     private GuiItem createKitIcon(Kit kit) {
         List<Component> lore = new ArrayList<>(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
         lore.add(0, Component.text(""));
+        lore.add(Tools.componentalize("Abilities:"));
+        for (Ability a : kit.getAbilities()) {
+            String abilityString = String.format("&a%s &f- &7%s", a.getCustomName() != null ? a.getCustomName() : a.getName(), a.getDescription());
+            lore.addAll(Tools.componentalize(Tools.wrapText(abilityString, ChatColor.GRAY)));
+            lore.add(Tools.BLANK_LINE);
+        }
 
         return ItemBuilder.from(kit.getIcon()).name(Component.text(ChatColor.WHITE + kit.getName())).lore(lore)
             .asGuiItem(e -> Bukkit.dispatchCommand(e.getWhoClicked(), "kit " + kit.getName()));

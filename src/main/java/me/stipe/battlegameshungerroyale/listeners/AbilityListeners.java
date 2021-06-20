@@ -6,6 +6,7 @@ import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
 import me.stipe.battlegameshungerroyale.managers.PlayerManager;
+import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -42,11 +43,11 @@ public class AbilityListeners implements Listener {
         if (event.getAction().name().contains("RIGHT")) {
             Player p = event.getPlayer();
             ItemStack activeItem = p.getActiveItem();
-            if (!Ability.isThisAnAbilityItem(activeItem))
+            if (Tools.getUuidFromItem(activeItem) == null)
                 activeItem = p.getInventory().getItemInMainHand();
-            if (!Ability.isThisAnAbilityItem(activeItem))
+            if (Tools.getUuidFromItem(activeItem) == null)
                 activeItem = p.getInventory().getItemInOffHand();
-            if (!Ability.isThisAnAbilityItem(activeItem))
+            if (Tools.getUuidFromItem(activeItem) == null)
                 return;
 
             PlayerData data = playerManager.getPlayerData(p);
@@ -83,7 +84,7 @@ public class AbilityListeners implements Listener {
             ItemStack clicked = event.getCurrentItem();
 
             if (clicked != null) {
-                if (Ability.isThisAnAbilityItem(clicked)) {
+                if (Tools.getUuidFromItem(clicked) != null) {
                     p.sendMessage(Component.text("Ability items must remain in your hotbar or offhand. You can use the 'swap hands' (default 'F') button to move them around"));
                     event.setCancelled(true);
                 }
@@ -96,7 +97,7 @@ public class AbilityListeners implements Listener {
         Player p = event.getPlayer();
         ItemStack item = event.getItemDrop().getItemStack();
 
-        if (Ability.isThisAnAbilityItem(item)) {
+        if (Tools.getUuidFromItem(item) == null) {
             event.setCancelled(true);
             p.sendMessage(Component.text("That's kind of important, you should keep it."));
         }

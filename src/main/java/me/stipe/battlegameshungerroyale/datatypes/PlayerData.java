@@ -2,6 +2,7 @@ package me.stipe.battlegameshungerroyale.datatypes;
 
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
+import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -26,13 +27,13 @@ public class PlayerData {
     }
 
     public Ability getAbilityFromItem(ItemStack item) {
-        UUID id = Ability.getUuid(item);
+        UUID id = Tools.getUuidFromItem(item);
         if (id == null) {
             return null;
         }
         for (Map.Entry<Ability, ItemStack> e : abilityItems.entrySet()) {
-            if (Ability.getUuid(e.getValue()) != null)
-                if (Objects.equals(Ability.getUuid(e.getValue()), id))
+            if (Tools.getUuidFromItem(e.getValue()) != null)
+                if (Objects.equals(Tools.getUuidFromItem(e.getValue()), id))
                     return e.getKey();
         }
         return null;
@@ -82,7 +83,7 @@ public class PlayerData {
         for (int i = 0; i < 9; i++) {
             ItemStack ithItem = getPlayer().getInventory().getItem(i);
             if (item != null && ithItem != null)
-                if (Objects.equals(Ability.getUuid(item), Ability.getUuid(ithItem)))
+                if (Objects.equals(Tools.getUuidFromItem(item), Tools.getUuidFromItem(ithItem)))
                     return i;
         }
         return -1;

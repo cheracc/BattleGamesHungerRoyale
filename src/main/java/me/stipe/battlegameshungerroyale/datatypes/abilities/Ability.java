@@ -1,68 +1,142 @@
 package me.stipe.battlegameshungerroyale.datatypes.abilities;
 
-import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class Ability {
-    private static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_key");
-    private final ConfigurationSection section;
-    String description = "";
-    String name = getClass().getSimpleName();
+public abstract class Ability implements Cloneable {
+    private ConfigurationSection section;
+    private UUID id;
     private Kit forKit = null;
+    String description = "";
+    String customName = null;
 
     public Ability() {
         this.section = null;
+        this.id = UUID.randomUUID();
+        try {
+            ConfigurationSection section = new YamlConfiguration();
+
+            for (Field f : getClass().getDeclaredFields()) {
+                f.setAccessible(true);
+                    section.addDefault(fieldNameToConfigOption(f.getName()), f.get(this));
+                    section.set(fieldNameToConfigOption(f.getName()), f.get(this));
+            }
+            this.section = section;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static NamespacedKey getAbilityKey() {
-        return ABILITY_KEY;
+    public void generateConfigSection() {
+        try {
+            ConfigurationSection section = new YamlConfiguration();
+
+            for (Field f : getClass().getDeclaredFields()) {
+                f.setAccessible(true);
+                section.addDefault(fieldNameToConfigOption(f.getName()), f.get(this));
+                section.set(fieldNameToConfigOption(f.getName()), f.get(this));
+            }
+            this.section = section;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 
+    public void loadFromConfig(ConfigurationSection section) {
+        this.section = section;
+        this.id = UUID.randomUUID();
+        if (section != null) {
+            for (String key : section.getKeys(false)) {
+                String fieldName = Tools.configOptionToFieldName(key);
+                Object value = section.get(key);
+                try {
+                    Field f = this.getClass().getDeclaredField(fieldName);
+                    f.setAccessible(true);
+                    f.set(this, value);
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    try {
+                        Field f = this.getClass().getSuperclass().getDeclaredField(fieldName);
+                        f.setAccessible(true);
+                        f.set(this, value);
+                    } catch (NoSuchFieldException | IllegalAccessException ex) {
+                        Bukkit.getLogger().warning("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + key);
+                    }
+                }
+            }
+        }
+    }
+
+    public Ability newWithDefaults() {
+        try {
+            Ability ability = (Ability) this.clone();
+            ability.generateConfigSection();
+            ability.newId();
+            return ability;
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void newId() {
+        id = UUID.randomUUID();
+    }
+
+    // writes an option to the stored config
+    public void setOption(String configOption, Object value) {
+        getConfig().set(configOption, value);
+        loadFromConfig(getConfig());
+    }
+
+    // gets the custom name or the default name
     public String getName() {
-        return name;
+        return getClass().getSimpleName();
+    }
+
+    public String getCustomName() {
+        return customName;
+    }
+
+    // sets a custom name and saves the default class name
+    public void setName(String name) {
+            customName = name;
+            getConfig().set("custom name", customName);
     }
 
     public String getDescription() {
         return description;
     }
 
+    // sets the description field and config values
     public void setDescription(String text) {
         description = text;
+        getConfig().set("description", description);
     }
 
     public Kit getAssignedKit() {
         return forKit;
     }
 
-    public boolean isAssignedToAKit() {
-        return forKit != null;
-    }
-
-    public void attachNewUuid(ItemMeta meta, String value) {
-        meta.getPersistentDataContainer().set(ABILITY_KEY, PersistentDataType.STRING, value);
-    }
-
-    public static boolean isThisAnAbilityItem(ItemStack item) {
-        return getUuid(item) != null;
+    public void setAssignedKit(Kit kit) {
+        forKit = kit;
     }
 
     public boolean isActive() {
@@ -71,19 +145,6 @@ public abstract class Ability {
 
     public boolean isPassive() {
         return this instanceof PassiveAbility;
-    }
-
-    public static @Nullable UUID getUuid(ItemStack item) {
-        if (item == null)
-            return null;
-
-        if (item.getItemMeta() != null && item.getItemMeta().getPersistentDataContainer().has(ABILITY_KEY, PersistentDataType.STRING)) {
-            String uuidString = item.getItemMeta().getPersistentDataContainer().get(ABILITY_KEY, PersistentDataType.STRING);
-            if (uuidString == null)
-                return null;
-            return UUID.fromString(uuidString);
-        }
-        return null;
     }
 
     public ItemStack makeItem(Material type, String name, String description, int cooldown) {
@@ -95,7 +156,7 @@ public abstract class Ability {
             return abilityItem;
 
         meta.displayName(Component.text(ChatColor.WHITE + name));
-        attachNewUuid(meta, UUID.randomUUID().toString());
+        Tools.saveUuidToItemMeta(getId(), meta);
 
         lore.add(Component.text(""));
         lore.addAll(Tools.componentalize(Tools.wrapText(description, ChatColor.GRAY)));
@@ -110,58 +171,8 @@ public abstract class Ability {
         return abilityItem;
     }
 
-    public void load(ConfigurationSection section, Kit forKit) {
-        this.forKit = forKit;
-        for (String s : section.getKeys(false)) {
-            String fieldName = Tools.configOptionToFieldName(s);
-            try {
-                Field f = this.getClass().getDeclaredField(fieldName);
-                f.setAccessible(true);
-                if (f.getGenericType() instanceof ConfigurationSerializable) {
-                    Class<? extends ConfigurationSerializable> type = (Class<? extends ConfigurationSerializable>) f.getType();
-                    setFieldToValue(f, section.getSerializable(s, type));
-                } else
-                    setFieldToValue(f, section.get(s));
-            } catch (NoSuchFieldException e) {
-                Bukkit.getLogger().warning("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + s);
-            }
-        }
-    }
-
-    private void setFieldToValue(Field field, Object value) {
-        try {
-            field.set(this, value);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        if (value instanceof ConfigurationSerializable) {
-            getConfig().set(Tools.fieldNameToConfigOption(field.getName()), ((ConfigurationSerializable) value).serialize());
-        }
-        else
-            getConfig().set(Tools.fieldNameToConfigOption(field.getName()), value);
-    }
-
     public ConfigurationSection getConfig() {
-        if (section == null)
-            return getDefaultConfig();
         return section;
-    }
-
-    public ConfigurationSection getDefaultConfig() {
-        try {
-            ConfigurationSection section = new YamlConfiguration();
-
-            for (Field f : getClass().getDeclaredFields()) {
-                f.setAccessible(true);
-                section.addDefault(fieldNameToConfigOption(f.getName()), f.get(this));
-                section.set(fieldNameToConfigOption(f.getName()), f.get(this));
-            }
-
-            return section;
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     public static String fieldNameToConfigOption(String string) {

@@ -1,5 +1,6 @@
 package me.stipe.battlegameshungerroyale.tools;
 
+import me.stipe.battlegameshungerroyale.BGHR;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -7,20 +8,42 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Tools {
     public static TextComponent BLANK_LINE = Component.text("");
-    public static TextColor RED = TextColor.color(255,0,0);
-    public static TextColor WHITE = TextColor.color(255,255,255);
-    public static TextColor BLUE = TextColor.color(0,0,255);
-    public static TextColor GREEN = TextColor.color(0,255,0);
-    public static TextColor GRAY = TextColor.color(180,180,180);
-    public static TextColor YELLOW = TextColor.color(0,255,255);
-    public static TextColor GOLD = TextColor.color(255,255,0);
+    public static NamespacedKey UUID_KEY = new NamespacedKey(BGHR.getPlugin(), "uuid_key");
+
+    public static void saveUuidToItemMeta(UUID uuid, ItemMeta meta) {
+        meta.getPersistentDataContainer().set(UUID_KEY, PersistentDataType.STRING, uuid.toString());
+    }
+
+    public static @Nullable UUID getUuidFromItem(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || meta.getPersistentDataContainer() == null)
+            return null;
+
+        String data = meta.getPersistentDataContainer().get(UUID_KEY, PersistentDataType.STRING);
+
+        if (data != null) {
+            return UUID.fromString(data);
+        }
+        return null;
+    }
 
     public static List<String> wrapText(String longText, ChatColor color) {
         List<String> wrappedText = new ArrayList<>();
@@ -102,27 +125,32 @@ public class Tools {
         return sb.toString();
     }
 
-    public static TextComponent commandInstructions(String commandString) {
+    public static TextComponent commandInstructions(String commandString, String currentText) {
         String[] words = commandString.split(" ");
         String command = words[0];
         String argument = words[1];
         String property = argument.equalsIgnoreCase("desc") ? "description" : argument;
-        return Component.text("=====================================================").color(TextColor.color(255,0,0))
+        TextComponent withoutCurrent = Component.text("=====================================================").color(TextColor.color(255,0,0))
                 .append(Component.newline())
-                .append(Component.text("                                Type").color(TextColor.color(255,255,255)))
-                .append(Component.newline())
-                .append(Component.text("                    " + commandString).color(TextColor.color(250,250,0)))
+                .append(Component.text("       Type (or click) ->").color(TextColor.color(255,255,255)))
+                .append(Component.text(commandString).color(TextColor.color(250,250,0)))
                 .append(Component.newline())
                 .append(Component.text("                 to change the " + property + " of this map").color(TextColor.color(255,255,255)))
+                .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, command + " " + argument + " "))
+                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the command to the chat input box!")));
+
+        TextComponent withCurrent = Component.newline()
                 .append(Component.newline())
                 .append(Component.newline())
-                .append(Component.text("    (you can click on this message to start the command").color(TextColor.color(150,150,150)))
+                .append(Component.text("(you can also click down here to copy the current " + property + ")").color(TextColor.color(150,150,150)))
                 .append(Component.newline())
-                .append(Component.text(" or just type '/kitconfig' to cancel and return to the menu)").color(TextColor.color(150,150,150)))
+                .append(Component.text(" or just type " + command + " to cancel and return to the menu)").color(TextColor.color(150,150,150)))
                 .append(Component.newline())
                 .append(Component.text("=====================================================").color(TextColor.color(255,0,0)))
-                .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, command + " " + argument + " "))
-                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to save some typing!")));
+                .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, command + " " + argument + " " + currentText))
+                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the command and current description to the chat input box!")));
+
+        return withoutCurrent.append(withCurrent);
     }
 
     public static String configOptionToFieldName(String string) {
@@ -154,4 +182,50 @@ public class Tools {
         }
         return sb.toString();
     }
+
+    public static String integerToRomanNumeral(int input) {
+        String[] numerals = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"};
+
+        if (input > 15)
+            return "";
+
+        return numerals[input];
+    }
+
+    public static void saveObjectToPlayer(String key, Object object, Player p) {
+        if (p.hasMetadata(key)) {
+            p.removeMetadata(key, BGHR.getPlugin());
+        }
+        p.setMetadata(key, new FixedMetadataValue(BGHR.getPlugin(), object));
+    }
+
+    public static @Nullable Object getObjectFromPlayer(String key, Player p) {
+        if (p.getMetadata(key) != null && !p.getMetadata(key).isEmpty()) {
+            Object o = p.getMetadata(key).get(0).value();
+            if (o instanceof PotionEffect) {
+                Bukkit.getLogger().info("Fetched Potion Effect: " + ((PotionEffect) o).serialize());
+            }
+            return o;
+        }
+        Bukkit.getLogger().info("no object on " + p.getName() + " with key " + key);
+
+        return null;
+    }
+
+    public static void removeObjectFromPlayer(String key, Player p) {
+        if (p.hasMetadata(key)) {
+            Object o = p.getMetadata(key).get(0).value();
+            p.removeMetadata(key, BGHR.getPlugin());
+        }
+    }
+
+    // debug
+    public static void outputSectionToConsole(ConfigurationSection section) {
+        for (String s : section.getKeys(false)) {
+            Bukkit.getLogger().info(s + ": " + section.get(s));
+        }
+    }
+
+
+
 }

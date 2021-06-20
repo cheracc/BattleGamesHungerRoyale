@@ -4,6 +4,7 @@ import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
 import me.stipe.battlegameshungerroyale.datatypes.PlayerData;
 import me.stipe.battlegameshungerroyale.managers.PlayerManager;
+import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -19,7 +20,7 @@ public class KitCommand implements CommandExecutor {
             Player p = (Player) commandSender;
 
             if (args.length >= 1) {
-                String kitName = args[0];
+                String kitName = Tools.rebuildString(args, 0);
                 Kit kit = BGHR.getKitManager().getKit(kitName);
 
                 if (kit != null) {
