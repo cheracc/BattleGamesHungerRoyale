@@ -109,6 +109,7 @@ public class AbilityConfig implements CommandExecutor {
         for (String s : ability.getConfig().getKeys(false)) {
             gui.addItem(genericOptionGuiItem(ability, s));
         }
+        gui.setItem(16, cancelIcon(ability));
         gui.setItem(17, saveIcon(ability));
         gui.open(p);
         Tools.saveObjectToPlayer("abilityGui", gui, p);
@@ -197,6 +198,62 @@ public class AbilityConfig implements CommandExecutor {
         return ItemBuilder.from(icon).name(Tools.componentalize(itemName)).lore(Tools.componentalize(lore)).asGuiItem(event);
     }
 
+    private GuiItem saveIcon(Ability ability) {
+        List<String> lore = new ArrayList<>();
+        lore.add("");
+        lore.add("&bClick here to save this ability");
+
+        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave and Return to Kit Configuration"))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
+                    if (e.getWhoClicked() instanceof Player) {
+                        Player p = (Player) e.getWhoClicked();
+                        p.closeInventory();
+                        Object o = Tools.getObjectFromPlayer("kitconfig", p);
+                        Kit kit;
+                        if (o instanceof Kit) {
+                            kit = (Kit) o;
+                        }
+                        else {
+                            Bukkit.getLogger().warning(p.getName() + " tried to save an ability but is not editing a kit");
+                            return;
+                        }
+
+                        kit.addAbility(ability);
+                        Tools.removeObjectFromPlayer("kitconfig", p);
+                        Tools.removeObjectFromPlayer("abilityconfig", p);
+                        Tools.saveObjectToPlayer("kitconfig", kit, p);
+                        Bukkit.dispatchCommand(p, "kitconfig");
+                    }
+                });
+    }
+
+    private GuiItem cancelIcon(Ability ability) {
+        List<String> lore = new ArrayList<>();
+        lore.add("");
+        lore.add("&bClick here to cancel and go back");
+
+        return ItemBuilder.from(Material.BARRIER).name(Tools.componentalize("&eCancel and Go Back"))
+                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
+                    if (e.getWhoClicked() instanceof Player) {
+                        Player p = (Player) e.getWhoClicked();
+                        p.closeInventory();
+                        Object o = Tools.getObjectFromPlayer("kitconfig", p);
+                        Kit kit;
+                        if (o instanceof Kit) {
+                            kit = (Kit) o;
+                        }
+                        else {
+                            Bukkit.getLogger().warning(p.getName() + " tried to save an ability but is not editing a kit");
+                            return;
+                        }
+
+                        kit.addAbility(ability);
+                        Tools.removeObjectFromPlayer("kitconfig", p);
+                        Bukkit.dispatchCommand(p, "kitconfig");
+                    }
+                });
+    }
+
     private GuiAction<InventoryClickEvent> handleBoolean(Ability ability, String configOption, boolean currentValue) {
         return new GuiAction<>() {
             @Override
@@ -238,22 +295,25 @@ public class AbilityConfig implements CommandExecutor {
         return new GuiAction<>() {
             @Override
             public void execute(InventoryClickEvent event) {
-                double newValue = currentValue;
+                double newValue = currentValue * 10;
 
                 switch (event.getClick()) {
                     case LEFT:
-                        newValue += 0.1;
-                        break;
-                    case RIGHT:
-                        newValue -= 0.1;
-                        break;
-                    case SHIFT_LEFT:
                         newValue++;
                         break;
-                    case SHIFT_RIGHT:
+                    case RIGHT:
                         newValue--;
                         break;
+                    case SHIFT_LEFT:
+                        newValue += 10;
+                        break;
+                    case SHIFT_RIGHT:
+                        newValue -= 10;
+                        break;
                 }
+
+                newValue += 0.5;
+                newValue = Math.floor(newValue) / 10;
 
                 ability.setOption(configOption, Math.floor((newValue) * 10)/10);
                 getGui(event.getWhoClicked()).updateItem(event.getSlot(), genericOptionGuiItem(ability, configOption));
@@ -297,33 +357,5 @@ public class AbilityConfig implements CommandExecutor {
         };
     }
 
-    private GuiItem saveIcon(Ability ability) {
-        List<String> lore = new ArrayList<>();
-        lore.add("");
-        lore.add("&bClick here to save this ability");
-
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave and Return to Kit Configuration"))
-                .lore(Tools.componentalize(lore)).asGuiItem(e -> {
-                    if (e.getWhoClicked() instanceof Player) {
-                        Player p = (Player) e.getWhoClicked();
-                        p.closeInventory();
-                        Object o = Tools.getObjectFromPlayer("kitconfig", p);
-                        Kit kit;
-                        if (o instanceof Kit) {
-                            kit = (Kit) o;
-                        }
-                        else {
-                            Bukkit.getLogger().warning(p.getName() + " tried to save an ability but is not editing a kit");
-                            return;
-                        }
-
-                        kit.addAbility(ability);
-                        Tools.removeObjectFromPlayer("kitconfig", p);
-                        Tools.removeObjectFromPlayer("abilityconfig", p);
-                        Tools.saveObjectToPlayer("kitconfig", kit, p);
-                        Bukkit.dispatchCommand(p, "kitconfig");
-                    }
-                });
-    }
 
 }
