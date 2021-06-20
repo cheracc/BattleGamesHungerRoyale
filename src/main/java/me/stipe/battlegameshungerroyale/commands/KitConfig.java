@@ -180,7 +180,6 @@ public class KitConfig implements CommandExecutor {
         lore.add("");
         lore.add("Ability Options:");
 
-        Tools.outputSectionToConsole(ability.getConfig());
         for (String s : ability.getConfig().getKeys(false)) {
             Object o = ability.getConfig().get(s);
             String value = o.toString();

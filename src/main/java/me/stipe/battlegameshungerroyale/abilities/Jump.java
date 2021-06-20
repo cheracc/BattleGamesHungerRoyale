@@ -3,7 +3,6 @@ package me.stipe.battlegameshungerroyale.abilities;
 import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -39,7 +38,6 @@ public class Jump extends Ability implements ActiveAbility {
             public void run() {
                 if (count >= 120 || source.getLocation().getY() == Math.floor(source.getLocation().getY())) {
                     cancel();
-                    Bukkit.getLogger().info("cancelled");
                 }
                 source.setFallDistance(-100);
                 count++;

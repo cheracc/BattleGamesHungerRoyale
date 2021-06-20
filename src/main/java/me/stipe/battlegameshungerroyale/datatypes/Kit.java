@@ -30,8 +30,8 @@ public class Kit implements Cloneable {
     public Kit(String key, ConfigurationSection config) {
         this.id = key;
         this.config = config;
-        name = config.getString("name", "");
-        description = config.getString("description", "");
+        name = config.getString("name", "Nameless Kit");
+        description = config.getString("description", "Give this kit a description");
         iconItemType = config.getString("icon", "chest").toUpperCase();
         if (config.contains("abilities"))
             loadAbilities(Objects.requireNonNull(config.getConfigurationSection("abilities")));
@@ -150,8 +150,10 @@ public class Kit implements Cloneable {
         if (!configFile.exists())
             plugin.saveResource("kits.yml", false);
 
+        config.set("abilities", null);
+
         for (Ability a : abilities) {
-            if (a.getCustomName() == null)
+            if (this.config.get("abilities." + a.getName()) == null)
                 this.config.set("abilities." + a.getName(), a.getConfig());
             else
                 this.config.set("abilities." + a.getName() + "_" + ThreadLocalRandom.current().nextInt(99999999), a.getConfig());

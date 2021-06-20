@@ -4,6 +4,7 @@ import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -49,6 +50,14 @@ public class Teleport extends Ability implements ActiveAbility {
         if (teleportLocation == null)
             return false;
         else {
+            if (leaveTracer) {
+                int tracerDensity = 200;
+                double distance = teleportLocation.distance(source.getLocation());
+                for (int i = 0; i <= tracerDensity; i++) {
+                    Location particleLocation = source.getLocation().add(source.getLocation().getDirection().normalize().multiply(distance/tracerDensity*i));
+                    source.getWorld().spawnParticle(Particle.WHITE_ASH, particleLocation, 5, 0.1,0.1,0.1);
+                }
+            }
             source.teleport(teleportLocation, PlayerTeleportEvent.TeleportCause.PLUGIN);
             source.setFallDistance(0);
         }
