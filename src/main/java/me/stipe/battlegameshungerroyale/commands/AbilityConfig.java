@@ -5,6 +5,7 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
+import me.stipe.battlegameshungerroyale.datatypes.SoundEffect;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.tools.CommonGuis;
 import me.stipe.battlegameshungerroyale.tools.Tools;
@@ -40,6 +41,14 @@ public class AbilityConfig implements CommandExecutor {
                 return true;
 
             if (args.length > 0) {
+                if (args[0].equalsIgnoreCase("addsound")) {
+                    o = Tools.getObjectFromPlayer("sound", p);
+                    if (o instanceof SoundEffect)
+                    ability.setSound((SoundEffect) o);
+                    Tools.saveObjectToPlayer("abilityconfig", ability, p);
+                    Bukkit.dispatchCommand(p, "abilityconfig");
+                    return true;
+                }
                 if (args[0].equalsIgnoreCase("material") && args.length >= 2) {
                     String configOption = Tools.fieldNameToConfigOption(args[1]);
                     String material = args[2];
@@ -109,10 +118,31 @@ public class AbilityConfig implements CommandExecutor {
         for (String s : ability.getConfig().getKeys(false)) {
             gui.addItem(genericOptionGuiItem(ability, s));
         }
+        gui.addItem(soundItem(ability, gui));
         gui.setItem(16, cancelIcon(ability));
         gui.setItem(17, saveIcon(ability));
         gui.open(p);
         Tools.saveObjectToPlayer("abilityGui", gui, p);
+    }
+
+    private GuiItem soundItem(Ability ability, Gui gui) {
+        SoundEffect effect = ability.getSound();
+        if (effect == null)
+            return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize("&eAdd a Sound Effect")).asGuiItem(e -> {
+                e.getWhoClicked().closeInventory();
+                CommonGuis.soundEffectGui((Player) e.getWhoClicked(), "abilityconfig addsound", "abilityconfig").open(e.getWhoClicked());   });
+        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize("&eCurrent Sound Effect:")).lore(Tools.componentalize("  " + effect.getSound().name().toLowerCase()),
+                Tools.BLANK_LINE, Tools.componentalize("&eClick to modify"), Tools.componentalize("&eRight click to remove"))
+                .asGuiItem(e -> {
+                    if (e.getClick().isRightClick()) {
+                        ability.setSound(null);
+                        Tools.saveObjectToPlayer("abilityconfig", ability, (Player) e.getWhoClicked());
+                        gui.updateItem(17, soundItem(ability, gui));
+                        return;
+                    }
+                    e.getWhoClicked().closeInventory();
+                    Tools.saveObjectToPlayer("sound", ability.getSound(), (Player) e.getWhoClicked());
+                    CommonGuis.soundEffectGui((Player) e.getWhoClicked(), "abilityconfig addsound", "abilityconfig").open(e.getWhoClicked());   });
     }
 
     private GuiItem nameDescGuiItem(Ability ability) {
@@ -315,7 +345,7 @@ public class AbilityConfig implements CommandExecutor {
                 newValue += 0.5;
                 newValue = Math.floor(newValue) / 10;
 
-                ability.setOption(configOption, Math.floor((newValue) * 10)/10);
+                ability.setOption(configOption, newValue);
                 getGui(event.getWhoClicked()).updateItem(event.getSlot(), genericOptionGuiItem(ability, configOption));
             }
         };

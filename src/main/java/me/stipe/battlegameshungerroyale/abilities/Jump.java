@@ -32,6 +32,8 @@ public class Jump extends Ability implements ActiveAbility {
 
         newTrajectory.add(new Vector(0,1 + amplifier,0));
         source.setVelocity(newTrajectory);
+        if (getSound() != null)
+            getSound().play(source.getLocation());
         new BukkitRunnable() {
             int count = 0;
             @Override

@@ -1,6 +1,7 @@
 package me.stipe.battlegameshungerroyale.datatypes.abilities;
 
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
+import me.stipe.battlegameshungerroyale.datatypes.SoundEffect;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -23,6 +24,8 @@ public abstract class Ability implements Cloneable {
     private Kit forKit = null;
     String description = "";
     String customName = null;
+    SoundEffect sound = null;
+
 
     public Ability() {
         this.section = null;
@@ -98,6 +101,15 @@ public abstract class Ability implements Cloneable {
 
     public void newId() {
         id = UUID.randomUUID();
+    }
+
+    public SoundEffect getSound() {
+        return sound;
+    }
+
+    public void setSound(SoundEffect sound) {
+        this.sound = sound;
+        getConfig().set("sound", sound);
     }
 
     // writes an option to the stored config

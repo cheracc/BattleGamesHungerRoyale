@@ -70,7 +70,7 @@ public class KitConfig implements CommandExecutor {
                     sendGui(newKit, p);
                 }
 
-                kit = BGHR.getKitManager().getKit(args[0]);
+                kit = BGHR.getKitManager().getKit(Tools.rebuildString(args, 0));
                 if (kit == null) {
                     p.sendMessage(Component.text("That's not a valid kit"));
                     return true;

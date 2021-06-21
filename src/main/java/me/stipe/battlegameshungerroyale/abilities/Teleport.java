@@ -55,8 +55,12 @@ public class Teleport extends Ability implements ActiveAbility {
                 double distance = teleportLocation.distance(source.getLocation());
                 for (int i = 0; i <= tracerDensity; i++) {
                     Location particleLocation = source.getLocation().add(source.getLocation().getDirection().normalize().multiply(distance/tracerDensity*i));
-                    source.getWorld().spawnParticle(Particle.WHITE_ASH, particleLocation, 5, 0.1,0.1,0.1);
+                    source.getWorld().spawnParticle(Particle.WHITE_ASH, particleLocation.add(0,1,0), 5, 0.1,0.3,0.1);
                 }
+            }
+            if (getSound() != null) {
+                getSound().play(source.getLocation());
+                getSound().play(teleportLocation);
             }
             source.teleport(teleportLocation, PlayerTeleportEvent.TeleportCause.PLUGIN);
             source.setFallDistance(0);

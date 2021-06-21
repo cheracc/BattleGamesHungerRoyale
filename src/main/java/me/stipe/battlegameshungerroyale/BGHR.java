@@ -1,6 +1,7 @@
 package me.stipe.battlegameshungerroyale;
 
 import me.stipe.battlegameshungerroyale.commands.*;
+import me.stipe.battlegameshungerroyale.datatypes.SoundEffect;
 import me.stipe.battlegameshungerroyale.listeners.AbilityListeners;
 import me.stipe.battlegameshungerroyale.listeners.GeneralPlayerEventListener;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
@@ -9,6 +10,7 @@ import me.stipe.battlegameshungerroyale.managers.PlayerManager;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.InvocationTargetException;
@@ -26,6 +28,7 @@ public class BGHR extends JavaPlugin {
         saveDefaultConfig();
         mainConfig = getConfig();
         mapManager = new MapManager();
+        ConfigurationSerialization.registerClass(SoundEffect.class);
         kitManager = new KitManager();
         try {
             kitManager.findAndLoadDefaultAbilities();
