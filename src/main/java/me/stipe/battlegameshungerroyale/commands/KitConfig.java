@@ -8,6 +8,7 @@ import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.Kit;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
+import me.stipe.battlegameshungerroyale.guis.EquipmentSetGui;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
@@ -20,6 +21,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +104,7 @@ public class KitConfig implements CommandExecutor {
 
         gui.addItem(nameAndDescriptionIcon(kit));
         gui.addItem(kitIcon(kit));
+        gui.addItem(equipmentIcon(kit, gui));
         gui.setItem(8, saveIcon(kit));
         gui.setItem(7, cancelIcon(kit));
         for (Ability a : kit.getAbilities()) {
@@ -109,6 +112,37 @@ public class KitConfig implements CommandExecutor {
         }
         gui.addItem(newAbilityIcon(kit));
         gui.open(player);
+    }
+
+    private GuiItem equipmentIcon(Kit kit, Gui gui) {
+        List<Component> lore = new ArrayList<>();
+        boolean noGear = true;
+        lore.add(Tools.BLANK_LINE);
+
+
+        if (!kit.getEquipment().getArmor().isEmpty()) {
+            lore.add(Tools.componentalize("Armor"));
+            noGear = false;
+            for (ItemStack item : kit.getEquipment().getArmor().values()) {
+                lore.add(item.displayName());
+            }
+        }
+        if (!kit.getEquipment().getOtherItems().isEmpty()) {
+            lore.add(Tools.componentalize("Other Starting Items:"));
+            noGear = false;
+            for (ItemStack item : kit.getEquipment().getOtherItems())
+                lore.add(item.displayName());
+        }
+        if (noGear)
+            lore.add(Tools.componentalize("&7None"));
+        lore.add(Tools.BLANK_LINE);
+        lore.add(Tools.componentalize("&bClick to modify equipment"));
+
+        return ItemBuilder.from(Material.ARMOR_STAND).name(Tools.componentalize("Kit Equipment:")).lore(lore)
+                .asGuiItem(e -> {
+                    e.getWhoClicked().closeInventory();
+                    new EquipmentSetGui(kit.getEquipment(), gui).open(e.getWhoClicked());
+        });
     }
 
     private GuiItem cancelIcon(Kit kit) {

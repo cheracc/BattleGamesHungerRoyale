@@ -14,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
@@ -409,7 +410,9 @@ public class CommonGuis {
                 }
             }
             name = sound.name().substring(parts[0].length() + 1).toLowerCase();
-            ItemBuilder item = ItemBuilder.from(icon).name(Tools.componentalize(name))
+            ItemBuilder item = ItemBuilder.from(icon).name(Tools.componentalize(name)).flags(ItemFlag.HIDE_PLACED_ON,
+                    ItemFlag.HIDE_DYE, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_UNBREAKABLE,
+                    ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS)
                     .lore(Tools.BLANK_LINE, Tools.componentalize("&bClick to play"), Tools.componentalize("&bRight Click to select"));
 
             gui.addItem(item.asGuiItem(e -> {

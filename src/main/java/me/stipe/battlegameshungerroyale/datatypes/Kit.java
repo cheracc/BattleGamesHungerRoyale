@@ -26,10 +26,12 @@ public class Kit implements Cloneable {
     String description;
     String iconItemType;
     List<Ability> abilities = new ArrayList<>();
+    EquipmentSet equipment;
 
     public Kit(String key, ConfigurationSection config) {
         this.id = key;
         this.config = config;
+        this.equipment = (EquipmentSet) config.get("equipment", new EquipmentSet());
         name = config.getString("name", "Nameless Kit");
         description = config.getString("description", "Give this kit a description");
         iconItemType = config.getString("icon", "chest").toUpperCase();
@@ -81,6 +83,15 @@ public class Kit implements Cloneable {
         }
         abilities.remove(ability);
         saveConfig();
+    }
+
+    public void setEquipment(EquipmentSet equipment) {
+        this.equipment = equipment;
+        config.set("equipment", this.equipment);
+    }
+
+    public EquipmentSet getEquipment() {
+        return equipment;
     }
 
     public void outfitPlayer(Player p, PlayerData data) {

@@ -19,6 +19,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 
@@ -128,7 +129,7 @@ public class AbilityConfig implements CommandExecutor {
     private GuiItem soundItem(Ability ability, Gui gui) {
         SoundEffect effect = ability.getSound();
         if (effect == null)
-            return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize("&eAdd a Sound Effect")).asGuiItem(e -> {
+            return ItemBuilder.from(Material.MUSIC_DISC_11).name(Tools.componentalize("&eAdd a Sound Effect")).asGuiItem(e -> {
                 e.getWhoClicked().closeInventory();
                 CommonGuis.soundEffectGui((Player) e.getWhoClicked(), "abilityconfig addsound", "abilityconfig").open(e.getWhoClicked());   });
         return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize("&eCurrent Sound Effect:")).lore(Tools.componentalize("  " + effect.getSound().name().toLowerCase()),
@@ -176,12 +177,14 @@ public class AbilityConfig implements CommandExecutor {
         lore.add("");
         Object value = ability.getConfig().get(configOption);
         String valueString;
-        Material icon = Material.REDSTONE_LAMP;
+        Material icon = Material.LEVER;
         GuiAction<InventoryClickEvent> event = null;
 
         if (value instanceof Boolean) {
             valueString = Boolean.toString((Boolean) value);
             lore.add("&bClick to make " + !(Boolean) value);
+            if ((Boolean) value)
+                icon = Material.REDSTONE_TORCH;
             event = handleBoolean(ability, configOption, (Boolean) value);
         } else if (value instanceof Integer) {
             valueString = Integer.toString((Integer) value);
@@ -193,7 +196,7 @@ public class AbilityConfig implements CommandExecutor {
             valueString = Double.toString((Double) value);
             lore.add("&bClick to increase " + configOption);
             lore.add("&bRight Click to decrease " + configOption);
-            icon = Material.COMPARATOR;
+            icon = Material.REPEATER;
             event = handleDouble(ability, configOption, (Double) value);
         } else if (value instanceof String) {
             valueString = (String) value;
@@ -216,7 +219,7 @@ public class AbilityConfig implements CommandExecutor {
             lore.add("&eEffect Icon: &f" + (effect.hasIcon() ? "On" : "Off"));
             valueString = "";
             lore.add("&bClick to select a new " + configOption);
-            icon = Material.POTION;
+            icon = Material.DRAGON_BREATH;
             event = handlePotionEffect(ability, configOption, (PotionEffect) value);
         }  else {
             valueString = "";
@@ -225,7 +228,9 @@ public class AbilityConfig implements CommandExecutor {
         if (valueString.length() > 0)
             lore.add(0, "&eCurrent value: &7" + valueString);
 
-        return ItemBuilder.from(icon).name(Tools.componentalize(itemName)).lore(Tools.componentalize(lore)).asGuiItem(event);
+        return ItemBuilder.from(icon).name(Tools.componentalize(itemName)).lore(Tools.componentalize(lore))
+                .flags(ItemFlag.HIDE_PLACED_ON, ItemFlag.HIDE_DYE, ItemFlag.HIDE_POTION_EFFECTS, ItemFlag.HIDE_UNBREAKABLE,
+                        ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS).asGuiItem(event);
     }
 
     private GuiItem saveIcon(Ability ability) {

@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -224,6 +225,15 @@ public class Tools {
         for (String s : section.getKeys(false)) {
             Bukkit.getLogger().info(s + ": " + section.get(s));
         }
+    }
+
+    public static int getLastEmptyHotbarSlot(Player p) {
+        for (int i = 8; i >= 0; i--) {
+            ItemStack item = p.getInventory().getItem(i);
+            if (item == null || item.getType() == Material.AIR)
+                return i;
+        }
+        return -1;
     }
 
 
