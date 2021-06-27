@@ -97,7 +97,7 @@ public class AbilityListeners implements Listener {
         Player p = event.getPlayer();
         ItemStack item = event.getItemDrop().getItemStack();
 
-        if (Tools.getUuidFromItem(item) == null) {
+        if (Tools.getUuidFromItem(item) != null) {
             event.setCancelled(true);
             p.sendMessage(Component.text("That's kind of important, you should keep it."));
         }

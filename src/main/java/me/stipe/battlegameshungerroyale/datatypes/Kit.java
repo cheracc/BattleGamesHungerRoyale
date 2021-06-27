@@ -50,6 +50,10 @@ public class Kit implements Cloneable {
 
     public Kit(String id) {
         this.id = id;
+        config = new YamlConfiguration();
+        setName("Some New Kit");
+        setDescription("Can't be sure what it does because nobody ever changed the default description!");
+        setIcon(Material.STONE);
     }
 
     public String getId() {
@@ -88,10 +92,15 @@ public class Kit implements Cloneable {
     public void setEquipment(EquipmentSet equipment) {
         this.equipment = equipment;
         config.set("equipment", this.equipment);
+        saveConfig();
     }
 
     public EquipmentSet getEquipment() {
         return equipment;
+    }
+
+    public void disrobePlayer(PlayerData data) {
+
     }
 
     public void outfitPlayer(Player p, PlayerData data) {
@@ -110,6 +119,9 @@ public class Kit implements Cloneable {
                     ((PassiveAbility) a).activate(p);
                 }
             }
+        }
+        if (equipment != null) {
+            equipment.equip(p);
         }
     }
 
@@ -170,6 +182,9 @@ public class Kit implements Cloneable {
                 this.config.set("abilities." + a.getName() + "_" + ThreadLocalRandom.current().nextInt(99999999), a.getConfig());
 
         }
+
+        if (equipment != null)
+            this.config.set("equipment", equipment);
 
         FileConfiguration kitsConfig = new YamlConfiguration();
 

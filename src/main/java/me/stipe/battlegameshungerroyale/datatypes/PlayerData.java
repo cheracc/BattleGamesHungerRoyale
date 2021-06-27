@@ -77,6 +77,9 @@ public class PlayerData {
                 ((PassiveAbility) a).deactivate(getPlayer());
             }
         }
+        if (kit.getEquipment() != null) {
+            kit.getEquipment().unequip(getPlayer());
+        }
     }
 
     private int findHotbarSlot(Kit kit, ItemStack item) {

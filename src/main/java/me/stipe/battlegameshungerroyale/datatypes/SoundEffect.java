@@ -16,8 +16,8 @@ public class SoundEffect implements ConfigurationSerializable {
 
     public SoundEffect() {
         sound = Sound.ENTITY_PLAYER_BURP;
-        pitch = 0;
-        volume = 0;
+        pitch = 1F;
+        volume = 1F;
     }
 
     public SoundEffect(Map<String, Object> serialized) {

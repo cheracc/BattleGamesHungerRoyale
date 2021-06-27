@@ -5,10 +5,13 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.stipe.battlegameshungerroyale.datatypes.EquipmentSet;
+import me.stipe.battlegameshungerroyale.guis.interfaces.GetEquipmentSet;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -24,18 +27,21 @@ public class EquipmentSetGui extends Gui {
     private final static EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND};
     private final static String[] slotArmorNames = {"a helmet", "a chestplate", "some leggings",  "some boots", "an off hand item"};
 
-    public EquipmentSetGui(EquipmentSet set, Gui sendingGui) {
+    public EquipmentSetGui(HumanEntity player, EquipmentSet set, Gui sendingGui, GetEquipmentSet callback) {
         super(1, Tools.componentalize("&0Current Equipment:"));
         this.setDefaultTopClickAction(e -> e.setCancelled(true));
         this.set = set;
 
+        setOutsideClickAction(e -> sendingGui.open(e.getWhoClicked()));
         fillArmorSlots();
         fillOtherSlots();
         setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("Save this Equipment")).asGuiItem(e -> {
-            Tools.saveObjectToPlayer("equipment", set, (Player) e.getWhoClicked());
+            Tools.saveObjectToPlayer("equipment", this.set, (Player) e.getWhoClicked());
             e.getWhoClicked().closeInventory();
             sendingGui.open(e.getWhoClicked());
         }));
+
+        open(player);
     }
 
     private void fillOtherSlots() {
@@ -46,7 +52,7 @@ public class EquipmentSetGui extends Gui {
 
         for (ItemStack item : set.getOtherItems()) {
             Component name = Tools.componentalize("Hotbar Item:");
-            List<Component> lore = new ArrayList<>(item.lore());
+            List<Component> lore = new ArrayList<>();
 
             lore.add(0, item.displayName());
             lore.add(Tools.BLANK_LINE);
@@ -67,7 +73,7 @@ public class EquipmentSetGui extends Gui {
             List<Component> lore = Tools.componentalize(Tools.wrapText(emptyInstructions, ChatColor.AQUA));
             lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
             lore.add(0, Tools.BLANK_LINE);
-            addItem(ItemBuilder.from(Material.LIME_STAINED_GLASS_PANE).name(name).lore(lore).asGuiItem());
+            addItem(ItemBuilder.from(Material.LIME_STAINED_GLASS_PANE).name(name).lore(lore).asGuiItem(handleOtherItems(null)));
             slot++;
         }
     }
@@ -94,10 +100,8 @@ public class EquipmentSetGui extends Gui {
                 else
                     setItem(i, guiItem);
             } else {
-                ItemStack item = set.getArmor().get(slots[i]);
+                ItemStack item = set.getArmor().get(slots[i]).clone();
                 List<Component> lore = new ArrayList<>();
-                if (item.lore() != null)
-                    lore.addAll(item.lore());
                 lore.add(Tools.BLANK_LINE);
                 lore.addAll(Tools.componentalize(Tools.wrapText(replaceInstructions, ChatColor.AQUA)));
                 item.lore(lore);
@@ -114,12 +118,18 @@ public class EquipmentSetGui extends Gui {
         Component errorMessage = Tools.componentalize("That won't fit there");
 
         return event -> {
-            ItemStack input = event.getCursor();
+            ItemStack cursor = event.getCursor();
 
-            if (input == null || input.getItemMeta() == null || input.getType().isAir()) return;
+            if (cursor == null || cursor.getItemMeta() == null || cursor.getType().isAir()) {
+                if (set.getArmor().get(slots[slotNumber]) != null) {
+                    set.removeArmor(slots[slotNumber]);
+                    fillArmorSlots();
+                    return;
+                }
+            }
 
-            if (armorFitsInSlot(input, slots[slotNumber])) {
-                set.setArmor(slots[slotNumber], input);
+            if (armorFitsInSlot(cursor, slots[slotNumber])) {
+                set.setArmor(slots[slotNumber], cursor);
                 event.getWhoClicked().setItemOnCursor(null);
                 fillArmorSlots();
             } else {
@@ -131,19 +141,22 @@ public class EquipmentSetGui extends Gui {
 
     private GuiAction<InventoryClickEvent> handleOtherItems(@Nullable ItemStack currentItem) {
         return event -> {
-            ItemStack cursorItem = event.getCursor();
+            ItemStack cursorItem = event.getWhoClicked().getItemOnCursor();
 
             if (cursorItem == null && currentItem != null) {
+                Bukkit.getLogger().info("cursor: null current: " + currentItem.getI18NDisplayName());
                 set.removeItem(currentItem);
-                fillArmorSlots();
-            } if (cursorItem != null) {
+                fillOtherSlots();
+            } else if (cursorItem != null) {
+                Bukkit.getLogger().info("cursor: " + cursorItem.getI18NDisplayName() + " current: " + ((currentItem == null) ? "null" : currentItem.getI18NDisplayName()) );
                 if (currentItem != null)
                     set.removeItem(currentItem);
                 set.addOtherItem(cursorItem);
 
                 event.getWhoClicked().setItemOnCursor(null);
-                fillArmorSlots();
-            }
+                fillOtherSlots();
+            } else
+                Bukkit.getLogger().info("both null");
         };
     }
 

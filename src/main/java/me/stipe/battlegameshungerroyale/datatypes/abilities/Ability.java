@@ -124,6 +124,8 @@ public abstract class Ability implements Cloneable {
     }
 
     public String getCustomName() {
+        if (customName == null)
+            return getName();
         return customName;
     }
 

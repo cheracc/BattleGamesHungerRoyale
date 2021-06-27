@@ -32,6 +32,7 @@ public class KitManager {
         return null;
     }
 
+    // TODO make this super clean - check for players with the kit and update them as well, make sure all items match etc
     public void replaceKit(Kit kit) {
         List<Kit> toRemove = new ArrayList<>();
         for (Kit k : getLoadedKits()) {
@@ -42,6 +43,7 @@ public class KitManager {
             loadedKits.remove(k);
         }
         loadedKits.add(kit);
+        kit.saveConfig();
     }
 
     public void loadKits() {

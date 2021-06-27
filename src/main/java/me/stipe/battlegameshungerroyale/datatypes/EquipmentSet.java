@@ -2,6 +2,7 @@ package me.stipe.battlegameshungerroyale.datatypes;
 
 import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.tools.Tools;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
@@ -43,7 +44,7 @@ public class EquipmentSet implements ConfigurationSerializable {
         }
 
         int count = 1;
-        for (ItemStack other : otherItems) {
+        for (ItemStack other : getOtherItems()) {
             output.put("other." + count, other);
             count++;
         }
@@ -57,8 +58,15 @@ public class EquipmentSet implements ConfigurationSerializable {
     }
 
     public void addOtherItem(@NotNull ItemStack item) {
-        if (otherItems.size() < 3)
+        if (otherItems.size() < 3) {
             otherItems.add(item);
+            Bukkit.getLogger().info("Added " + item.getI18NDisplayName());
+        }
+        Bukkit.getLogger().info("size: " + otherItems.size());
+    }
+
+    public void removeArmor(@NotNull EquipmentSlot slot) {
+        armor.remove(slot);
     }
 
     public void removeItem(@NotNull ItemStack item) {
@@ -70,28 +78,33 @@ public class EquipmentSet implements ConfigurationSerializable {
         for (Map.Entry<EquipmentSlot, ItemStack> e : armor.entrySet()) {
             p.getInventory().setItem(e.getKey(), tagItem(e.getValue()));
         }
-        for (ItemStack i : otherItems) {
+        for (ItemStack i : getOtherItems()) {
             p.getInventory().setItem(Tools.getLastEmptyHotbarSlot(p), tagItem(i));
         }
     }
 
     public void unequip(Player p) {
-        List<ItemStack> items = new ArrayList<>();
-        items.addAll(Arrays.asList(p.getInventory().getArmorContents()));
-        items.addAll(Arrays.asList(p.getInventory().getContents()));
-        items.addAll(Arrays.asList(p.getInventory().getStorageContents()));
-        items.addAll(Arrays.asList(p.getInventory().getExtraContents()));
-        items.add(p.getItemOnCursor());
-
-        items.removeIf(Objects::isNull);
-
-        for (ItemStack item : items) {
+        for (int i = 0; i <= 8; i++) {
+            ItemStack item = p.getInventory().getItem(i);
             if (hasTag(item))
-                p.getInventory().remove(item);
+                p.getInventory().setItem(i, null);
+            if (hasTag(p.getInventory().getHelmet()))
+                p.getInventory().setHelmet(null);
+            if (hasTag(p.getInventory().getChestplate()))
+                p.getInventory().setChestplate(null);
+            if (hasTag(p.getInventory().getLeggings()))
+                p.getInventory().setLeggings(null);
+            if (hasTag(p.getInventory().getBoots()))
+                p.getInventory().setBoots(null);
+            if (hasTag(p.getInventory().getItemInOffHand()))
+                p.getInventory().setItemInOffHand(null);
+            if (hasTag(p.getInventory().getItemInMainHand()))
+                p.getInventory().setItemInMainHand(null);
         }
     }
 
     private boolean hasTag(ItemStack item) {
+        if (item == null) return false;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
         String id = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
@@ -100,6 +113,7 @@ public class EquipmentSet implements ConfigurationSerializable {
     }
 
     private ItemStack tagItem(ItemStack item) {
+        if (item == null) return null;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
