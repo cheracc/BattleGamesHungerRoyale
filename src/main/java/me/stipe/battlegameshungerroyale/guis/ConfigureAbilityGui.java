@@ -9,7 +9,6 @@ import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.guis.interfaces.GetAbilityResponse;
 import me.stipe.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -68,8 +67,7 @@ public class ConfigureAbilityGui extends Gui {
                 Player p = (Player) e.getWhoClicked();
                 p.closeInventory();
                 if (e.getClick() == ClickType.RIGHT) {
-                    Component message = Tools.componentalize("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing.")
-                            .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, ability.getDescription()));
+                    Component message = Tools.formatInstructions("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing.", ability.getDescription());
                     p.sendMessage(message);
                     TextInputListener.getInstance().getNextInputFrom(p, text -> {
                         ability.setOption("description", text);
@@ -78,8 +76,7 @@ public class ConfigureAbilityGui extends Gui {
                     });
                 }
                 else {
-                    Component message = Tools.componentalize("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing.")
-                            .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, ability.getCustomName()));
+                    Component message = Tools.formatInstructions("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing.", ability.getCustomName());
                     p.sendMessage(message);
                     TextInputListener.getInstance().getNextInputFrom(p, text -> {
                         ability.setOption("custom name", text);
@@ -277,8 +274,7 @@ public class ConfigureAbilityGui extends Gui {
         return event -> {
             Player p = (Player) event.getWhoClicked();
             p.closeInventory();
-            Component message = Tools.componentalize("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing.")
-                .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue));
+            Component message = Tools.formatInstructions("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing.", currentValue);
             p.sendMessage(message);
             TextInputListener.getInstance().getNextInputFrom(p, text -> {
                 ability.setOption(configOption, text);

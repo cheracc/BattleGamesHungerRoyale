@@ -78,7 +78,7 @@ public class ConfigureKitGui extends Gui {
                 if (e.getWhoClicked() instanceof Player) {
                     Player p = (Player) e.getWhoClicked();
                     if (e.getClick().isLeftClick()) {
-                        p.sendMessage(Tools.componentalize("Enter a new name:"));
+                        p.sendMessage(Tools.formatInstructions("    Enter a new name for this kit:", kit.getName()));
                         TextInputListener.getInstance().getNextInputFrom(p, text -> {
                             kit.setName(text);
                             updateTitle(Tools.componentalize("&0Configuring Kit: &1" + kit.getName()));
@@ -87,6 +87,7 @@ public class ConfigureKitGui extends Gui {
                         });
                     }
                     else if (e.getClick().isRightClick()) {
+                        p.sendMessage(Tools.formatInstructions("Enter a new description for this kit. If you want to edit the current description, you can click on this message to enter it into the chat box", kit.getDescription()));
                         TextInputListener.getInstance().getNextInputFrom(p, text -> {
                             kit.setDescription(text);
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
@@ -152,7 +153,7 @@ public class ConfigureKitGui extends Gui {
                     e.getWhoClicked().closeInventory();
                     new EquipmentSetGui(e.getWhoClicked(), kit.getEquipment(), this, equipment -> {
                         kit.setEquipment(equipment);
-                        new ConfigureKitGui(kit, sendingGui, e.getWhoClicked());
+                        updateItem(e.getSlot(), equipmentIcon());
                     });
                 });
     }

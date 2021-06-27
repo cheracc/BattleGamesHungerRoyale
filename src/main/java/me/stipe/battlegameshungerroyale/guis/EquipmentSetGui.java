@@ -38,7 +38,7 @@ public class EquipmentSetGui extends Gui {
         setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("Save this Equipment")).asGuiItem(e -> {
             Tools.saveObjectToPlayer("equipment", this.set, (Player) e.getWhoClicked());
             e.getWhoClicked().closeInventory();
-            sendingGui.open(e.getWhoClicked());
+            callback.equipmentCallback(set);
         }));
 
         open(player);
@@ -51,15 +51,16 @@ public class EquipmentSetGui extends Gui {
         int slot = slots.length;
 
         for (ItemStack item : set.getOtherItems()) {
+            ItemStack iconItem = item.clone();
             Component name = Tools.componentalize("Hotbar Item:");
             List<Component> lore = new ArrayList<>();
 
-            lore.add(0, item.displayName());
+            lore.add(0, iconItem.displayName());
             lore.add(Tools.BLANK_LINE);
             lore.addAll(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA)));
             lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
 
-            GuiItem guiItem = ItemBuilder.from(item).name(name).lore(lore).asGuiItem();
+            GuiItem guiItem = ItemBuilder.from(iconItem).name(name).lore(lore).asGuiItem();
             guiItem.setAction(handleOtherItems(item));
 
             if (getGuiItem(slot) != null)
