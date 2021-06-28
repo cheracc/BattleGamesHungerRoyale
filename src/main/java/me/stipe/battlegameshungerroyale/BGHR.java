@@ -28,7 +28,7 @@ public class BGHR extends JavaPlugin {
         plugin = this;
         saveDefaultConfig();
         mainConfig = getConfig();
-        mapManager = new MapManager();
+        mapManager = MapManager.getInstance();
         ConfigurationSerialization.registerClass(SoundEffect.class);
         ConfigurationSerialization.registerClass(EquipmentSet.class);
         kitManager = new KitManager();

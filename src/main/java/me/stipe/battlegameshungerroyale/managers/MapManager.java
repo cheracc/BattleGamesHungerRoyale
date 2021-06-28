@@ -2,22 +2,27 @@ package me.stipe.battlegameshungerroyale.managers;
 
 import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.MapData;
-import org.bukkit.*;
+import org.apache.commons.io.FileUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.WorldCreator;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
-
-import java.io.*;
-import java.util.*;
-
-import org.apache.commons.io.FileUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+
 public class MapManager implements Listener {
     private final BGHR plugin;
+    private static MapManager singletonInstance;
     private final FileConfiguration mainConfig;
     private final File mapsDirectory;
     private final File mainWorldFolder;
@@ -27,7 +32,7 @@ public class MapManager implements Listener {
     private boolean canBuildInLobby = false;
     private boolean canFlyInLobby = false;
 
-    public MapManager() {
+    private MapManager() {
         plugin = BGHR.getPlugin();
         mainConfig = plugin.getMainConfig();
         mapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("maps directory", "maps/")).getAbsoluteFile();
@@ -38,6 +43,12 @@ public class MapManager implements Listener {
         loadLobby();
         registerMaps();
         Bukkit.getPluginManager().registerEvents(this, plugin);
+    }
+
+    public static MapManager getInstance() {
+        if (singletonInstance == null)
+            singletonInstance = new MapManager();
+        return singletonInstance;
     }
 
     private void loadLobby() {

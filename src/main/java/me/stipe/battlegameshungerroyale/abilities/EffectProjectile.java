@@ -1,6 +1,7 @@
 package me.stipe.battlegameshungerroyale.abilities;
 
 import me.stipe.battlegameshungerroyale.BGHR;
+import me.stipe.battlegameshungerroyale.datatypes.DamageSource;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.stipe.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import org.bukkit.Bukkit;
@@ -12,6 +13,7 @@ import org.bukkit.entity.ThrowableProjectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
@@ -60,8 +62,20 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
                     if (getId().equals(o)) {
                         o = proj.getMetadata("thrower").get(0).value();
                         if (o instanceof UUID) {
-                            Player p = Bukkit.getPlayer((UUID) o);
-                            // TODO set this player as the damager for kill credit
+                            Player damager = Bukkit.getPlayer((UUID) o);
+
+                            if (damager != null && event.getEntity() instanceof Player) {
+                                Player target = (Player) event.getEntity();
+                                EntityDamageEvent.DamageCause type = null;
+
+                                if (potionEffect.getType() == PotionEffectType.POISON)
+                                    type = EntityDamageEvent.DamageCause.POISON;
+                                if (potionEffect.getType() == PotionEffectType.WITHER)
+                                    type = EntityDamageEvent.DamageCause.WITHER;
+
+                                if (target != null && type != null)
+                                    new DamageSource(damager, type, potionEffect.getDuration()).apply(target);
+                            }
 
                             if (potionEffect != null && event.getEntity() instanceof LivingEntity)
                                 potionEffect.apply((LivingEntity) event.getEntity());

@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -43,6 +44,10 @@ public class Tools {
         if (data != null) {
             return UUID.fromString(data);
         }
+        return null;
+    }
+
+    public static @Nullable UUID getUuidFromBlock(Block block) {
         return null;
     }
 

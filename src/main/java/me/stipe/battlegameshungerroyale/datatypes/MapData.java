@@ -118,6 +118,11 @@ public class MapData {
         }
     }
 
+    public void addGamePlayed(int length) {
+        averageLength = (averageLength * timesPlayed + length) / (timesPlayed + 1);
+        timesPlayed++;
+    }
+
     public File getMapDirectory() {
         return mapDirectory;
     }
