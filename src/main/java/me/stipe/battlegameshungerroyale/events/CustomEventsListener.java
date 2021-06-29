@@ -110,7 +110,6 @@ public class CustomEventsListener implements Listener {
 
         // this damage wasn't caused by a block or an entity so must have been done by a damage tick
         else {
-            boolean found = false;
             switch (event.getCause()) {
                 case FIRE_TICK:
                 case POISON:
@@ -123,14 +122,11 @@ public class CustomEventsListener implements Listener {
                             else {
                                 aggressor = ds.getSource();
                                 directDamage = false;
-                                found = true;
                             }
                         }
                     }
                     break;
             }
-            if (!found)
-                bestGuess = event.getCause().name();
         }
 
         if (victim != null && event.getDamage() > 0) {

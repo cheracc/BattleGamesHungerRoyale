@@ -19,11 +19,15 @@ public class GameLog {
     private final String mapName;
     private final Map<Long, Object> entries = new HashMap<>();
     private final Game game;
+    private final File logFile;
 
     public GameLog(Game game) {
         this.startTime = System.currentTimeMillis();
         this.game = game;
         mapName = game.getMap().getMapName();
+
+        String timestamp = Instant.now().toString().split("\\.")[0].replace('T', '_').replace(':', '-');
+        logFile = new File(BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/gamelogs",  timestamp + ".log");
     }
 
     public void addDamageEntry(GameDamageEvent event) {
@@ -31,8 +35,17 @@ public class GameLog {
         entries.put(System.currentTimeMillis(), entry);
     }
 
+    public void addLogEntry(String string) {
+        entries.put(System.currentTimeMillis(), string);
+        try {
+            saveLogFile();
+        } catch (IOException e) {
+            Bukkit.getLogger().warning("couldn't save gamelog file");
+        }
+    }
+
     public void addDeathEntry(Player player) {
-        entries.put(System.currentTimeMillis(), player.getName());
+        entries.put(System.currentTimeMillis(), player.getName() + " died.");
         try {
             saveLogFile();
         } catch (IOException e) {
@@ -58,15 +71,12 @@ public class GameLog {
     }
 
     private void saveLogFile() throws IOException {
-        String timestamp = Instant.now().toString().split("\\.")[0].replace('T', '_').replace(':', '-');
-        File gameLogFile = new File(BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/gamelogs",  timestamp + ".log");
+        if (!logFile.exists())
+            if (logFile.getParentFile().mkdirs())
+                Bukkit.getLogger().info("creating game log directory: " + logFile.getAbsolutePath());
 
-        if (!gameLogFile.exists())
-            if (gameLogFile.getParentFile().mkdirs())
-                Bukkit.getLogger().info("creating game log directory: " + gameLogFile.getAbsolutePath());
-
-        FileWriter writer = new FileWriter(gameLogFile);
-        PrintWriter print = new PrintWriter(writer);
+        FileWriter writer = new FileWriter(logFile);
+        PrintWriter printer = new PrintWriter(writer);
 
         List<Long> entryTimes = new ArrayList<>(entries.keySet());
         List<String> players = new ArrayList<>(game.getFullPlayerList());
@@ -80,18 +90,18 @@ public class GameLog {
             playerString.append(s);
         }
 
-        print.printf("Game Started: %s", Instant.ofEpochMilli(startTime));
-        print.println();
-        print.printf("Game Ended: %s", Instant.now());
-        print.println();
-        print.printf("Time elapsed: %s", Tools.secondsToMinutesAndSeconds(game.getCurrentGameTime()));
-        print.println();
-        print.printf("Map: %s", mapName);
-        print.println();
-        print.printf("Participants (%s): %s", players.size(), playerString);
-        print.println();
-        print.printf("Winner: %s", game.getWinner() == null ? "" : game.getWinner().getName());
-        print.println();
+        printer.printf("Game Started: %s", Instant.ofEpochMilli(startTime));
+        printer.println();
+        printer.printf("Game Ended: %s", Instant.now());
+        printer.println();
+        printer.printf("Time elapsed: %s", Tools.secondsToMinutesAndSeconds(game.getCurrentGameTime()));
+        printer.println();
+        printer.printf("Map: %s", mapName);
+        printer.println();
+        printer.printf("Participants(%s): %s", players.size(), playerString);
+        printer.println();
+        printer.printf("Winner: %s", game.getWinner() == null ? "" : game.getWinner().getName());
+        printer.println();
 
         for (Long l : entryTimes) {
             Object o = entries.get(l);
@@ -100,21 +110,21 @@ public class GameLog {
             if (o instanceof GameLogDamageEntry) {
                 GameLogDamageEntry entry = (GameLogDamageEntry) o;
                 if (entry.getDamager() != null && entry.getDamager().length() > 1) {
-                    print.printf("[%s]: %s(%s) [%s-> %s-%s(%s)", time.toString(), entry.getDamager(), entry.getDamagerHealth(),
-                            entry.getType().name().toLowerCase(), entry.getVictim(), entry.getDamage(), entry.getVictimHealth());
+                    printer.printf("[%s]: %s(%.1f) [%s(%.1f)-> %s(%.1f)", time.toString(), entry.getDamager(), entry.getDamagerHealth(),
+                            entry.getType().name().toLowerCase(), entry.getDamage(), entry.getVictim(), entry.getVictimHealth());
                 } else
-                    print.printf("[%s]: %s [%s-> %s-%s(%s)", time.toString(), entry.getBestGuess(), entry.getType().name().toLowerCase(), entry.getVictim(), entry.getDamage(), entry.getVictimHealth());
+                    printer.printf("[%s]: %s [%s(%.1f)-> %s(%.1f)", time.toString(), entry.getBestGuess(), entry.getType().name().toLowerCase(), entry.getDamage(), entry.getVictim(), entry.getVictimHealth());
             }
             else if (o instanceof String) {
-                print.printf("[%s]: %s died.", time.toString(), o);
+                printer.printf("[%s]: %s", time.toString(), o);
             }
             else if (o instanceof Game.GamePhase) {
                 Game.GamePhase phase = (Game.GamePhase) o;
-                print.printf("[%s]: Started %s phase", time.toString(), phase.name().toLowerCase());
+                printer.printf("[%s]: Started %s phase", time.toString(), phase.name().toLowerCase());
             }
-            print.println();
+            printer.println();
         }
-        print.close();
+        printer.close();
     }
 
     private static class GameLogDamageEntry {

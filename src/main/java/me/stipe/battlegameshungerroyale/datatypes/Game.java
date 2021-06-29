@@ -49,6 +49,7 @@ public class Game implements Listener {
         openToPlayers = false;
         pregameTime = -1;
         gameTime = -1;
+        postgameTime = -1;
         currentPhase = GamePhase.PREGAME;
 
         if (!map.isLoaded()) {
@@ -123,10 +124,10 @@ public class Game implements Listener {
     }
 
     private void endGame() {
+        gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
             quit(p);
 
-        gameLog.finalizeLog();
         bar.setVisible(false);
         bar.removeAll();
 
@@ -174,15 +175,17 @@ public class Game implements Listener {
         player.teleport(map.getWorld().getSpawnLocation());
         bar.addPlayer(player);
         player.setBedSpawnLocation(map.getWorld().getSpawnLocation(), true);
+        gameLog.addLogEntry(String.format("%s joined (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
     }
 
     public void quit(Player player) {
-        if (participants.containsKey(player.getUniqueId()))
+        if (!getWinner().equals(player) && participants.containsKey(player.getUniqueId())) {
             participants.replace(player.getUniqueId(), 0);
+            gameLog.addLogEntry(String.format("%s left (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
+        }
+        player.setGameMode(GameMode.ADVENTURE);
         player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
         bar.removePlayer(player);
-        player.setGameMode(GameMode.SURVIVAL);
-        player.setBedSpawnLocation(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), true);
     }
 
     private void checkForWinner() {
@@ -196,6 +199,7 @@ public class Game implements Listener {
             }
         }
         doPostGame();
+        gameLog.addLogEntry(winner.getName() + " won!");
     }
 
     public Player getWinner() {
@@ -331,7 +335,7 @@ public class Game implements Listener {
         if (currentPhase == GamePhase.PREGAME)
             phaseProgress = options.getPregameTime() - pregameTime;
         else if (currentPhase == GamePhase.POSTGAME) {
-            phaseProgress = postgameTime;
+            phaseProgress = 1 - postgameTime;
         }
         else {
             phaseProgress = gameTime;
@@ -440,6 +444,7 @@ public class Game implements Listener {
 
     @EventHandler
     public void onJoinWorld(PlayerChangedWorldEvent event) {
+        // coming to this world!
         if (event.getPlayer().getWorld().equals(map.getWorld())) {
             Player p = event.getPlayer();
             if (participants.containsKey(p.getUniqueId()) && participants.get(p.getUniqueId()) > 0)
@@ -447,6 +452,7 @@ public class Game implements Listener {
             p.setGameMode(GameMode.SPECTATOR);
             bar.addPlayer(event.getPlayer());
         }
+        // leaving this world!
         if (event.getFrom().equals(map.getWorld())) {
             UUID uuid = event.getPlayer().getUniqueId();
             if (participants.get(uuid) != null)
@@ -459,6 +465,7 @@ public class Game implements Listener {
     public void onRespawn(PlayerRespawnEvent event) {
         if (isPlaying(event.getPlayer())) {
             event.setRespawnLocation(map.getWorld().getSpawnLocation());
+            event.getPlayer().setGameMode(GameMode.ADVENTURE);
         }
         if (isSpectating(event.getPlayer())) {
             event.setRespawnLocation(map.getWorld().getSpawnLocation());
