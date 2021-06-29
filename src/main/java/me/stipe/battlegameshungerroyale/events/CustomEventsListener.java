@@ -94,19 +94,20 @@ public class CustomEventsListener implements Listener {
         // the rest of these would all be 'indirect damage' - damage from blocks placed by a player or poison/wither/etc.
         else if (event instanceof EntityDamageByBlockEvent) {
             Block block = ((EntityDamageByBlockEvent) event).getDamager();
-
-            if (block.hasMetadata("player")) {
-                for (MetadataValue v : block.getMetadata("player")) {
-                    Object o = v.value();
-                    if (o instanceof UUID) {
-                        aggressor = Bukkit.getPlayer((UUID) o);
-                        directDamage = false;
+            if (block != null) {
+                if (block.hasMetadata("player")) {
+                    for (MetadataValue v : block.getMetadata("player")) {
+                        Object o = v.value();
+                        if (o instanceof UUID) {
+                            aggressor = Bukkit.getPlayer((UUID) o);
+                            directDamage = false;
+                        }
                     }
                 }
+                else
+                    bestGuess = String.format("%s(%s,%s,%s)", block.getType().name(), block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
             }
-            else
-                bestGuess = String.format("%s(%s,%s,%s)", block.getType().name(), block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
-        }
+    }
 
         // this damage wasn't caused by a block or an entity so must have been done by a damage tick
         else {
