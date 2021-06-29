@@ -20,11 +20,20 @@ public class GameManager {
         return singletonInstance;
     }
 
+    public List<Game> getActiveGames() {
+        return new ArrayList<>(activeGames);
+    }
+
     public @Nullable Game getPlayersCurrentGame(Player player) {
         for (Game game : activeGames) {
             if (game.getActivePlayers().contains(player))
                 return game;
         }
         return null;
+    }
+
+    public void setupGame(Game game) {
+        activeGames.add(game);
+        game.setupGame();
     }
 }

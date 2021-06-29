@@ -24,11 +24,10 @@ commands:
     usage: "/kitconfig"
     description: "opens a gui to configure a kit"
     permission: bghr.admin.kits
-  abilities:
-    usage: "/abilities"
-    description: "shows all of the available base abilities and their options"
-    permission: bghr.admin.kits
-  abilityconfig:
-    usage: "/abilityconfig"
-    description: "opens a gui to configure an ability"
-    permission: bghr.admin.kits
+  newgame:
+    usage: "/newgame"
+    description: "opens a gui to configure a new game"
+    permission: bghr.admin.games
+  games:
+    usage: "/games"
+    description: "shows currently active games to join or spectate"

@@ -10,6 +10,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -21,8 +22,16 @@ import java.util.UUID;
 
 public class CustomEventsListener implements Listener {
 
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void callGameDeathEvent(GameDamageEvent event) {
+        if (event.getDamage() > event.getVictim().getHealth()) {
+            GameDeathEvent deathEvent = new GameDeathEvent(event.getVictim(), event.getAggressor(), event.getGame(), event.getDamage(), event.getType());
+            deathEvent.callEvent();
+        }
+    }
+
     @EventHandler
-    public void callPvpDamageEvent(EntityDamageEvent event) {
+    public void callGameDamageEvent(EntityDamageEvent event) {
         Player aggressor = null;
         Player victim;
         Game game;
@@ -107,19 +116,19 @@ public class CustomEventsListener implements Listener {
             }
         }
 
-        if (aggressor != null && victim != null && event.getDamage() > 0) {
+        if (victim != null && event.getDamage() > 0) {
             game = GameManager.getInstance().getPlayersCurrentGame(victim);
 
             if (game == null || !game.equals(GameManager.getInstance().getPlayersCurrentGame(aggressor))) {
                 return;
             }
 
-            PvpDamageEvent pvpDamageEvent = new PvpDamageEvent(aggressor, victim, game, event.getDamage(), directDamage);
-            pvpDamageEvent.callEvent();
+            GameDamageEvent gameDamageEvent = new GameDamageEvent(aggressor, victim, game, event.getDamage(), directDamage, event.getCause());
+            gameDamageEvent.callEvent();
 
-            if (pvpDamageEvent.isCancelled())
+            if (gameDamageEvent.isCancelled())
                 event.setCancelled(true);
 
-            event.setDamage(pvpDamageEvent.getDamage());
+            event.setDamage(gameDamageEvent.getDamage());
         }
     }}

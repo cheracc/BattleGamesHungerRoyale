@@ -121,6 +121,7 @@ public class MapData {
     public void addGamePlayed(int length) {
         averageLength = (averageLength * timesPlayed + length) / (timesPlayed + 1);
         timesPlayed++;
+        saveConfig();
     }
 
     public File getMapDirectory() {
