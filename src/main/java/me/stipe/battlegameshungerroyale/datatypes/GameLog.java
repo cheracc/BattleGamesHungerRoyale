@@ -3,9 +3,9 @@ package me.stipe.battlegameshungerroyale.datatypes;
 import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.events.GameDamageEvent;
 import me.stipe.battlegameshungerroyale.tools.Tools;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,50 +17,59 @@ import java.util.*;
 public class GameLog {
     private final long startTime;
     private final String mapName;
-    private String winner = "";
     private final Map<Long, Object> entries = new HashMap<>();
-    private final List<String> players = new ArrayList<>();
+    private final Game game;
 
     public GameLog(Game game) {
         this.startTime = System.currentTimeMillis();
+        this.game = game;
         mapName = game.getMap().getMapName();
-        for (Player p : game.getActivePlayers()) {
-            players.add(p.getName());
-        }
     }
 
     public void addDamageEntry(GameDamageEvent event) {
-        GameLogDamageEntry entry = new GameLogDamageEntry(event.getAggressor(), event.getVictim(), event.getType(), event.getDamage());
+        GameLogDamageEntry entry = new GameLogDamageEntry(event.getAggressor(), event.getVictim(), event.getType(), event.getDamage(), event.getBestGuess());
         entries.put(System.currentTimeMillis(), entry);
     }
 
     public void addDeathEntry(Player player) {
         entries.put(System.currentTimeMillis(), player.getName());
+        try {
+            saveLogFile();
+        } catch (IOException e) {
+            Bukkit.getLogger().warning("couldn't save gamelog file");
+        }
     }
 
     public void addPhaseEntry(Game.GamePhase phase) {
         entries.put(System.currentTimeMillis(), phase);
-    }
-
-    public void finalizeLog(@NotNull Game game) {
-        if (game.getWinner() != null)
-            winner = game.getWinner().getName();
-
         try {
             saveLogFile();
         } catch (IOException e) {
-            e.printStackTrace();
+            Bukkit.getLogger().warning("couldn't save gamelog file");
+        }
+    }
+
+    public void finalizeLog() {
+        try {
+            saveLogFile();
+        } catch (IOException e) {
+            Bukkit.getLogger().warning("couldn't save gamelog file");
         }
     }
 
     private void saveLogFile() throws IOException {
-        Instant timestamp = Instant.now();
-        File gameLogFile = new File(BGHR.getPlugin().getDataFolder(), "gamelogs/" + timestamp.toString());
+        String timestamp = Instant.now().toString().split("\\.")[0].replace('T', '_').replace(':', '-');
+        File gameLogFile = new File(BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/gamelogs",  timestamp + ".log");
+
+        if (!gameLogFile.exists())
+            if (gameLogFile.getParentFile().mkdirs())
+                Bukkit.getLogger().info("creating game log directory: " + gameLogFile.getAbsolutePath());
 
         FileWriter writer = new FileWriter(gameLogFile);
         PrintWriter print = new PrintWriter(writer);
 
         List<Long> entryTimes = new ArrayList<>(entries.keySet());
+        List<String> players = new ArrayList<>(game.getFullPlayerList());
         Collections.sort(entryTimes);
         Collections.sort(players);
 
@@ -71,14 +80,18 @@ public class GameLog {
             playerString.append(s);
         }
 
-        long elapsedTimeInSeconds = System.currentTimeMillis() - startTime / 1000;
-
         print.printf("Game Started: %s", Instant.ofEpochMilli(startTime));
+        print.println();
         print.printf("Game Ended: %s", Instant.now());
-        print.printf("Time elapsed: %s", Tools.secondsToMinutesAndSeconds((int) elapsedTimeInSeconds));
+        print.println();
+        print.printf("Time elapsed: %s", Tools.secondsToMinutesAndSeconds(game.getCurrentGameTime()));
+        print.println();
         print.printf("Map: %s", mapName);
+        print.println();
         print.printf("Participants (%s): %s", players.size(), playerString);
-        print.printf("Winner: %s", winner);
+        print.println();
+        print.printf("Winner: %s", game.getWinner() == null ? "" : game.getWinner().getName());
+        print.println();
 
         for (Long l : entryTimes) {
             Object o = entries.get(l);
@@ -86,10 +99,11 @@ public class GameLog {
 
             if (o instanceof GameLogDamageEntry) {
                 GameLogDamageEntry entry = (GameLogDamageEntry) o;
-                if (entry.getDamager() != null) {
-                    print.printf("[%s]: %s did %s damage to %s with %s", time.toString(), entry.getDamager(), entry.getDamage(), entry.getVictim(), entry.getType().name().toLowerCase());
+                if (entry.getDamager() != null && entry.getDamager().length() > 1) {
+                    print.printf("[%s]: %s(%s) [%s-> %s-%s(%s)", time.toString(), entry.getDamager(), entry.getDamagerHealth(),
+                            entry.getType().name().toLowerCase(), entry.getVictim(), entry.getDamage(), entry.getVictimHealth());
                 } else
-                    print.printf("[%s]: %s took %s damage from %s", time.toString(), entry.getVictim(), entry.getDamage(), entry.getType().name().toLowerCase());
+                    print.printf("[%s]: %s [%s-> %s-%s(%s)", time.toString(), entry.getBestGuess(), entry.getType().name().toLowerCase(), entry.getVictim(), entry.getDamage(), entry.getVictimHealth());
             }
             else if (o instanceof String) {
                 print.printf("[%s]: %s died.", time.toString(), o);
@@ -98,16 +112,21 @@ public class GameLog {
                 Game.GamePhase phase = (Game.GamePhase) o;
                 print.printf("[%s]: Started %s phase", time.toString(), phase.name().toLowerCase());
             }
+            print.println();
         }
+        print.close();
     }
 
     private static class GameLogDamageEntry {
         private final String damager;
         private final String victim;
+        private final String bestGuess;
         private final EntityDamageEvent.DamageCause type;
         private final double damage;
+        private final double damagerHealth;
+        private final double victimHealth;
 
-        public GameLogDamageEntry(Player damager, Player victim, EntityDamageEvent.DamageCause type, double damage) {
+        public GameLogDamageEntry(Player damager, Player victim, EntityDamageEvent.DamageCause type, double damage, String bestGuess) {
             if (damager == null)
                 this.damager = "";
             else
@@ -115,6 +134,20 @@ public class GameLog {
             this.victim = victim.getName();
             this.type = type;
             this.damage = damage;
+            if (damager != null)
+                this.damagerHealth = damager.getHealth();
+            else
+                this.damagerHealth = 0;
+            this.victimHealth = victim.getHealth();
+            this.bestGuess = bestGuess == null ? "" : bestGuess;
+        }
+
+        public double getDamagerHealth() {
+            return damagerHealth;
+        }
+
+        public double getVictimHealth() {
+            return victimHealth;
         }
 
         public String getDamager() {
@@ -123,6 +156,10 @@ public class GameLog {
 
         public String getVictim() {
             return victim;
+        }
+
+        public String getBestGuess() {
+            return bestGuess;
         }
 
         public EntityDamageEvent.DamageCause getType() {

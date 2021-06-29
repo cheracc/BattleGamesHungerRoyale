@@ -36,4 +36,8 @@ public class GameManager {
         activeGames.add(game);
         game.setupGame();
     }
+
+    public void gameOver(Game game) {
+        activeGames.remove(game);
+    }
 }

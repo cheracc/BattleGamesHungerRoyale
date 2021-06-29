@@ -15,6 +15,7 @@ public class GameDamageEvent extends Event implements Cancellable {
 
     private final EntityDamageEvent.DamageCause type;
     private final Game game;
+    private String bestGuess;
     private boolean cancelled = false;
     private double damage;
     private final boolean directDamage;
@@ -26,6 +27,7 @@ public class GameDamageEvent extends Event implements Cancellable {
         this.damage = damage;
         this.directDamage = directDamage;
         this.type = type;
+        this.bestGuess = null;
     }
 
     public Player getAggressor() {
@@ -52,6 +54,13 @@ public class GameDamageEvent extends Event implements Cancellable {
         return directDamage;
     }
 
+    public String getBestGuess() {
+        return bestGuess;
+    }
+
+    public void setBestGuess(String bestGuess) {
+        this.bestGuess = bestGuess;
+    }
 
     @Override
     public @NotNull HandlerList getHandlers() {

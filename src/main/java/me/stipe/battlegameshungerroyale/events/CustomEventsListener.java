@@ -21,6 +21,15 @@ import org.bukkit.projectiles.ProjectileSource;
 import java.util.UUID;
 
 public class CustomEventsListener implements Listener {
+    private static CustomEventsListener singletonInstance = null;
+
+    private CustomEventsListener() {}
+
+    public static CustomEventsListener getInstance() {
+        if (singletonInstance == null)
+            singletonInstance = new CustomEventsListener();
+        return singletonInstance;
+    }
 
     @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void callGameDeathEvent(GameDamageEvent event) {
@@ -36,6 +45,7 @@ public class CustomEventsListener implements Listener {
         Player victim;
         Game game;
         boolean directDamage = false;
+        String bestGuess = null;
 
         if (event.getEntity() instanceof Player) {
             victim = (Player) event.getEntity();
@@ -76,6 +86,9 @@ public class CustomEventsListener implements Listener {
                     }
                 }
             }
+
+            else
+                bestGuess = damager.getName();
         }
 
         // the rest of these would all be 'indirect damage' - damage from blocks placed by a player or poison/wither/etc.
@@ -91,10 +104,13 @@ public class CustomEventsListener implements Listener {
                     }
                 }
             }
+            else
+                bestGuess = String.format("%s(%s,%s,%s)", block.getType().name(), block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
         }
 
         // this damage wasn't caused by a block or an entity so must have been done by a damage tick
         else {
+            boolean found = false;
             switch (event.getCause()) {
                 case FIRE_TICK:
                 case POISON:
@@ -107,23 +123,28 @@ public class CustomEventsListener implements Listener {
                             else {
                                 aggressor = ds.getSource();
                                 directDamage = false;
+                                found = true;
                             }
                         }
                     }
                     break;
-                default:
-                    return;
             }
+            if (!found)
+                bestGuess = event.getCause().name();
         }
 
         if (victim != null && event.getDamage() > 0) {
             game = GameManager.getInstance().getPlayersCurrentGame(victim);
 
-            if (game == null || !game.equals(GameManager.getInstance().getPlayersCurrentGame(aggressor))) {
+            if (game == null) // not playing a game
                 return;
-            }
+
+            if (aggressor != null && !game.equals(GameManager.getInstance().getPlayersCurrentGame(aggressor))) // aggressor and victim in different worlds (idk)
+                return;
 
             GameDamageEvent gameDamageEvent = new GameDamageEvent(aggressor, victim, game, event.getDamage(), directDamage, event.getCause());
+            if (bestGuess != null)
+                gameDamageEvent.setBestGuess(bestGuess);
             gameDamageEvent.callEvent();
 
             if (gameDamageEvent.isCancelled())

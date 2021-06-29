@@ -1,6 +1,7 @@
 package me.stipe.battlegameshungerroyale.datatypes;
 
 import me.stipe.battlegameshungerroyale.BGHR;
+import me.stipe.battlegameshungerroyale.events.CustomEventsListener;
 import me.stipe.battlegameshungerroyale.events.GameDamageEvent;
 import me.stipe.battlegameshungerroyale.events.GameDeathEvent;
 import me.stipe.battlegameshungerroyale.managers.GameManager;
@@ -15,12 +16,11 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockDamageEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -33,6 +33,7 @@ public class Game implements Listener {
     private final BossBar bar;
 
     private boolean openToPlayers;
+    private double postgameTime;
     private double pregameTime;
     private double gameTime;
     private BukkitTask gameTick = null;
@@ -82,6 +83,7 @@ public class Game implements Listener {
     }
 
     public void startGame() {
+        CustomEventsListener.getInstance();
         gameTick = startGameTick();
         currentPhase = GamePhase.INVINCIBILITY;
         openToPlayers = false;
@@ -121,11 +123,16 @@ public class Game implements Listener {
     }
 
     private void endGame() {
-        gameLog.finalizeLog(this);
+        for (Player p : getCurrentPlayersAndSpectators())
+            quit(p);
+
+        gameLog.finalizeLog();
+        bar.setVisible(false);
+        bar.removeAll();
+
         MapManager.getInstance().unloadMap(map);
-        BlockPlaceEvent.getHandlerList().unregister(this);
-        BlockBreakEvent.getHandlerList().unregister(this);
-        BlockDamageEvent.getHandlerList().unregister(this);
+        GameManager.getInstance().gameOver(this);
+        HandlerList.unregisterAll(this);
     }
 
     public int getCurrentGameTime() {
@@ -166,13 +173,16 @@ public class Game implements Listener {
         player.setGameMode(GameMode.ADVENTURE);
         player.teleport(map.getWorld().getSpawnLocation());
         bar.addPlayer(player);
+        player.setBedSpawnLocation(map.getWorld().getSpawnLocation(), true);
     }
 
     public void quit(Player player) {
-        participants.replace(player.getUniqueId(), 0);
+        if (participants.containsKey(player.getUniqueId()))
+            participants.replace(player.getUniqueId(), 0);
         player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
         bar.removePlayer(player);
         player.setGameMode(GameMode.SURVIVAL);
+        player.setBedSpawnLocation(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), true);
     }
 
     private void checkForWinner() {
@@ -206,7 +216,25 @@ public class Game implements Listener {
     }
 
     private void startPostGameTimer() {
+        postgameTime = options.getPostGameTime();
 
+        BukkitRunnable postGameTimer = new BukkitRunnable() {
+            long last = System.currentTimeMillis();
+            @Override
+            public void run() {
+                postgameTime -= (System.currentTimeMillis() - last) / 1000D;
+
+                if (postgameTime <= 0) {
+                    endGame();
+                    cancel();
+                    return;
+                }
+                updateBossBar();
+                last = System.currentTimeMillis();
+            }
+        };
+
+        postGameTimer.runTaskTimer(BGHR.getPlugin(), 20L, 4L);
     }
 
     private void startPregameTimer() {
@@ -263,6 +291,21 @@ public class Game implements Listener {
         return participants.size();
     }
 
+    public List<String> getFullPlayerList() {
+        List<String> list = new ArrayList<>();
+        for (UUID u : participants.keySet()) {
+            list.add(Bukkit.getPlayer(u).getName());
+        }
+        return list;
+    }
+
+    public Set<Player> getCurrentPlayersAndSpectators() {
+        Set<Player> players = getActivePlayers();
+
+        players.addAll(map.getWorld().getPlayers());
+        return players;
+    }
+
     public Set<Player> getActivePlayers() {
         Set<Player> players = new HashSet<>();
 
@@ -287,6 +330,9 @@ public class Game implements Listener {
         double phaseProgress;
         if (currentPhase == GamePhase.PREGAME)
             phaseProgress = options.getPregameTime() - pregameTime;
+        else if (currentPhase == GamePhase.POSTGAME) {
+            phaseProgress = postgameTime;
+        }
         else {
             phaseProgress = gameTime;
             if (currentPhase.ordinal() > 1)
@@ -294,61 +340,61 @@ public class Game implements Listener {
                     phaseProgress -= length[i];
                 }
         }
-        phaseProgress = Math.max(1, phaseProgress/length[currentPhase.ordinal()]);
+        phaseProgress = Math.max(0, Math.min(1, phaseProgress/length[currentPhase.ordinal()]));
 
         bar.setProgress(1 - phaseProgress);
     }
 
-    @EventHandler
-    public void handlePlacing(BlockPlaceEvent event) {
-        if (event.getPlayer().getWorld().equals(map.getWorld())) {
-            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
-                event.setCancelled(true);
-                return;
-            }
-
-            if (!options.isAllowRegularBuilding()) {
-                if (Tools.getUuidFromItem(event.getItemInHand()) == null) {
-                    event.setCancelled(true);
-                }
-            }
-
-        }
-    }
-
-    @EventHandler
-    public void handleBreaking(BlockBreakEvent event) {
-        if (event.getPlayer().getWorld().equals(map.getWorld())) {
-            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
-                event.setCancelled(true);
-                return;
-            }
-
-            if (!options.isAllowRegularBuilding()) {
-                if (Tools.getUuidFromBlock(event.getBlock()) == null) {
-                    event.setCancelled(true);
-                }
-            }
-
-        }
-    }
-
-    @EventHandler
-    public void stopDamage(BlockDamageEvent event) {
-        if (event.getPlayer().getWorld().equals(map.getWorld())) {
-            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
-                event.setCancelled(true);
-                return;
-            }
-
-            if (!options.isAllowRegularBuilding()) {
-                if (Tools.getUuidFromBlock(event.getBlock()) == null) {
-                    event.setCancelled(true);
-                }
-            }
-
-        }
-    }
+//    @EventHandler
+//    public void handlePlacing(BlockPlaceEvent event) {
+//        if (event.getPlayer().getWorld().equals(map.getWorld())) {
+//            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
+//                event.setCancelled(true);
+//                return;
+//            }
+//
+//            if (!options.isAllowRegularBuilding()) {
+//                if (Tools.getUuidFromItem(event.getItemInHand()) == null) {
+//                    event.setCancelled(true);
+//                }
+//            }
+//
+//        }
+//    }
+//
+//    @EventHandler
+//    public void handleBreaking(BlockBreakEvent event) {
+//        if (event.getPlayer().getWorld().equals(map.getWorld())) {
+//            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
+//                event.setCancelled(true);
+//                return;
+//            }
+//
+//            if (!options.isAllowRegularBuilding()) {
+//                if (Tools.getUuidFromBlock(event.getBlock()) == null) {
+//                    event.setCancelled(true);
+//                }
+//            }
+//
+//        }
+//    }
+//
+//    @EventHandler
+//    public void stopDamage(BlockDamageEvent event) {
+//        if (event.getPlayer().getWorld().equals(map.getWorld())) {
+//            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
+//                event.setCancelled(true);
+//                return;
+//            }
+//
+//            if (!options.isAllowRegularBuilding()) {
+//                if (Tools.getUuidFromBlock(event.getBlock()) == null) {
+//                    event.setCancelled(true);
+//                }
+//            }
+//
+//        }
+//    }
 
     @EventHandler
     public void handlePvp(GameDamageEvent event) {
@@ -374,9 +420,13 @@ public class Game implements Listener {
             gameLog.addDeathEntry(dead);
 
             if (participants.containsKey(dead.getUniqueId())) {
-                int livesLeft = participants.get(dead.getUniqueId());
+                int livesLeft = Math.max(0, participants.get(dead.getUniqueId()) - 1);
 
-                participants.replace(dead.getUniqueId(), livesLeft - 1);
+                participants.replace(dead.getUniqueId(), livesLeft);
+                if (livesLeft > 0)
+                    dead.sendMessage(Tools.componentalize("&cYou died! &fYou may respawn &e" + livesLeft + " &fmore time" + ((livesLeft > 1) ? "s" : "")));
+                else
+                    dead.sendMessage(Tools.componentalize("&cYou died! &fYou have no respawns left."));
             }
         }
     }
@@ -402,6 +452,17 @@ public class Game implements Listener {
             if (participants.get(uuid) != null)
                 if (participants.get(uuid) != 0)
                     quit(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        if (isPlaying(event.getPlayer())) {
+            event.setRespawnLocation(map.getWorld().getSpawnLocation());
+        }
+        if (isSpectating(event.getPlayer())) {
+            event.setRespawnLocation(map.getWorld().getSpawnLocation());
+            event.getPlayer().setGameMode(GameMode.SPECTATOR);
         }
     }
 }

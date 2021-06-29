@@ -289,12 +289,19 @@ public class ConfigureGameGui extends Gui {
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();
+            updateItem(1, timersIcon());
             open(e.getWhoClicked());
         });
 
         for (int i = 0; i < 5; i++) {
             gui.setItem(i, timerIcon(gui, i));
         }
+
+        gui.setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave")).asGuiItem(e -> {
+            e.getWhoClicked().closeInventory();
+            updateItem(1, timersIcon());
+            open(e.getWhoClicked());
+        }));
 
         gui.open(player);
     }
@@ -315,7 +322,7 @@ public class ConfigureGameGui extends Gui {
 
     private void sendStartGameGui(HumanEntity player) {
         int rows = options.getMaps().size() / 9 + 1;
-        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("Select a Map for This Game:")).create();
+        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Select a Map for This Game:")).create();
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();

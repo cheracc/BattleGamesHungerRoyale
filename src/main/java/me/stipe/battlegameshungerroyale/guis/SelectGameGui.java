@@ -17,7 +17,7 @@ import java.util.List;
 public class SelectGameGui extends Gui {
 
     public SelectGameGui(HumanEntity player) {
-        super(1, Tools.componentalize("Current Games:"));
+        super(1, Tools.componentalize("&0Current Games:"));
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 

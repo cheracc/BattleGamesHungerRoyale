@@ -3,6 +3,7 @@ package me.stipe.battlegameshungerroyale;
 import me.stipe.battlegameshungerroyale.commands.*;
 import me.stipe.battlegameshungerroyale.datatypes.EquipmentSet;
 import me.stipe.battlegameshungerroyale.datatypes.SoundEffect;
+import me.stipe.battlegameshungerroyale.events.CustomEventsListener;
 import me.stipe.battlegameshungerroyale.guis.TextInputListener;
 import me.stipe.battlegameshungerroyale.listeners.AbilityListeners;
 import me.stipe.battlegameshungerroyale.listeners.GeneralPlayerEventListener;
@@ -49,9 +50,11 @@ public class BGHR extends JavaPlugin {
         this.getCommand("kitconfig").setExecutor(new KitConfig());
         this.getCommand("newgame").setExecutor(new NewGameCommand());
         this.getCommand("games").setExecutor(new GamesCommand());
+        this.getCommand("quit").setExecutor(new QuitCommand());
         Bukkit.getPluginManager().registerEvents(new GeneralPlayerEventListener(), this);
         Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
+        Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
     }
 
     @Override

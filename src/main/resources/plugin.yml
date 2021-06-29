@@ -31,3 +31,6 @@ commands:
   games:
     usage: "/games"
     description: "shows currently active games to join or spectate"
+  quit:
+    usage: "/quit"
+    description: "leaves a game and returns to the lobby world"
