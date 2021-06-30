@@ -112,6 +112,7 @@ public class MapManager implements Listener {
         this.canFlyInLobby = config.getBoolean("players can fly", false);
     }
 
+
     private Properties getServerProperties() {
         Properties properties = new Properties();
         try {
