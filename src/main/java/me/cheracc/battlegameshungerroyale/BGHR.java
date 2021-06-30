@@ -12,6 +12,8 @@ import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.permissions.Permission;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.InvocationTargetException;
@@ -19,16 +21,16 @@ import java.lang.reflect.InvocationTargetException;
 public class BGHR extends JavaPlugin {
     private FileConfiguration mainConfig;
     private static BGHR plugin;
-    private static MapManager mapManager;
     private static KitManager kitManager;
     private static PlayerManager playerManager;
+    private static Permission perms = null;
 
     @Override
     public void onEnable() {
         plugin = this;
         saveDefaultConfig();
         mainConfig = getConfig();
-        mapManager = MapManager.getInstance();
+        MapManager.getInstance();
         ConfigurationSerialization.registerClass(SoundEffect.class);
         ConfigurationSerialization.registerClass(EquipmentSet.class);
         kitManager = new KitManager();
@@ -52,11 +54,23 @@ public class BGHR extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
+        setupPermissions();
     }
 
     @Override
     public void onDisable() {
         saveConfig();
+    }
+
+    private static void setupPermissions() {
+        RegisteredServiceProvider<Permission> rsp = Bukkit.getServer().getServicesManager().getRegistration(Permission.class);
+        perms = rsp.getProvider();
+    }
+
+    public static Permission getPerms() {
+        if (perms == null)
+            setupPermissions();
+        return perms;
     }
 
     public static BGHR getPlugin() {
@@ -65,10 +79,6 @@ public class BGHR extends JavaPlugin {
 
     public FileConfiguration getMainConfig() {
         return mainConfig;
-    }
-
-    public static MapManager getMapManager() {
-        return mapManager;
     }
 
     public static KitManager getKitManager() {
