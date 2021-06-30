@@ -4,9 +4,6 @@ version: 1.17.1
 api-version: 1.16
 load: STARTUP
 commands:
-  maps:
-    usage: "just type /maps"
-    description: "shows the maps"
   savemap:
     usage: "/savemap"
     description: "saves the current map"

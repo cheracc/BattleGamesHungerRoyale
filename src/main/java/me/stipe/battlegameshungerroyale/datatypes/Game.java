@@ -7,10 +7,7 @@ import me.stipe.battlegameshungerroyale.events.GameDeathEvent;
 import me.stipe.battlegameshungerroyale.managers.GameManager;
 import me.stipe.battlegameshungerroyale.managers.MapManager;
 import me.stipe.battlegameshungerroyale.tools.Tools;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.GameRule;
-import org.bukkit.WorldBorder;
+import org.bukkit.*;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -31,6 +28,7 @@ public class Game implements Listener {
     private final GameLog gameLog;
     private final GameOptions options;
     private final BossBar bar;
+    private final World world;
 
     private boolean openToPlayers;
     private double postgameTime;
@@ -44,7 +42,9 @@ public class Game implements Listener {
     public Game(MapData map, GameOptions options) {
         this.map = map;
         this.options = options;
+        this.world = MapManager.getInstance().createNewWorld(map);
         bar = Bukkit.createBossBar("Pregame", BarColor.WHITE, BarStyle.SOLID);
+        bar.setVisible(true);
         gameLog = new GameLog(this);
         openToPlayers = false;
         pregameTime = -1;
@@ -52,31 +52,26 @@ public class Game implements Listener {
         postgameTime = -1;
         currentPhase = GamePhase.PREGAME;
 
-        if (!map.isLoaded()) {
-            MapManager.getInstance().loadMap(map);
-        }
-        bar.setVisible(true);
-
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
 
     public void setupGame() {
         openToPlayers = true;
         if (map.isUseBorder()) {
-            WorldBorder border = map.getWorld().getWorldBorder();
+            WorldBorder border = world.getWorldBorder();
             border.setCenter(map.getCenterX(), map.getCenterZ());
             border.setSize(map.getBorderRadius() * 2);
         }
         // always
-        map.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-        map.getWorld().setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
-        map.getWorld().setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
+        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+        world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
+        world.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
 
         // for pregame only
-        map.getWorld().setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        map.getWorld().setGameRule(GameRule.DO_FIRE_TICK, false);
-        map.getWorld().setGameRule(GameRule.DO_MOB_SPAWNING, false);
-        map.getWorld().setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        world.setGameRule(GameRule.DO_FIRE_TICK, false);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
 
         gameLog.addPhaseEntry(currentPhase);
 
@@ -88,12 +83,12 @@ public class Game implements Listener {
         gameTick = startGameTick();
         currentPhase = GamePhase.INVINCIBILITY;
         openToPlayers = false;
-        map.getWorld().setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
-        map.getWorld().setGameRule(GameRule.DO_FIRE_TICK, true);
-        map.getWorld().setGameRule(GameRule.DO_MOB_SPAWNING, true);
-        map.getWorld().setGameRule(GameRule.DO_WEATHER_CYCLE, true);
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        world.setGameRule(GameRule.DO_FIRE_TICK, true);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
 
-        for (Player p : map.getWorld().getPlayers()) {
+        for (Player p : world.getPlayers()) {
             p.setInvulnerable(true);
         }
         gameLog.addPhaseEntry(currentPhase);
@@ -111,7 +106,7 @@ public class Game implements Listener {
 
     private void startBorderPhase() {
         currentPhase = GamePhase.BORDER;
-        map.getWorld().getWorldBorder().setSize(10, options.getBorderTime());
+        world.getWorldBorder().setSize(10, options.getBorderTime());
         gameLog.addPhaseEntry(currentPhase);
     }
 
@@ -131,7 +126,7 @@ public class Game implements Listener {
         bar.setVisible(false);
         bar.removeAll();
 
-        MapManager.getInstance().unloadMap(map);
+        MapManager.getInstance().unloadWorld(world);
         GameManager.getInstance().gameOver(this);
         HandlerList.unregisterAll(this);
     }
@@ -148,6 +143,10 @@ public class Game implements Listener {
         return map;
     }
 
+    public World getWorld() {
+        return world;
+    }
+
     public boolean isOpenToPlayers() {
         return openToPlayers;
     }
@@ -157,11 +156,11 @@ public class Game implements Listener {
             return false;
         if (!participants.containsKey(player.getUniqueId()))
             return false;
-        return participants.get(player.getUniqueId()) > 0 && map.getWorld().equals(player.getWorld());
+        return participants.get(player.getUniqueId()) > 0 && world.equals(player.getWorld());
     }
 
     public boolean isSpectating(Player player) {
-        if (player.getWorld().equals(map.getWorld())) {
+        if (player.getWorld().equals(world)) {
             if (participants.get(player.getUniqueId()) == null)
                 return true;
             return participants.get(player.getUniqueId()) == 0;
@@ -172,9 +171,9 @@ public class Game implements Listener {
     public void join(Player player) {
         participants.put(player.getUniqueId(), options.getLivesPerPlayer());
         player.setGameMode(GameMode.ADVENTURE);
-        player.teleport(map.getWorld().getSpawnLocation());
+        player.teleport(world.getSpawnLocation());
         bar.addPlayer(player);
-        player.setBedSpawnLocation(map.getWorld().getSpawnLocation(), true);
+        player.setBedSpawnLocation(world.getSpawnLocation(), true);
         gameLog.addLogEntry(String.format("%s joined (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
     }
 
@@ -306,7 +305,7 @@ public class Game implements Listener {
     public Set<Player> getCurrentPlayersAndSpectators() {
         Set<Player> players = getActivePlayers();
 
-        players.addAll(map.getWorld().getPlayers());
+        players.addAll(world.getPlayers());
         return players;
     }
 
@@ -351,7 +350,7 @@ public class Game implements Listener {
 
 //    @EventHandler
 //    public void handlePlacing(BlockPlaceEvent event) {
-//        if (event.getPlayer().getWorld().equals(map.getWorld())) {
+//        if (event.getPlayer().getWorld().equals(world)) {
 //            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
 //                event.setCancelled(true);
 //                return;
@@ -368,7 +367,7 @@ public class Game implements Listener {
 //
 //    @EventHandler
 //    public void handleBreaking(BlockBreakEvent event) {
-//        if (event.getPlayer().getWorld().equals(map.getWorld())) {
+//        if (event.getPlayer().getWorld().equals(world)) {
 //            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
 //                event.setCancelled(true);
 //                return;
@@ -385,7 +384,7 @@ public class Game implements Listener {
 //
 //    @EventHandler
 //    public void stopDamage(BlockDamageEvent event) {
-//        if (event.getPlayer().getWorld().equals(map.getWorld())) {
+//        if (event.getPlayer().getWorld().equals(world)) {
 //            if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.POSTGAME) {
 //                event.setCancelled(true);
 //                return;
@@ -445,7 +444,7 @@ public class Game implements Listener {
     @EventHandler
     public void onJoinWorld(PlayerChangedWorldEvent event) {
         // coming to this world!
-        if (event.getPlayer().getWorld().equals(map.getWorld())) {
+        if (event.getPlayer().getWorld().equals(world)) {
             Player p = event.getPlayer();
             if (participants.containsKey(p.getUniqueId()) && participants.get(p.getUniqueId()) > 0)
                 return;
@@ -453,7 +452,7 @@ public class Game implements Listener {
             bar.addPlayer(event.getPlayer());
         }
         // leaving this world!
-        if (event.getFrom().equals(map.getWorld())) {
+        if (event.getFrom().equals(world)) {
             UUID uuid = event.getPlayer().getUniqueId();
             if (participants.get(uuid) != null)
                 if (participants.get(uuid) != 0)
@@ -464,11 +463,11 @@ public class Game implements Listener {
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         if (isPlaying(event.getPlayer())) {
-            event.setRespawnLocation(map.getWorld().getSpawnLocation());
+            event.setRespawnLocation(world.getSpawnLocation());
             event.getPlayer().setGameMode(GameMode.ADVENTURE);
         }
         if (isSpectating(event.getPlayer())) {
-            event.setRespawnLocation(map.getWorld().getSpawnLocation());
+            event.setRespawnLocation(world.getSpawnLocation());
             event.getPlayer().setGameMode(GameMode.SPECTATOR);
         }
     }

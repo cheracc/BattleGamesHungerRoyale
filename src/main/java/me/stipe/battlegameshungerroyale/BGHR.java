@@ -6,7 +6,6 @@ import me.stipe.battlegameshungerroyale.datatypes.SoundEffect;
 import me.stipe.battlegameshungerroyale.events.CustomEventsListener;
 import me.stipe.battlegameshungerroyale.guis.TextInputListener;
 import me.stipe.battlegameshungerroyale.listeners.AbilityListeners;
-import me.stipe.battlegameshungerroyale.listeners.GeneralPlayerEventListener;
 import me.stipe.battlegameshungerroyale.managers.KitManager;
 import me.stipe.battlegameshungerroyale.managers.MapManager;
 import me.stipe.battlegameshungerroyale.managers.PlayerManager;
@@ -42,7 +41,6 @@ public class BGHR extends JavaPlugin {
         kitManager.loadKits();
         playerManager = new PlayerManager();
 
-        this.getCommand("maps").setExecutor(new Maps());
         this.getCommand("savemap").setExecutor(new SaveMap());
         this.getCommand("mapconfig").setExecutor(new MapConfig());
         this.getCommand("kit").setExecutor(new KitCommand());
@@ -51,7 +49,6 @@ public class BGHR extends JavaPlugin {
         this.getCommand("newgame").setExecutor(new NewGameCommand());
         this.getCommand("games").setExecutor(new GamesCommand());
         this.getCommand("quit").setExecutor(new QuitCommand());
-        Bukkit.getPluginManager().registerEvents(new GeneralPlayerEventListener(), this);
         Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
@@ -60,7 +57,6 @@ public class BGHR extends JavaPlugin {
     @Override
     public void onDisable() {
         saveConfig();
-        mapManager.unloadAllMaps();
     }
 
     public static BGHR getPlugin() {

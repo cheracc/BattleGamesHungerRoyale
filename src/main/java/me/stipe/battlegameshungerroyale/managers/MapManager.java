@@ -4,12 +4,12 @@ import me.stipe.battlegameshungerroyale.BGHR;
 import me.stipe.battlegameshungerroyale.datatypes.MapData;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
@@ -27,9 +27,8 @@ public class MapManager implements Listener {
     private final File mapsDirectory;
     private final File mainWorldFolder;
     private final File activeMapsDirectory;
-    private final List<MapData> maps = new ArrayList<>();
-    private World lobbyWorld = null;
-    private boolean canBuildInLobby = false;
+    private final Map<MapData, List<World>> maps = new HashMap<>();
+    private World lobbyWorld;
     private boolean canFlyInLobby = false;
 
     private MapManager() {
@@ -92,27 +91,25 @@ public class MapManager implements Listener {
                     e.printStackTrace();
                 }
 
+                if (isLobby) {
+                    for (MapData m : getMaps()) {
+                        if (m.isLobby()) {
+                            Bukkit.getLogger().warning("found multiple lobby.yml files in the maps directory. There can only be one lobby map.");
+                            Bukkit.getLogger().warning("Existing: " + m.getMapDirectory().getPath() + " Tried to add: " + configFile.getParent());
+                            Bukkit.getLogger().warning(configFile.getParent() + " was not loaded. Rename one of the lobby.yml files to mapconfig.yml. You may only have one lobby.yml file.");
+                            return;
+                        }
+                    }
+                }
+
                 MapData mapData = new MapData(config, file, isLobby);
-                if (isLobby && lobbyWorld != null)
-                    mapData.setWorld(lobbyWorld);
-                maps.add(mapData);
+                maps.put(mapData, new ArrayList<>());
             }
         }
     }
 
     private void loadLobbyConfig(FileConfiguration config) {
-        this.canBuildInLobby = config.getBoolean("players can build", false);
         this.canFlyInLobby = config.getBoolean("players can fly", false);
-
-    }
-
-    public MapData getPlayersCurrentMap(Player p) {
-        for (MapData mapData : maps) {
-            if (mapData.isLoaded() && mapData.getWorld().equals(p.getWorld()))
-                return mapData;
-        }
-        Bukkit.getLogger().warning("Couldn't find the map data for " + p.getName() + "'s current world");
-        return null;
     }
 
     private Properties getServerProperties() {
@@ -135,25 +132,36 @@ public class MapManager implements Listener {
     }
 
     public World getLobbyWorld() {
-        if (lobbyWorld != null)
-            return lobbyWorld;
-        else
-            return Bukkit.getWorlds().get(0);
+        if (lobbyWorld == null)
+            lobbyWorld = Bukkit.getWorlds().get(0);
+        return lobbyWorld;
+    }
+
+    public MapData getLobbyMap() {
+        for (MapData m : getMaps()) {
+            if (m.isLobby())
+                return m;
+        }
+        Bukkit.getLogger().warning("could not find lobby mapdata");
+        return null;
     }
 
     public List<MapData> getMaps() {
-        return new ArrayList<>(maps);
+        return new ArrayList<>(maps.keySet());
     }
 
     @EventHandler
     public void onWorldLoad(WorldLoadEvent event) {
         if (event.getWorld().getName().equalsIgnoreCase(mainWorldFolder.getName())) {
             this.lobbyWorld = event.getWorld();
-            for (MapData mapData : maps) {
-                if (mapData.isLobby())
-                    mapData.setWorld(lobbyWorld);
-            }
+            maps.get(getLobbyMap()).add(lobbyWorld);
             lobbyWorld.setAutoSave(false);
+            lobbyWorld.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+            lobbyWorld.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+            lobbyWorld.setGameRule(GameRule.DO_FIRE_TICK, false);
+            lobbyWorld.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+            lobbyWorld.setGameRule(GameRule.KEEP_INVENTORY, true);
+            lobbyWorld.setGameRule(GameRule.SPAWN_RADIUS, 0);
             WorldLoadEvent.getHandlerList().unregister(this);
         }
     }
@@ -167,11 +175,26 @@ public class MapManager implements Listener {
             }
     }
 
-    public void loadMap(MapData mapData) {
+    public MapData getMapFromWorld(World world) {
+        for (Map.Entry<MapData, List<World>> e : maps.entrySet())
+            if (e.getValue().contains(world))
+                return e.getKey();
+        return null;
+    }
+
+    public void unloadWorld(World world) {
+        MapData map = getMapFromWorld(world);
+        Bukkit.unloadWorld(world, false);
+
+        maps.get(map).remove(world);
+    }
+
+    public World createNewWorld(MapData mapData) {
         File loadedMap = new File(activeMapsDirectory, mapData.getMapDirectory().getName() + "_" + System.currentTimeMillis());
         copyMap(mapData.getMapDirectory(), loadedMap);
         World world = Bukkit.createWorld(new WorldCreator(mapsDirectory.getName() + "/" + mapData.getMapDirectory().getName()));
-        if (world == null) return;
+        if (world == null)
+            return null;
         world.setAutoSave(false);
         world.setKeepSpawnInMemory(false);
         world.setClearWeatherDuration(Integer.MAX_VALUE);
@@ -180,18 +203,7 @@ public class MapManager implements Listener {
             world.getWorldBorder().setCenter(mapData.getCenterX(), mapData.getCenterZ());
             world.getWorldBorder().setSize(mapData.getBorderRadius() * 2);
         }
-        mapData.setWorld(world);
-    }
-
-    public void unloadMap(MapData mapData) {
-        // TODO make sure a game isn't going on
-        World world = mapData.getWorld();
-
-        for (Player p : world.getPlayers())
-            p.teleport(getLobbyWorld().getSpawnLocation());
-
-        Bukkit.unloadWorld(world, false);
-        mapData.setWorld(null);
+        return world;
     }
 
     private void copyMap(File mapSourceDirectory, File destination) {
@@ -223,25 +235,12 @@ public class MapManager implements Listener {
         }
     }
 
-    public void unloadAllMaps() {
-        for (MapData mapData : maps) {
-            if (mapData.isLoaded() && !mapData.isLobby()) {
-                mapData.getWorld().setAutoSave(false);
-                mapData.getWorld().setKeepSpawnInMemory(false);
-                Bukkit.unloadWorld(mapData.getWorld(), false);
-                Bukkit.getLogger().info("unloaded " + mapData.getMapName());
-            }
-        }
-    }
-
-    public void saveMap(MapData mapData) {
+    public void saveMap(MapData mapData, World world) {
         File oldVersionsDirectory = new File(mapsDirectory, "old_maps");
         if (!oldVersionsDirectory.exists() && oldVersionsDirectory.mkdirs())
             Bukkit.getLogger().info("created old_maps directory inside maps directory");
 
-        if (mapData.getWorld() != null) {
-            mapData.getWorld().save();
-        }
+        world.save();
 
         File loadedMap = new File(activeMapsDirectory, mapData.getMapDirectory().getName());
 
@@ -256,9 +255,6 @@ public class MapManager implements Listener {
 
     }
 
-    public boolean canBuildInLobby() {
-        return canBuildInLobby;
-    }
 
 
 }

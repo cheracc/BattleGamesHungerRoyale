@@ -24,25 +24,16 @@ public class SaveMap implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         if (commandSender instanceof Player) {
-            MapManager maps = BGHR.getPlugin().getMapManager();
             Player p = (Player) commandSender;
             World w = p.getWorld();
             Long currentTime = System.currentTimeMillis();
-            MapData mapDataToSave = null;
-
-            // TODO: make sure this map hasn't been used in a game...
-
-            for (MapData mapData : maps.getMaps()) {
-                if (mapData.isLoaded() && mapData.getWorld().equals(w)) {
-                    mapDataToSave = mapData;
-                }
-            }
+            MapData mapDataToSave = MapManager.getInstance().getMapFromWorld(w);
 
             if (args.length == 1 && args[0].equalsIgnoreCase("confirm")) {
                 if (checkConfirmation(p) && mapDataToSave != null) {
                     String mapName = mapDataToSave.getMapName();
-                    maps.saveMap(mapDataToSave);
-                    p.sendMessage(Component.text("MapData " + mapName + " has been saved"));
+                    MapManager.getInstance().saveMap(mapDataToSave, w);
+                    p.sendMessage(Component.text("&fWorld and Config for &e" + mapName + " &fhas been saved"));
                     return true;
                 }
                 else

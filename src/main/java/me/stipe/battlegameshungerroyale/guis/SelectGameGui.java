@@ -55,7 +55,7 @@ public class SelectGameGui extends Gui {
                 game.join(p);
             }
             else if (e.isRightClick()) {
-                e.getWhoClicked().teleport(game.getMap().getWorld().getSpawnLocation());
+                e.getWhoClicked().teleport(game.getWorld().getSpawnLocation());
                 e.getWhoClicked().setGameMode(GameMode.SPECTATOR);
             }
         });

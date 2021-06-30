@@ -8,10 +8,13 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapData {
     private final FileConfiguration config;
     private final File mapDirectory;
+    private final List<World> createdWorlds;
     private String mapName;
     private String mapCreator;
     private String mapDescription;
@@ -19,7 +22,6 @@ public class MapData {
     private double averageLength;
     private Material icon;
 
-    private World world = null;
     private final boolean isLobby;
     private int centerX;
     private int centerY;
@@ -30,6 +32,7 @@ public class MapData {
     public MapData(FileConfiguration config, File mapDirectory, boolean isLobby) {
         this.config = config;
         this.mapDirectory = mapDirectory;
+        this.createdWorlds = new ArrayList<>();
         mapName = config.getString("name",  mapDirectory.getName());
         mapCreator = config.getString("creator", "unknown");
         mapDescription = config.getString("description", "there is no description for this map");
@@ -42,10 +45,6 @@ public class MapData {
         centerZ = config.getInt("center.z", 0);
         useBorder = config.getBoolean("use border", false);
         borderRadius = config.getInt("border radius", 50);
-    }
-
-    public void setWorld(World world) {
-        this.world = world;
     }
 
     public void setIcon(Material material) {
@@ -88,15 +87,6 @@ public class MapData {
         saveConfig();
     }
 
-    public void updateBorder() {
-        if (isUseBorder()) {
-            world.getWorldBorder().setSize(borderRadius * 2);
-            world.getWorldBorder().setCenter(centerX, centerZ);
-        } else {
-            world.getWorldBorder().reset();
-        }
-    }
-
     public void toggleUseBorder() {
         useBorder = !useBorder;
         config.set("use border", useBorder);
@@ -121,6 +111,8 @@ public class MapData {
     public void addGamePlayed(int length) {
         averageLength = (averageLength * timesPlayed + length) / (timesPlayed + 1);
         timesPlayed++;
+        config.set("average length", averageLength);
+        config.set("times played", timesPlayed);
         saveConfig();
     }
 
@@ -150,14 +142,6 @@ public class MapData {
 
     public String getMapCreator() {
         return mapCreator;
-    }
-
-    public boolean isLoaded() {
-        return world != null;
-    }
-
-    public World getWorld() {
-        return world;
     }
 
     public boolean isLobby() {
