@@ -76,7 +76,11 @@ public class GameManager {
     private void startWithRandomMap(GameOptions options) {
         List<MapData> maps = options.getMaps();
         Collections.shuffle(maps);
-        int random = ThreadLocalRandom.current().nextInt(0, maps.size() - 1);
+        int random;
+        if (maps.size() > 1)
+            random = ThreadLocalRandom.current().nextInt(0, maps.size() - 1);
+        else
+            random = 0;
 
         setupGame(new Game(maps.get(random), options));
     }

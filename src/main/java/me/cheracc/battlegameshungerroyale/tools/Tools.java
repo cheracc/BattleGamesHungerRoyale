@@ -22,6 +22,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +31,23 @@ public class Tools {
     public static TextComponent BLANK_LINE = Component.text("");
     public static NamespacedKey UUID_KEY = new NamespacedKey(BGHR.getPlugin(), "uuid_key");
 
+    public static String getTimestamp() {
+        return Instant.now().toString().replace(":","-").split("\\.")[0];
+    }
+
     public static void saveUuidToItemMeta(UUID uuid, ItemMeta meta) {
         meta.getPersistentDataContainer().set(UUID_KEY, PersistentDataType.STRING, uuid.toString());
+    }
+
+    public static String getRandomId(boolean withLeadingUnderscore) {
+        if (withLeadingUnderscore)
+            return "_" + getRandomId();
+        else
+            return getRandomId();
+    }
+
+    public static String getRandomId() {
+        return UUID.randomUUID().toString().split("-")[0];
     }
 
     public static @Nullable UUID getUuidFromItem(ItemStack item) {

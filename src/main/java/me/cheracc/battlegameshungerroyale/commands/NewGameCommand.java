@@ -11,7 +11,7 @@ public class NewGameCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         if (sender instanceof Player) {
-            new ConfigureGameGui((Player) sender);
+            new ConfigureGameGui((Player) sender, null);
         }
         return true;
     }

@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
@@ -190,9 +191,10 @@ public class MapManager implements Listener {
     }
 
     public World createNewWorld(MapData mapData) {
-        File loadedMap = new File(activeMapsDirectory, mapData.getMapDirectory().getName() + "_" + System.currentTimeMillis());
+        String uid = UUID.randomUUID().toString().split("-")[0];
+        File loadedMap = new File(activeMapsDirectory, mapData.getMapDirectory().getName() + "_" + uid);
         copyMap(mapData.getMapDirectory(), loadedMap);
-        World world = Bukkit.createWorld(new WorldCreator(mapsDirectory.getName() + "/" + mapData.getMapDirectory().getName()));
+        World world = Bukkit.createWorld(new WorldCreator(activeMapsDirectory.getName() + "/" + loadedMap.getName()));
         if (world == null)
             return null;
         world.setAutoSave(false);
@@ -203,6 +205,7 @@ public class MapManager implements Listener {
             world.getWorldBorder().setCenter(mapData.getCenterX(), mapData.getCenterZ());
             world.getWorldBorder().setSize(mapData.getBorderRadius() * 2);
         }
+        maps.get(mapData).add(world);
         return world;
     }
 
@@ -230,6 +233,14 @@ public class MapManager implements Listener {
                 else
                     FileUtils.copyFileToDirectory(file, destination);
             }
+
+            if (destination.equals(mainWorldFolder)) {
+                File playerdataDirectory = new File(destination, "playerdata");
+                if (!playerdataDirectory.exists())
+                    if (!playerdataDirectory.mkdirs())
+                        Bukkit.getLogger().warning("could not create empty playerdata directory");
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -239,19 +250,32 @@ public class MapManager implements Listener {
         File oldVersionsDirectory = new File(mapsDirectory, "old_maps");
         if (!oldVersionsDirectory.exists() && oldVersionsDirectory.mkdirs())
             Bukkit.getLogger().info("created old_maps directory inside maps directory");
+        String[] unwantedFiles = { "uid.dat", "session.lock", "level.dat_old", "playerdata", "advancements", "stats" };
 
         world.save();
 
-        File loadedMap = new File(activeMapsDirectory, mapData.getMapDirectory().getName());
+        File loadedMap = world.getWorldFolder();
 
         if (loadedMap.exists()) {
             try {
-                FileUtils.moveDirectory(mapData.getMapDirectory(), new File(oldVersionsDirectory, mapData.getMapDirectory().getName() + System.currentTimeMillis()));
-                FileUtils.copyDirectoryToDirectory(loadedMap, mapsDirectory);
+                File archiveFolder = new File(oldVersionsDirectory, mapData.getMapDirectory().getName() + "_" + Tools.getTimestamp());
+                FileUtils.moveDirectory(mapData.getMapDirectory(), archiveFolder);
+                Bukkit.getLogger().info("archived " + mapData.getMapDirectory().getPath() + " as " + archiveFolder.getPath());
+                FileUtils.deleteDirectory(mapData.getMapDirectory());
+                Bukkit.getLogger().info("deleted " + mapData.getMapDirectory().getPath());
+                FileUtils.copyDirectory(loadedMap, mapData.getMapDirectory());
+                Bukkit.getLogger().info("copied " + loadedMap.getAbsolutePath() + " to " + mapData.getMapDirectory().getPath());
+                for (String s : unwantedFiles) {
+                    File delete = new File(mapData.getMapDirectory(), s);
+                    FileUtils.deleteQuietly(delete);
+                }
+                mapData.saveConfig();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        else
+            Bukkit.getLogger().warning("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
 
     }
 

@@ -7,6 +7,8 @@ import me.cheracc.battlegameshungerroyale.datatypes.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
@@ -38,7 +40,12 @@ public class ConfigureMapGui extends Gui {
         setItem(1, centerIcon());
         setItem(2, borderIcon());
         setItem(8, saveQuitIcon());
+    }
 
+    private void setBorderFromConfig(World world) {
+        WorldBorder border = world.getWorldBorder();
+        border.setSize(map.getBorderRadius() * 2);
+        border.setCenter(map.getCenterX(), map.getCenterZ());
     }
 
     public GuiItem nameAndDescriptionIcon() {
@@ -108,6 +115,7 @@ public class ConfigureMapGui extends Gui {
                 }
             }
             map.setBorderRadius(current);
+            setBorderFromConfig(e.getWhoClicked().getWorld());
             updateItem(2, borderIcon());
         });
     }

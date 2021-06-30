@@ -178,7 +178,7 @@ public class Game implements Listener {
     }
 
     public void quit(Player player) {
-        if (!getWinner().equals(player) && participants.containsKey(player.getUniqueId())) {
+        if (getWinner() != null && !getWinner().equals(player) && participants.containsKey(player.getUniqueId())) {
             participants.replace(player.getUniqueId(), 0);
             gameLog.addLogEntry(String.format("%s left (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
         }

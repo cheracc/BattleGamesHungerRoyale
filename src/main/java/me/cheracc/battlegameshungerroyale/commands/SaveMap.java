@@ -3,6 +3,7 @@ package me.cheracc.battlegameshungerroyale.commands;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -26,14 +27,19 @@ public class SaveMap implements CommandExecutor {
         if (commandSender instanceof Player) {
             Player p = (Player) commandSender;
             World w = p.getWorld();
-            Long currentTime = System.currentTimeMillis();
             MapData mapDataToSave = MapManager.getInstance().getMapFromWorld(w);
 
             if (args.length == 1 && args[0].equalsIgnoreCase("confirm")) {
                 if (checkConfirmation(p) && mapDataToSave != null) {
+                    double startTime = System.currentTimeMillis();
+                    w.save();
+                    w.setAutoSave(false);
+
                     String mapName = mapDataToSave.getMapName();
                     MapManager.getInstance().saveMap(mapDataToSave, w);
-                    p.sendMessage(Component.text("&fWorld and Config for &e" + mapName + " &fhas been saved"));
+                    double elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000;
+
+                    p.sendMessage(Tools.componentalize(String.format("&fWorld and Config for &e%s &fhas been saved. That took %.3f seconds.", mapName, elapsedSeconds)));
                     return true;
                 }
                 else

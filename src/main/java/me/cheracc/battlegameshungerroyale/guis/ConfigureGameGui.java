@@ -23,22 +23,30 @@ import java.util.List;
 public class ConfigureGameGui extends Gui {
     private final GameOptions options;
 
-    public ConfigureGameGui(HumanEntity player) {
+    public ConfigureGameGui(HumanEntity player, GameOptions options) {
         super(1, Tools.componentalize("&0Configure Game"));
-        options = new GameOptions();
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
+
+        if (options == null) {
+            this.options = new GameOptions();
+            sendSelectConfigGui(player);
+            return;
+        }
+
+
+        this.options = options;
 
         fillGui();
         open(player);
     }
 
     private void fillGui() {
-        setItem(0,mapsIcon());
-        setItem(1,timersIcon());
-        setItem(2,livesIcon());
-        setItem(3,playersNeededIcon());
-        setItem(4,allowBuildingIcon());
+        setItem(0, mapsIcon());
+        setItem(1, timersIcon());
+        setItem(2, livesIcon());
+        setItem(3, playersNeededIcon());
+        setItem(4, allowBuildingIcon());
 
         setItem(6, loadConfigIcon());
         setItem(7, saveConfigIcon());
@@ -188,6 +196,7 @@ public class ConfigureGameGui extends Gui {
 
         if (configFiles.isEmpty()) {
             player.sendMessage(Tools.componentalize("There are no saved configuration files"));
+            fillGui();
             open(player);
         }
 
@@ -205,10 +214,17 @@ public class ConfigureGameGui extends Gui {
                     .lore(Tools.componentalize("&bClick to load this file")).asGuiItem(e -> {
                 e.getWhoClicked().closeInventory();
                 options.loadConfig(file);
-                updateAll();
+                fillGui();
                 open(e.getWhoClicked());
             }));
         }
+
+        gui.addItem(ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("&eCreate New Configuration")).asGuiItem(e -> {
+            e.getWhoClicked().closeInventory();
+            updateAll();
+            open(e.getWhoClicked());
+        }));
+
         gui.open(player);
     }
 
