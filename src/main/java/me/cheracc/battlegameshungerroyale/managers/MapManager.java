@@ -201,8 +201,8 @@ public class MapManager implements Listener {
         world.setKeepSpawnInMemory(false);
         world.setClearWeatherDuration(Integer.MAX_VALUE);
         world.setTime(0);
-        if (mapData.isUseBorder() && !(mapData.getCenterX() != 0 && mapData.getCenterZ() != 0)) {
-            world.getWorldBorder().setCenter(mapData.getCenterX(), mapData.getCenterZ());
+        if (mapData.isUseBorder() && mapData.getBorderRadius() > 0) {
+            world.getWorldBorder().setCenter(mapData.getBorderCenter(world));
             world.getWorldBorder().setSize(mapData.getBorderRadius() * 2);
         }
         maps.get(mapData).add(world);

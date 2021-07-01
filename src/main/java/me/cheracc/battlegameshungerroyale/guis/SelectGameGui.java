@@ -8,7 +8,6 @@ import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.milkbowl.vault.permission.Permission;
-import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -71,8 +70,7 @@ public class SelectGameGui extends Gui {
             else if (e.isLeftClick() && game.isOpenToPlayers())
                 game.join(p);
             else if (e.isRightClick()) {
-                e.getWhoClicked().teleport(game.getWorld().getSpawnLocation());
-                e.getWhoClicked().setGameMode(GameMode.SPECTATOR);
+                game.joinAsSpectator(p);
             }
         });
     }

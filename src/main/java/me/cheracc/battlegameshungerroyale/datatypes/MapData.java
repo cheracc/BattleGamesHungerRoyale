@@ -8,43 +8,51 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MapData {
     private final FileConfiguration config;
     private final File mapDirectory;
-    private final List<World> createdWorlds;
     private String mapName;
     private String mapCreator;
     private String mapDescription;
     private int timesPlayed;
     private double averageLength;
     private Material icon;
-
     private final boolean isLobby;
-    private int centerX;
-    private int centerY;
-    private int centerZ;
+
     private boolean useBorder;
     private int borderRadius;
+    private int borderCenterX;
+    private int borderCenterY;
+    private int borderCenterZ;
+
+    private Material spawnBlockType = null;
+    private int spawnRadius;
+    private int spawnCenterX;
+    private int spawnCenterY;
+    private int spawnCenterZ;
 
     public MapData(FileConfiguration config, File mapDirectory, boolean isLobby) {
         this.config = config;
         this.mapDirectory = mapDirectory;
-        this.createdWorlds = new ArrayList<>();
         mapName = config.getString("name",  mapDirectory.getName());
         mapCreator = config.getString("creator", "unknown");
         mapDescription = config.getString("description", "there is no description for this map");
         averageLength = config.getInt("average length", 0);
         timesPlayed = config.getInt("times played", 0);
         icon = Material.getMaterial(config.getString("icon", "map").toUpperCase());
+        if (config.contains("spawn block type"))
+            spawnBlockType = Material.getMaterial(config.getString("spawn block type").toUpperCase());
         this.isLobby = isLobby;
-        centerX = config.getInt("center.x", 0);
-        centerY = config.getInt("center.y", 0);
-        centerZ = config.getInt("center.z", 0);
+        borderCenterX = config.getInt("border center.x", 0);
+        borderCenterY = config.getInt("border center.y", 100);
+        borderCenterZ = config.getInt("border center.z", 0);
+        spawnRadius = config.getInt("spawn radius", 10);
         useBorder = config.getBoolean("use border", false);
         borderRadius = config.getInt("border radius", 50);
+        spawnCenterX = config.getInt("spawn center.x", 0);
+        spawnCenterY = config.getInt("spawn center.y", 100);
+        spawnCenterZ = config.getInt("spawn center.z", 0);
     }
 
     public void setIcon(Material material) {
@@ -71,13 +79,35 @@ public class MapData {
         saveConfig();
     }
 
-    public void setCenter(Location location) {
-        centerX = (int) Math.floor(location.getX());
-        centerY = (int) Math.floor(location.getY());
-        centerZ = (int) Math.floor(location.getZ());
-        config.set("center.x", centerX);
-        config.set("center.y", centerY);
-        config.set("center.z", centerZ);
+    public void setSpawnBlockType(Material material) {
+        this.spawnBlockType = material;
+        config.set("spawn block type", spawnBlockType.name().toLowerCase());
+        saveConfig();
+    }
+
+    public void setSpawnRadius(int radius) {
+        this.spawnRadius = radius;
+        config.set("spawn radius", spawnRadius);
+        saveConfig();
+    }
+
+    public void setSpawnCenter(Location location) {
+        spawnCenterX = (int) Math.floor(location.getX());
+        spawnCenterY = (int) Math.floor(location.getY());
+        spawnCenterZ = (int) Math.floor(location.getZ());
+        config.set("spawn center.x", spawnCenterX);
+        config.set("spawn center.y", spawnCenterY);
+        config.set("spawn center.z", spawnCenterZ);
+        saveConfig();
+    }
+
+    public void setBorderCenter(Location location) {
+        borderCenterX = (int) Math.floor(location.getX());
+        borderCenterY = (int) Math.floor(location.getY());
+        borderCenterZ = (int) Math.floor(location.getZ());
+        config.set("border center.x", borderCenterX);
+        config.set("border center.y", borderCenterY);
+        config.set("border center.z", borderCenterZ);
         saveConfig();
     }
 
@@ -152,16 +182,12 @@ public class MapData {
         return config;
     }
 
-    public int getCenterX() {
-        return centerX;
+    public Location getBorderCenter(World world) {
+        return new Location(world, borderCenterX + 0.5, borderCenterY, borderCenterZ + 0.5);
     }
 
-    public int getCenterY() {
-        return centerY;
-    }
-
-    public int getCenterZ() {
-        return centerZ;
+    public Location getSpawnCenter(World world) {
+        return new Location(world, spawnCenterX + 0.5, spawnCenterY, spawnCenterZ + 0.5);
     }
 
     public boolean isUseBorder() {
@@ -170,5 +196,13 @@ public class MapData {
 
     public int getBorderRadius() {
         return borderRadius;
+    }
+
+    public Material getSpawnBlockType() {
+        return spawnBlockType;
+    }
+
+    public int getSpawnRadius() {
+        return spawnRadius;
     }
 }

@@ -6,19 +6,24 @@ import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
 import me.cheracc.battlegameshungerroyale.listeners.AbilityListeners;
+import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import net.milkbowl.vault.permission.Permission;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.InvocationTargetException;
 
-public class BGHR extends JavaPlugin {
+public class BGHR extends JavaPlugin implements Listener {
     private FileConfiguration mainConfig;
     private static BGHR plugin;
     private static KitManager kitManager;
@@ -54,7 +59,18 @@ public class BGHR extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new AbilityListeners(), this);
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
+        Bukkit.getPluginManager().registerEvents(this, this);
         setupPermissions();
+    }
+
+    @EventHandler
+    public void runDelayedTasks(ServerLoadEvent event) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                GameManager.getInstance();
+            }
+        }.runTaskLater(this, 10L);
     }
 
     @Override

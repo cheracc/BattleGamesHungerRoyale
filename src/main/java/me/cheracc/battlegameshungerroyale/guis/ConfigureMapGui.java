@@ -5,10 +5,7 @@ import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.WorldBorder;
+import org.bukkit.*;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
@@ -39,13 +36,16 @@ public class ConfigureMapGui extends Gui {
         setItem(0, nameAndDescriptionIcon());
         setItem(1, centerIcon());
         setItem(2, borderIcon());
+        setItem(3, spawnBlockIcon());
+        setItem(4, spawnCenterIcon());
+        setItem(5, spawnRadiusIcon());
         setItem(8, saveQuitIcon());
     }
 
     private void setBorderFromConfig(World world) {
         WorldBorder border = world.getWorldBorder();
         border.setSize(map.getBorderRadius() * 2);
-        border.setCenter(map.getCenterX(), map.getCenterZ());
+        border.setCenter(map.getBorderCenter(world));
     }
 
     public GuiItem nameAndDescriptionIcon() {
@@ -121,13 +121,81 @@ public class ConfigureMapGui extends Gui {
     }
 
     public GuiItem centerIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.COMPASS).name(Tools.componentalize("&eMap Center"));
-        icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center at this location. You can also stand where you want the center to be and type /mapconfig center", ChatColor.GRAY)));
+        ItemBuilder icon = ItemBuilder.from(Material.CONDUIT).name(Tools.componentalize("&eBorder Center"));
+        icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center at your location. You can also stand where you want the center to be and type &f/mapconfig &fbordercenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
 
         return icon.asGuiItem(e -> {
-            map.setCenter(e.getWhoClicked().getLocation());
-            e.getWhoClicked().sendMessage(Tools.componentalize("Center of world border to your location."));
+            if (e.isRightClick()) {
+                Location center = map.getBorderCenter(e.getWhoClicked().getWorld());
+                e.getWhoClicked().getWorld().strikeLightningEffect(center);
+                return;
+            }
+            map.setBorderCenter(e.getWhoClicked().getLocation());
+            e.getWhoClicked().sendMessage(Tools.componentalize("Center of border set to your location."));
         });
+    }
+
+    private GuiItem spawnBlockIcon() {
+        Material type = map.getSpawnBlockType();
+        if (type == null || type.isAir() || !type.isItem())
+            type = Material.DIRT;
+        Bukkit.getLogger().info(type.name());
+        ItemBuilder icon = ItemBuilder.from(type).name(Tools.componentalize("&eSpawn Point Block"));
+        icon.lore(Tools.componentalize(Tools.wrapText("Games will look for this block type to spawn players on. Click to open a gui and select a new block type. You can also stand on a spawn point and type /mapconfig spawn", ChatColor.GRAY)));
+
+        return icon.asGuiItem(e -> {
+            e.getWhoClicked().closeInventory();
+            new SelectMaterialGui(e.getWhoClicked(), this, mat -> {
+                map.setSpawnBlockType(mat);
+                e.getWhoClicked().closeInventory();
+                updateItem(3, spawnBlockIcon());
+                open(e.getWhoClicked());
+            });
+        });
+    }
+
+    public GuiItem spawnRadiusIcon() {
+        ItemBuilder icon = ItemBuilder.from(Material.ENDER_EYE).name(Tools.componentalize("&eSpawn Radius: &f" + map.getSpawnRadius()));
+        icon.lore(Tools.componentalize(Tools.wrapText("How far away players will spawn from the center. Click to increase, Right click to decrease", ChatColor.GRAY)));
+
+        return icon.asGuiItem(e -> {
+            int current = map.getSpawnRadius();
+            if (e.isLeftClick() && current < 24) {
+                current++;
+            }
+            if (e.isRightClick() && current > 5) {
+                current--;
+            }
+            map.setSpawnRadius(current);
+            updateItem(5, spawnRadiusIcon());
+            visualizeRadius((Player) e.getWhoClicked());
+        });
+    }
+
+    public GuiItem spawnCenterIcon() {
+        ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Tools.componentalize("&eSpawn Center"));
+        icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center of spawn at your location. You can also stand where you want the center to be and type &f/mapconfig &fspawncenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
+
+        return icon.asGuiItem(e -> {
+            if (e.isRightClick()) {
+                Location center = map.getSpawnCenter(e.getWhoClicked().getWorld());
+                e.getWhoClicked().getWorld().strikeLightningEffect(center);
+                return;
+            }
+            map.setSpawnCenter(e.getWhoClicked().getLocation());
+            e.getWhoClicked().sendMessage(Tools.componentalize("Center of spawn set to your location."));
+        });
+    }
+
+    private void visualizeRadius(Player p) {
+        Location center = map.getSpawnCenter(p.getWorld());
+        int radius = map.getSpawnRadius();
+        double angle = 2 * Math.PI / 100;
+
+        for (int i = 0; i < 100; i++) {
+            Location l = center.clone().add(radius * Math.cos(angle * i), 0, radius * Math.sin(angle * i));
+            p.spawnParticle(Particle.DRIP_LAVA, l, 10, 0.2, 0.2, 0.2);
+        }
     }
 
     public GuiItem saveQuitIcon() {

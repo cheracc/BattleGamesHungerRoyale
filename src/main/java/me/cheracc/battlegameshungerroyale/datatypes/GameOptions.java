@@ -23,6 +23,8 @@ public class GameOptions {
     private int borderTime;
     private int postGameTime;
     private boolean allowRegularBuilding;
+    private StartType startType;
+    public enum StartType { HUNGERGAMES, ELYTRA }
 
     public GameOptions() {
         loadConfig(null);
@@ -57,6 +59,7 @@ public class GameOptions {
         mainPhaseTime = config.getInt("timers.main", 600);
         borderTime = config.getInt("timers.border", 300);
         postGameTime = config.getInt("timers.postgame", 60);
+        startType = StartType.valueOf(config.getString("start type", "elytra").toUpperCase());
     }
 
     public void saveConfig(String configName) {
@@ -82,6 +85,7 @@ public class GameOptions {
         config.set("timers.main", mainPhaseTime);
         config.set("timers.border", borderTime);
         config.set("timers.postgame", postGameTime);
+        config.set("start type", startType.name().toLowerCase());
 
         try {
             config.save(configFile);
@@ -108,6 +112,17 @@ public class GameOptions {
 
     public void clearMaps() {
         maps.clear();
+    }
+
+    public StartType getStartType() {
+        return startType;
+    }
+
+    public void toggleStartType() {
+        if (startType == StartType.ELYTRA)
+            startType = StartType.HUNGERGAMES;
+        else
+            startType = StartType.ELYTRA;
     }
 
     public int getLivesPerPlayer() {

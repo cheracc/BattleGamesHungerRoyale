@@ -45,8 +45,8 @@ public class ConfigureGameGui extends Gui {
         setItem(2, livesIcon());
         setItem(3, playersNeededIcon());
         setItem(4, allowBuildingIcon());
+        setItem(5, spawnTypeIcon());
 
-        setItem(6, loadConfigIcon());
         setItem(7, saveConfigIcon());
         setItem(8, startGameIcon());
     }
@@ -151,17 +151,27 @@ public class ConfigureGameGui extends Gui {
         });
     }
 
-    private GuiItem loadConfigIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.ENDER_CHEST).name(Tools.componentalize("&eClick Here to LOAD a Saved Configuration"));
+    private GuiItem spawnTypeIcon() {
+        Material mat = options.getStartType() == GameOptions.StartType.ELYTRA ? Material.ELYTRA : Material.CHEST;
+        ItemBuilder icon = ItemBuilder.from(mat).name(Tools.componentalize("&eStart Type: &f" + options.getStartType().name().toLowerCase()));
+        List<String> lore = new ArrayList<>();
+        if (options.getStartType() == GameOptions.StartType.ELYTRA)
+            lore.addAll(Tools.wrapText("&7At the start of the game, players will be teleported to central spawn and then launched into the air to glide back down using a (temporary) provided elytra. The elytra will be removed at the end of the invincibility phase or when the player touches the ground.", ChatColor.GRAY));
+        else
+            lore.addAll(Tools.wrapText("&7At the start of the game, players are teleported to spawn points equally distant from the center spawn. If spawn point blocks are set, each player will spawn on one of the spawn point blocks - otherwise they will be evenly spaced around the center.", ChatColor.GRAY));
+
+        lore.add("");
+        lore.add("&bClick to change");
+        icon.lore(Tools.componentalize(lore));
 
         return icon.asGuiItem(e -> {
-            e.getWhoClicked().closeInventory();
-            sendSelectConfigGui(e.getWhoClicked());
+            options.toggleStartType();
+            updateItem(5, spawnTypeIcon());
         });
     }
 
     private GuiItem saveConfigIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.SHULKER_BOX).name(Tools.componentalize("&eClick Here to SAVE this Configuration"));
+        ItemBuilder icon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eClick Here to SAVE this Configuration"));
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();

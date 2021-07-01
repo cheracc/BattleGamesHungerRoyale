@@ -1,8 +1,10 @@
 name: BattleGamesHungerRoyale
 main: me.cheracc.battlegameshungerroyale.BGHR
-version: 1.17.1
+version: ${project.version}
 api-version: 1.16
 load: STARTUP
+softdepend:
+  - Vault
 commands:
   savemap:
     usage: "/savemap"
