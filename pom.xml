@@ -28,16 +28,6 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.h2database:h2</include>
-                                    <include>commons-io:commons-io</include>
-                                    <include>dev.triumphteam:triumph-gui</include>
-                                    <include>org.reflections:*</include>
-                                    <include>org.javassist:javassist</include>
-                                    <include>org.bukkit:*</include>
-                                </includes>
-                            </artifactSet>
                         </configuration>
                     </execution>
                 </executions>
@@ -106,6 +96,10 @@
         <repository>
             <id>repo</id>
             <url>https://repo.mattstudios.me/artifactory/public/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
         <repository>
             <id>papermc</id>

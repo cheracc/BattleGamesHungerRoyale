@@ -3,9 +3,11 @@ package me.cheracc.battlegameshungerroyale.guis;
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
+import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import net.milkbowl.vault.permission.Permission;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -21,18 +23,19 @@ public class SelectGameGui extends Gui {
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 
-        fillGui();
+        fillGui(player);
         open(player);
     }
 
-    private void fillGui() {
+    private void fillGui(HumanEntity player) {
         for (Game game : GameManager.getInstance().getActiveGames())
-            addItem(gameIcon(game));
+            addItem(gameIcon(player, game));
     }
 
-    private GuiItem gameIcon(Game game) {
+    private GuiItem gameIcon(HumanEntity viewer, Game game) {
         ItemBuilder item = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize("&eMap: &f" + game.getMap().getMapName()));
         List<String> lore = new ArrayList<>();
+        Permission perms = BGHR.getPerms();
 
         lore.add("&ePlayers: &7" + game.getActivePlayers().size() + "/" + game.getStartingPlayersSize());
         lore.add("&ePhase: &7" + game.getPhase());
@@ -42,6 +45,11 @@ public class SelectGameGui extends Gui {
         if (game.isOpenToPlayers())
             lore.add("    &d&lClick to Join!");
         lore.add("&bRight click to spectate");
+
+        if (perms.has(viewer, "bghr.admin.games")) {
+            lore.add("");
+            lore.add("&4[&cShift-Click&4]:&f Close this game");
+        }
 
         item = item.lore(Tools.componentalize(lore));
 
@@ -54,7 +62,13 @@ public class SelectGameGui extends Gui {
             Game current = GameManager.getInstance().getPlayersCurrentGame(p);
             if (current != null)
                 current.quit(p);
-            if (e.isLeftClick() && game.isOpenToPlayers())
+
+            if (e.isShiftClick() && perms.has(e.getWhoClicked(), "bghr.admin.games")) {
+                game.endGame();
+                e.getWhoClicked().closeInventory();
+                new SelectGameGui(e.getWhoClicked());
+            }
+            else if (e.isLeftClick() && game.isOpenToPlayers())
                 game.join(p);
             else if (e.isRightClick()) {
                 e.getWhoClicked().teleport(game.getWorld().getSpawnLocation());

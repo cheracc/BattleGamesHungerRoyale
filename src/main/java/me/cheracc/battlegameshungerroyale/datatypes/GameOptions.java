@@ -14,7 +14,7 @@ import java.util.List;
 
 public class GameOptions {
     private File configFile;
-    private List<MapData> maps = new ArrayList<>();
+    private final List<MapData> maps = new ArrayList<>();
     private int livesPerPlayer;
     private int playersNeededToStart;
     private int pregameTime;

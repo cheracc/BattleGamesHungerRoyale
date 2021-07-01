@@ -118,7 +118,7 @@ public class Game implements Listener {
         gameLog.addPhaseEntry(currentPhase);
     }
 
-    private void endGame() {
+    public void endGame() {
         gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
             quit(p);

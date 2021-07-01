@@ -33,8 +33,6 @@ public class ConfigureGameGui extends Gui {
             sendSelectConfigGui(player);
             return;
         }
-
-
         this.options = options;
 
         fillGui();
@@ -211,11 +209,17 @@ public class ConfigureGameGui extends Gui {
 
         for (File file : configFiles) {
             gui.addItem(ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.componentalize(file.getName()))
-                    .lore(Tools.componentalize("&bClick to load this file")).asGuiItem(e -> {
-                e.getWhoClicked().closeInventory();
-                options.loadConfig(file);
-                fillGui();
-                open(e.getWhoClicked());
+                    .lore(Tools.componentalize("&bClick to start a game using this config"),
+                            Tools.componentalize("&bRight click to view or modify it")).asGuiItem(e -> {
+                                if (e.isRightClick()) {
+                                    e.getWhoClicked().closeInventory();
+                                    options.loadConfig(file);
+                                    new ConfigureGameGui(e.getWhoClicked(), options);
+                                } else {
+                                    e.getWhoClicked().closeInventory();
+                                    options.loadConfig(file);
+                                    sendStartGameGui(e.getWhoClicked());
+                                }
             }));
         }
 
@@ -352,9 +356,18 @@ public class ConfigureGameGui extends Gui {
                 Game game = new Game(map, options);
 
                 GameManager.getInstance().setupGame(game);
+                new SelectGameGui(player);
             });
             gui.addItem(icon);
         }
+
+        if (options.getMaps().size() == 1) {
+            Game game = new Game(options.getMaps().get(0), options);
+            GameManager.getInstance().setupGame(game);
+            new SelectGameGui(player);
+            return;
+        }
+
         gui.open(player);
     }
 }
