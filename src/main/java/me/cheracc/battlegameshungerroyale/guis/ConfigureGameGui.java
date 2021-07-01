@@ -175,7 +175,13 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
+            e.getWhoClicked().sendMessage(Tools.formatInstructions("Enter a name for this configuration. If you enter an existing configuration name, the old configuration will be overwritten.", options.getConfigFile().getName().split("\\.")[0]));
             TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), filename -> {
+                if (filename.matches("[^-_.A-Za-z0-9]")) {
+                    e.getWhoClicked().sendMessage(Tools.componentalize("Config names may not contain spaces or other odd characters"));
+                    open(e.getWhoClicked());
+                    return;
+                }
                 options.saveConfig(filename);
                 e.getWhoClicked().sendMessage(Tools.componentalize("&eSaved game configuration to " + filename + ".yml"));
                 open(e.getWhoClicked());
@@ -209,7 +215,7 @@ public class ConfigureGameGui extends Gui {
         }
 
         int rows = configFiles.size() / 9 + 1;
-        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Select a configuration file:")).create();
+        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Select a saved config:")).create();
 
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> {
@@ -218,7 +224,7 @@ public class ConfigureGameGui extends Gui {
         });
 
         for (File file : configFiles) {
-            gui.addItem(ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.componentalize(file.getName()))
+            gui.addItem(ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.componentalize(file.getName().split("\\.")[0]))
                     .lore(Tools.componentalize("&bClick to start a game using this config"),
                             Tools.componentalize("&bRight click to view or modify it")).asGuiItem(e -> {
                                 if (e.isRightClick()) {
@@ -235,7 +241,7 @@ public class ConfigureGameGui extends Gui {
 
         gui.addItem(ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("&eCreate New Configuration")).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            updateAll();
+            fillGui();
             open(e.getWhoClicked());
         }));
 
@@ -356,7 +362,7 @@ public class ConfigureGameGui extends Gui {
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();
-            open(e.getWhoClicked());
+            new ConfigureGameGui(player, options);
         });
 
         for (MapData map : options.getMaps()) {

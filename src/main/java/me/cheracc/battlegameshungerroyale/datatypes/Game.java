@@ -37,6 +37,7 @@ public class Game implements Listener {
     private double postgameTime;
     private double pregameTime;
     private double gameTime;
+    private Player winner = null;
     private BukkitTask gameTick = null;
     private final Map<UUID, Integer> participants = new HashMap<>();
     private final List<Location> hardSpawnPoints = new ArrayList<>();
@@ -120,9 +121,12 @@ public class Game implements Listener {
         currentPhase = GamePhase.MAIN;
         for (UUID uuid : participants.keySet()) {
             Player p = Bukkit.getPlayer(uuid);
-            if (isPlaying(p))
+            if (isPlaying(p)) {
                 p.setInvulnerable(false);
-            if (options.getStartType() == GameOptions.StartType.ELYTRA && p.getInventory().getChestplate().getType().equals(Material.ELYTRA)) {
+                p.setWalkSpeed(0.2F);
+            }
+            if (options.getStartType() == GameOptions.StartType.ELYTRA && p.getInventory().getChestplate() != null &&
+                    p.getInventory().getChestplate().getType().equals(Material.ELYTRA)) {
                 p.getInventory().setChestplate(null);
                 p.setGliding(false);
                 p.setAllowFlight(false);
@@ -146,10 +150,12 @@ public class Game implements Listener {
     }
 
     public void endGame() {
+        gameTick.cancel();
         gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
             quit(p);
 
+        world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
         bar.setVisible(false);
         bar.removeAll();
 
@@ -224,27 +230,33 @@ public class Game implements Listener {
             gameLog.addLogEntry(String.format("%s left (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
         }
         player.setGameMode(GameMode.ADVENTURE);
+        player.setWalkSpeed(0.2F);
+        player.setAllowFlight(false);
         player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
         bar.removePlayer(player);
     }
 
-    private void checkForWinner() {
+    private boolean checkForWinner() {
         Player winner = null;
         for (Map.Entry<UUID, Integer> e : participants.entrySet()) {
             if (e.getValue() > 0) {
                 if (winner != null) {
-                    return;
+                    return false;
                 }
                 winner = Bukkit.getPlayer(e.getKey());
             }
         }
         doPostGame();
         gameLog.addLogEntry(winner.getName() + " won!");
+        return true;
     }
 
     public Player getWinner() {
         if (currentPhase != GamePhase.POSTGAME)
             return null;
+
+        if (this.winner != null)
+            return this.winner;
 
         Player winner = null;
         for (Map.Entry<UUID, Integer> e : participants.entrySet()) {
@@ -256,6 +268,7 @@ public class Game implements Listener {
                 winner = Bukkit.getPlayer(e.getKey());
             }
         }
+        this.winner = winner;
         return winner;
     }
 
@@ -269,8 +282,8 @@ public class Game implements Listener {
                 postgameTime -= (System.currentTimeMillis() - last) / 1000D;
 
                 if (postgameTime <= 0) {
-                    endGame();
                     cancel();
+                    endGame();
                     return;
                 }
                 updateBossBar();
@@ -316,7 +329,8 @@ public class Game implements Listener {
             public void run() {
                 gameTime += (System.currentTimeMillis() - last) / 1000D;
 
-                checkForWinner();
+                if (checkForWinner())
+                    cancel();
 
                 if (currentPhase == GamePhase.INVINCIBILITY && gameTime >= options.getInvincibilityTime()) {
                     startMainPhase();
@@ -380,7 +394,7 @@ public class Game implements Listener {
         if (currentPhase == GamePhase.PREGAME)
             phaseProgress = options.getPregameTime() - pregameTime;
         else if (currentPhase == GamePhase.POSTGAME) {
-            phaseProgress = (postgameTime/options.getPostGameTime());
+            phaseProgress = options.getPostGameTime() - postgameTime;
         }
         else {
             phaseProgress = gameTime;
@@ -413,6 +427,8 @@ public class Game implements Listener {
         new BukkitRunnable() {
             @Override
             public void run() {
+                for (Player p : getActivePlayers())
+                    p.setWalkSpeed(0.2F);
                 callback.finished();
             }
         }.runTaskLater(BGHR.getPlugin(), 40L);
@@ -429,7 +445,7 @@ public class Game implements Listener {
         List<Location> spawnPoints = new ArrayList<>(hardSpawnPoints);
         int scanRadius = map.getSpawnRadius() + 1;
 
-        if (spawnPoints.isEmpty()) {
+        if (spawnPoints.isEmpty() && map.getSpawnBlockType() != null) {
             for (int x = -scanRadius; x <= scanRadius; x++) {
                 for (int y = -scanRadius; y <= scanRadius; y++)
                     for (int z = -scanRadius; z <= scanRadius; z++) {
@@ -444,17 +460,18 @@ public class Game implements Listener {
                         }
                     }
             }
-            Bukkit.getLogger().info("found " + spawnPoints.size() + " spawn points on " + map.getSpawnBlockType().name());
+            if (spawnPoints.size() > 0)
+                Bukkit.getLogger().info("found " + spawnPoints.size() + " spawn points on " + map.getSpawnBlockType().name());
         }
 
         if (spawnPoints.size() < getActivePlayers().size()) {
-            Bukkit.getLogger().info("not enough spawn points - adding our own");
+            Bukkit.getLogger().info("no spawn points found - adding our own");
             int spawnPointsNeeded = getActivePlayers().size() - spawnPoints.size();
 
             for (int i = 0; i < spawnPointsNeeded; i++) {
                 double angle = (Math.PI * 2 * i) / spawnPointsNeeded;
                 int radius = map.getSpawnRadius();
-                Location spawnPoint = center.clone().add(radius * Math.cos(angle), 0, radius * Math.sin(angle)).toHighestLocation();
+                Location spawnPoint = center.clone().add(radius * Math.cos(angle), 2, radius * Math.sin(angle)).toHighestLocation().add(0,2,0);
                 spawnPoint.setDirection(spawnPoint.clone().subtract(center).toVector().multiply(-1));
                 spawnPoints.add(spawnPoint);
             }
@@ -463,7 +480,7 @@ public class Game implements Listener {
     }
 
     private void doElytraSpawn(ImFinished callback) {
-        Vector boost = new Vector(0, 20, 0);
+        Vector boost = new Vector(0, 1, 0);
         List<Location> spawns = getSpawnPoints();
 
         if (spawns.size() < getActivePlayers().size()) {
@@ -480,26 +497,36 @@ public class Game implements Listener {
         }
 
         new BukkitRunnable() {
+            int count = 0;
             @Override
             public void run() {
                 for (Player p : getActivePlayers()) {
-                    p.setWalkSpeed(0.2F);
-                    p.setVelocity(boost);
-                    p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1F, 1F);
                     if (!isPlaying(p))
                         return;
 
-                    p.setVelocity(p.getVelocity().add(boost));
+                    if (count == 0) {
+                        p.setWalkSpeed(0.2F);
+                        p.setVelocity(boost);
+                    } else {
+                        p.setVelocity(p.getVelocity().add(boost));
+                    }
+                    p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1F, 1F + (0.1F * 2 * count));
 
-                    ItemStack elytra = new ItemStack(Material.ELYTRA);
-                    elytra.addEnchantment(Enchantment.BINDING_CURSE, 1);
-                    p.getInventory().setChestplate(elytra);
-                    p.setGliding(true);
-                    p.setAllowFlight(true);
+                    if (count == 2) {
+                        ItemStack elytra = new ItemStack(Material.ELYTRA);
+                        elytra.addEnchantment(Enchantment.BINDING_CURSE, 1);
+                        p.getInventory().setChestplate(elytra);
+                        p.setGliding(true);
+                        p.setAllowFlight(true);
+                    }
+                    if (count >= 4) {
+                        cancel();
+                        callback.finished();
+                    }
                 }
-                callback.finished();
+                count++;
             }
-        }.runTaskLater(BGHR.getPlugin(), 30L);
+        }.runTaskTimer(BGHR.getPlugin(), 40L, 4L);
     }
 
     @EventHandler
@@ -540,6 +567,8 @@ public class Game implements Listener {
     @EventHandler
     public void handleQuits(PlayerQuitEvent event) {
         Player p = event.getPlayer();
+        p.setWalkSpeed(0.2F);
+        p.setAllowFlight(false);
         if (isSpectating(p) || isPlaying(p))
             quit(p);
     }
@@ -555,4 +584,5 @@ public class Game implements Listener {
             event.getPlayer().setGameMode(GameMode.SPECTATOR);
         }
     }
+
 }

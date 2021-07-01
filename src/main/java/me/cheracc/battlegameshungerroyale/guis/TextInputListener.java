@@ -91,7 +91,7 @@ public class TextInputListener implements Listener {
             @Override
             public void run() {
                 for (UUID uuid : new ArrayList<>(watchers.keySet())) {
-                    if (!Bukkit.getPlayer(uuid).isOnline()) {
+                    if (Bukkit.getPlayer(uuid) == null || !Bukkit.getPlayer(uuid).isOnline()) {
                         watchers.remove(uuid);
                         if (watchers.isEmpty())
                             cancel();

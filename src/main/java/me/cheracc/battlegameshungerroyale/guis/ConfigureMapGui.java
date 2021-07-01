@@ -136,7 +136,9 @@ public class ConfigureMapGui extends Gui {
     }
 
     private GuiItem spawnBlockIcon() {
-        Material type = map.getSpawnBlockType();
+        Material type = Material.DIRT;
+        if (map.getSpawnBlockType() != null)
+            type = map.getSpawnBlockType();
         if (type == null || type.isAir() || !type.isItem())
             type = Material.DIRT;
         Bukkit.getLogger().info(type.name());
