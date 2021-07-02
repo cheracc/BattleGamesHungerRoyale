@@ -175,7 +175,8 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            e.getWhoClicked().sendMessage(Tools.formatInstructions("Enter a name for this configuration. If you enter an existing configuration name, the old configuration will be overwritten.", options.getConfigFile().getName().split("\\.")[0]));
+            e.getWhoClicked().sendMessage(Tools.formatInstructions("Enter a name for this configuration. If you enter an existing configuration name, the old configuration will be overwritten.",
+                    options.getConfigFile() == null ? "" : options.getConfigFile().getName().split("\\.")[0]));
             TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), filename -> {
                 if (filename.matches("[^-_.A-Za-z0-9]")) {
                     e.getWhoClicked().sendMessage(Tools.componentalize("Config names may not contain spaces or other odd characters"));

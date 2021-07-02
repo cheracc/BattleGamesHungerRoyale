@@ -5,6 +5,7 @@ import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.events.GameDamageEvent;
 import me.cheracc.battlegameshungerroyale.events.GameDeathEvent;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
+import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.*;
@@ -32,6 +33,7 @@ public class Game implements Listener {
     private final GameOptions options;
     private final BossBar bar;
     private final World world;
+    private final LootManager lootManager;
 
     private boolean openToPlayers;
     private double postgameTime;
@@ -45,8 +47,10 @@ public class Game implements Listener {
     enum GamePhase { PREGAME, INVINCIBILITY, MAIN, BORDER, POSTGAME }
 
     public Game(MapData map, GameOptions options) {
+        currentPhase = GamePhase.PREGAME;
         this.map = map;
         this.options = options;
+        this.lootManager = new LootManager(this);
         this.world = MapManager.getInstance().createNewWorld(map);
         bar = Bukkit.createBossBar("Pregame", BarColor.WHITE, BarStyle.SOLID);
         bar.setVisible(true);
@@ -55,7 +59,6 @@ public class Game implements Listener {
         pregameTime = -1;
         gameTime = -1;
         postgameTime = -1;
-        currentPhase = GamePhase.PREGAME;
 
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
@@ -71,7 +74,6 @@ public class Game implements Listener {
         // always
         world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
-        world.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
 
         // for pregame only
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
@@ -91,6 +93,7 @@ public class Game implements Listener {
         world.setGameRule(GameRule.DO_FIRE_TICK, true);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
+        lootManager.placeLootChests(getActivePlayers().size() * 5);
 
 
         if (options.getStartType() == GameOptions.StartType.ELYTRA)
@@ -150,7 +153,9 @@ public class Game implements Listener {
     }
 
     public void endGame() {
-        gameTick.cancel();
+        if (gameTick != null)
+            gameTick.cancel();
+        lootManager.close();
         gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
             quit(p);
@@ -309,6 +314,9 @@ public class Game implements Listener {
                         cancel();
                     }
                     else {
+                        //debug
+                        lootManager.placeLootChests(100);
+
                         pregameTime = options.getPregameTime();
                     }
 
@@ -517,7 +525,7 @@ public class Game implements Listener {
                         elytra.addEnchantment(Enchantment.BINDING_CURSE, 1);
                         p.getInventory().setChestplate(elytra);
                         p.setGliding(true);
-                        p.setAllowFlight(true);
+                        //p.setAllowFlight(true);
                     }
                     if (count >= 4) {
                         cancel();
