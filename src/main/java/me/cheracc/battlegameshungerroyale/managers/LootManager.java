@@ -5,11 +5,15 @@ import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Chest;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.Directional;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.loot.LootTable;
+import org.bukkit.loot.LootTables;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -21,10 +25,28 @@ import java.util.function.Consumer;
 public class LootManager implements Listener {
     private final Game game;
     private final BukkitTask asyncChunkScanner;
-    private final BukkitTask addShinies;
+    private final BukkitTask updateChests;
+    private final BukkitTask chestRecycler;
+
     private final boolean generateChests = true;
     private final int maxChestsPerChunk = 10;
     private final boolean loosenChestSearchRestrictions = true;
+    private final boolean disableScalingLootByLightLevel = false;
+    private final LootTable[] tables = {
+            LootTables.VILLAGE_ARMORER.getLootTable(),
+            LootTables.VILLAGE_WEAPONSMITH.getLootTable(),
+            LootTables.VILLAGE_FLETCHER.getLootTable(),
+            LootTables.END_CITY_TREASURE.getLootTable(),
+            LootTables.IGLOO_CHEST.getLootTable(),
+            LootTables.UNDERWATER_RUIN_BIG.getLootTable(),
+            LootTables.UNDERWATER_RUIN_SMALL.getLootTable(),
+            LootTables.VILLAGE_BUTCHER.getLootTable(),
+            LootTables.VILLAGE_FISHER.getLootTable(),
+            LootTables.PILLAGER_OUTPOST.getLootTable(),
+            LootTables.WOODLAND_MANSION.getLootTable(),
+            LootTables.NETHER_BRIDGE.getLootTable(),
+            LootTables.FISHING_TREASURE.getLootTable()
+    };
 
     private final List<Location> unusedChestLocations = new ArrayList<>();
     private final Set<Location> usedChestLocations = new HashSet<>();
@@ -34,13 +56,15 @@ public class LootManager implements Listener {
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
         this.game = game;
         this.asyncChunkScanner = asyncChunkScanner();
-        this.addShinies = addShinies();
+        this.updateChests = updateChests();
+        this.chestRecycler = chestRecycler();
         Bukkit.getLogger().info("starting chunk scanner");
     }
 
     public void close() {
         asyncChunkScanner.cancel();
-        addShinies.cancel();
+        updateChests.cancel();
+        chestRecycler.cancel();
         ChunkLoadEvent.getHandlerList().unregister(this);
     }
 
@@ -61,20 +85,28 @@ public class LootManager implements Listener {
 
         for (Location l : selected) {
             if (makeLootChestAt(l)) {
-                l.getWorld().strikeLightningEffect(l);
                 usedChestLocations.add(l);
             }
             unusedChestLocations.remove(l);
         }
     }
 
-    private BukkitTask addShinies() {
+    private BukkitTask updateChests() {
         BukkitRunnable addShinies = new BukkitRunnable() {
             @Override
             public void run() {
+                Set<Location> toRemove = new HashSet<>();
                 for (Location l : usedChestLocations) {
-                    l.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, l.clone().add(0.5,0.5,0.5), 5, 0.5, 0.5, 0.5);
+                    if (l.getBlock().getType() != Material.CHEST) {
+                        toRemove.add(l);
+                        continue;
+                    }
+                    Chest chest = (Chest) l.getBlock().getState();
+                    if (!chest.hasBeenFilled())
+                        l.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, l.clone().add(0.5,0.5,0.5), 5, 0.5, 0.5, 0.5);
                 }
+                usedChestLocations.removeAll(toRemove);
+                unusedChestLocations.addAll(toRemove);
             }
         };
         return addShinies.runTaskTimer(BGHR.getPlugin(), 10L, 8L);
@@ -191,6 +223,40 @@ public class LootManager implements Listener {
 
     }
 
+    private BukkitTask chestRecycler() {
+        BukkitRunnable recycler = new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Location l : usedChestLocations) {
+                    if (l.getBlock().getType() == Material.CHEST) {
+                        Chest chest = (Chest) l.getBlock().getState();
+                        if (chest.hasBeenFilled() && l.getNearbyPlayers(5).isEmpty()) {
+                            recycleChestAt(l);
+                            return;
+                        }
+                    }
+                }
+            }
+        };
+        return recycler.runTaskTimer(BGHR.getPlugin(), 200L, 100L);
+    }
+
+    private void recycleChestAt(Location location) {
+        if (location.getBlock().getType() != Material.CHEST)
+            return;
+
+        Chest chest = (Chest) location.getBlock().getState();
+        chest.clearLootTable();
+        chest.getBlockInventory().clear();
+        chest.update(true);
+        ((InventoryHolder) chest.getBlock().getState()).getInventory().clear();
+        chest.getBlock().setType(Material.AIR);
+        location.getWorld().playEffect(location, Effect.LAVA_CONVERTS_BLOCK, null);
+
+        usedChestLocations.remove(location);
+        unusedChestLocations.add(location);
+    }
+
     public boolean makeLootChestAt(Location location) {
         Block b = location.getBlock();
         // look for adjacent chests and cancel if found
@@ -199,11 +265,21 @@ public class LootManager implements Listener {
                 return false;
         }
         b.setType(Material.CHEST);
-        Chest data = (Chest) b.getBlockData();
+        Chest chest = (Chest) b.getState();
+        chest.setLootTable(randomLootTable());
+        chest.update(true);
+        Directional data = (Directional) chest.getBlockData();
         data.setFacing(getGoodFacing(b));
-        b.setBlockData(data);
+        chest.setBlockData(data);
+        location.getWorld().playEffect(location, Effect.MOBSPAWNER_FLAMES, null);
         return true;
     }
+
+    private LootTable randomLootTable() {
+        int rand = ThreadLocalRandom.current().nextInt(tables.length - 1);
+        return tables[rand];
+    }
+
 
     private BlockFace getGoodFacing(Block block) {
         BlockFace[] sides = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};
