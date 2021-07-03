@@ -40,7 +40,6 @@ public class MapManager implements Listener {
         activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();
 
         if (!mapsDirectory.exists()) {
-            mapsDirectory.mkdirs();
             try {
                 Tools.unzip(plugin.getResource("BGHR_Maps.zip"), mapsDirectory.getAbsolutePath());
             } catch (IOException e) {
