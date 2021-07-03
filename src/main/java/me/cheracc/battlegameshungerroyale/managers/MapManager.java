@@ -2,10 +2,9 @@ package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.tools.ResourceExtractor;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import net.lingala.zip4j.ZipFile;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.World;
@@ -17,7 +16,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class MapManager implements Listener {
@@ -41,14 +43,8 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             try {
                 mapsDirectory.mkdirs();
-                File zipFile = new File(mapsDirectory, "maps.zip");
-                InputStream input = plugin.getResource("BGHR_Maps.zip");
-                OutputStream output = new FileOutputStream(zipFile);
-                IOUtils.copy(input, output);
-
-                ZipFile newZipFile = new ZipFile(zipFile);
-                newZipFile.extractAll(mapsDirectory.getAbsolutePath());
-                zipFile.deleteOnExit();
+                ResourceExtractor extractor = new ResourceExtractor(plugin, mapsDirectory, "BGHR_Maps", null);
+                extractor.extract();
 
             } catch (IOException e) {
                 e.printStackTrace();
