@@ -41,11 +41,7 @@ public class MapManager implements Listener {
         activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();
 
         if (!mapsDirectory.exists()) {
-            if (!mapsDirectory.mkdirs()) {
-                Bukkit.getLogger().warning("no maps directory and couldn't create one. Aborting.");
-                Bukkit.getPluginManager().disablePlugin(plugin);
-                return;
-            }
+            mapsDirectory.mkdirs();
             ResourceCopy copier = new ResourceCopy();
             try {
                 copier.copyResourcesToDir(mapsDirectory, false, "BGHR_Maps");
