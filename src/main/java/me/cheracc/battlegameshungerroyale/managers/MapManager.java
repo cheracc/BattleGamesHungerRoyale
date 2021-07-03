@@ -5,6 +5,7 @@ import me.cheracc.battlegameshungerroyale.datatypes.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.lingala.zip4j.ZipFile;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.World;
@@ -43,9 +44,7 @@ public class MapManager implements Listener {
                 File zipFile = new File(mapsDirectory, "maps.zip");
                 InputStream input = plugin.getResource("BGHR_Maps.zip");
                 OutputStream output = new FileOutputStream(zipFile);
-                input.transferTo(output);
-                input.close();
-                output.close();
+                IOUtils.copy(input, output);
 
                 ZipFile newZipFile = new ZipFile(zipFile);
                 newZipFile.extractAll(mapsDirectory.getAbsolutePath());
