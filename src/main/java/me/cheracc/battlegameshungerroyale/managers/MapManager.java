@@ -51,6 +51,7 @@ public class MapManager implements Listener {
                     if (entry.isDirectory())
                         destination.mkdirs();
                     else {
+                        destination.createNewFile();
                         int count = 0;
                         byte[] data = new byte[BUFFER_SIZE];
                         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(destination));
