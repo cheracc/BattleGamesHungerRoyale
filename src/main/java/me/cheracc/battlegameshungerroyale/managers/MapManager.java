@@ -2,7 +2,6 @@ package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
-import me.cheracc.battlegameshungerroyale.tools.ResourceExtractor;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -15,11 +14,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.reflections.Reflections;
+import org.reflections.scanners.ResourcesScanner;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class MapManager implements Listener {
@@ -43,9 +41,18 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             try {
                 mapsDirectory.mkdirs();
-                ResourceExtractor extractor = new ResourceExtractor(plugin, mapsDirectory, "BGHR_Maps", null);
-                extractor.extract(true, true);
-
+                Reflections refl = new Reflections(null, new ResourcesScanner());
+                Set<String> files = refl.getResources(name -> name.toLowerCase().contains("maps"));
+                for (String path : files) {
+                    InputStream in = plugin.getResource(path);
+                    String[] pathArray = path.split("/");
+                    String name = pathArray[pathArray.length - 1];
+                    File newFile = new File(mapsDirectory, name);
+                    OutputStream out = new FileOutputStream(newFile);
+                    in.transferTo(out);
+                    in.close();
+                    out.close();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
