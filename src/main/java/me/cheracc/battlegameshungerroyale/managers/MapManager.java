@@ -14,8 +14,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
-import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
 
 import java.io.*;
 import java.util.*;
@@ -41,20 +39,12 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             try {
                 mapsDirectory.mkdirs();
-                Reflections refl = new Reflections(null, new ResourcesScanner());
-                Set<String> files = refl.getResources(name -> name.toLowerCase().contains("maps"));
-                for (String path : files) {
-                    Bukkit.getLogger().info(path + " ");
-                    InputStream in = plugin.getResource(path);
-                    String[] pathArray = path.split("/");
-                    String name = pathArray[pathArray.length - 1];
-                    File newFile = new File(mapsDirectory, name);
-                    newFile.createNewFile();
-                    OutputStream out = new FileOutputStream(newFile);
-                    in.transferTo(out);
-                    in.close();
-                    out.close();
-                }
+                File file = new File(mapsDirectory, "maps.zip");
+                InputStream input = this.getClass().getResourceAsStream("BGHR_Maps.zip");
+                OutputStream output = new FileOutputStream(file);
+                input.transferTo(output);
+                input.close();
+                output.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
