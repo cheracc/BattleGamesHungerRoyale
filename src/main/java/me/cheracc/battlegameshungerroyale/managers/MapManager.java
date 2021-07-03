@@ -16,9 +16,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class MapManager implements Listener {
     private final BGHR plugin;
@@ -41,30 +40,9 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             try {
                 mapsDirectory.mkdirs();
-                final int BUFFER_SIZE = 1024;
-
-                ZipInputStream zipStream = new ZipInputStream(plugin.getResource("BGHR_Maps.zip"));
-                ZipEntry entry = null;
-                while ((entry = zipStream.getNextEntry()) != null) {
-                    File destination = new File(mapsDirectory, entry.getName());
-
-                    if (entry.isDirectory() || entry.getName().equals(""))
-                        destination.mkdirs();
-                    else {
-                        destination.createNewFile();
-                        int count = 0;
-                        byte[] data = new byte[BUFFER_SIZE];
-                        Bukkit.getLogger().info(entry.getName());
-                        Bukkit.getLogger().info(destination.getAbsolutePath());
-                        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(destination));
-                        while ((count = zipStream.read(data, 0, BUFFER_SIZE)) != -1) {
-                            out.write(data, 0, count);
-                        }
-                        out.flush();
-                        out.close();
-                    }
-                    zipStream.closeEntry();
-                }
+                File zipFile = new File(mapsDirectory, "maps.zip");
+                InputStream input = plugin.getResource("BGHR_Maps.zip");
+                Files.copy(input, zipFile.toPath());
             } catch (IOException e) {
                 e.printStackTrace();
             }
