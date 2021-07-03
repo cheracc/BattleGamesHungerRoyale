@@ -38,7 +38,11 @@ public class MapManager implements Listener {
 
         if (!mapsDirectory.exists()) {
             mapsDirectory.mkdirs();
-            plugin.saveResource("BGHR_Maps.zip", true);
+            try {
+                FileUtils.copyToFile(plugin.getClass().getResourceAsStream("/BGHR_Maps.zip"), new File(mapsDirectory, "maps.zip"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         deleteCompletedMaps();
