@@ -44,6 +44,7 @@ public class MapManager implements Listener {
                 Reflections refl = new Reflections(null, new ResourcesScanner());
                 Set<String> files = refl.getResources(name -> name.toLowerCase().contains("maps"));
                 for (String path : files) {
+                    Bukkit.getLogger().info(path + " ");
                     InputStream in = plugin.getResource(path);
                     String[] pathArray = path.split("/");
                     String name = pathArray[pathArray.length - 1];
