@@ -48,7 +48,7 @@ public class MapManager implements Listener {
                 while ((entry = zipStream.getNextEntry()) != null) {
                     File destination = new File(mapsDirectory, entry.getName());
 
-                    if (entry.isDirectory())
+                    if (entry.isDirectory() || entry.getName().equals(""))
                         destination.mkdirs();
                     else {
                         destination.createNewFile();
