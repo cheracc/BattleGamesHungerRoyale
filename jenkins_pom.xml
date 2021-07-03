@@ -48,6 +48,10 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
             </resource>
+            <resource>
+                <directory>src/main/binary-resources</directory>
+                <filtering>false</filtering>
+            </resource>
         </resources>
     </build>
     <properties>
