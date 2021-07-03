@@ -44,7 +44,7 @@ public class MapManager implements Listener {
             try {
                 mapsDirectory.mkdirs();
                 ResourceExtractor extractor = new ResourceExtractor(plugin, mapsDirectory, "BGHR_Maps", null);
-                extractor.extract();
+                extractor.extract(true, true);
 
             } catch (IOException e) {
                 e.printStackTrace();
