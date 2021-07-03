@@ -15,10 +15,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class MapManager implements Listener {
     private final BGHR plugin;
@@ -40,28 +41,7 @@ public class MapManager implements Listener {
 
         if (!mapsDirectory.exists()) {
             mapsDirectory.mkdirs();
-            InputStream input = plugin.getClass().getResourceAsStream("/BGHR_Maps.zip");
-            ZipInputStream zis = new ZipInputStream(input);
-            ZipEntry ze;
-            try {
-                BufferedOutputStream dest;
-                while ((ze = zis.getNextEntry()) != null) {
-                    System.out.println("Extracting: " + ze);
-                    int count;
-                    byte[] data = new byte[1024];
-                    // write the current file to the disk
-                    FileOutputStream fos = new FileOutputStream(ze.getName());
-                    dest = new BufferedOutputStream(fos, 1024);
-                    while ((count = zis.read(data, 0, 1024)) != -1) {
-                        dest.write(data, 0, count);
-                    }
-                    dest.flush();
-                    dest.close();
-                }
-                zis.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.getParentFile().toPath());
         }
 
         deleteCompletedMaps();

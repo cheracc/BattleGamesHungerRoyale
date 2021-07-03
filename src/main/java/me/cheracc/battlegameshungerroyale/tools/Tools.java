@@ -23,6 +23,8 @@ import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -241,49 +243,60 @@ public class Tools {
         return -1;
     }
 
-    private static final int BUFFER_SIZE = 4096;
     /**
-     * Extracts a zip file specified by the zipFilePath to a directory specified by
-     * destDirectory (will be created if does not exists)
-     * @param zipFilePath
-     * @param destDirectory
-     * @throws IOException
+     * Extract the contents of a .zip resource file to a destination directory.
+     * <p>
+     * Overwrite existing files.
+     *
+     * @param myClass     The class used to find the zipResource.
+     * @param zipResource Must end with ".zip".
+     * @param destDir     The path of the destination directory, which must exist.
+     * @return The list of created files in the destination directory.
      */
-    public static void unzip(InputStream zipFile, String destDirectory) throws IOException {
-        File destDir = new File(destDirectory);
-        if (!destDir.exists()) {
-            destDir.mkdir();
+    public static List<File> extractZipResource(Class myClass, String zipResource, Path destDir)
+    {
+        if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir))
+        {
+            throw new IllegalArgumentException("myClass=" + myClass + " zipResource=" + zipResource + " destDir=" + destDir);
         }
-        ZipInputStream zipIn = new ZipInputStream(zipFile);
-        ZipEntry entry = zipIn.getNextEntry();
-        // iterates over entries in the zip file
-        while (entry != null) {
-            String filePath = destDirectory + File.separator + entry.getName();
-            if (!entry.isDirectory()) {
-                // if the entry is a file, extracts it
-                extractFile(zipIn, filePath);
-            } else {
-                // if the entry is a directory, make the directory
-                File dir = new File(filePath);
-                dir.mkdirs();
+
+        ArrayList<File> res = new ArrayList<>();
+
+        try (InputStream is = myClass.getResourceAsStream(zipResource);
+             BufferedInputStream bis = new BufferedInputStream(is);
+             ZipInputStream zis = new ZipInputStream(bis))
+        {
+            ZipEntry entry;
+            byte[] buffer = new byte[2048];
+            while ((entry = zis.getNextEntry()) != null)
+            {
+                // Build destination file
+                File destFile = destDir.resolve(entry.getName()).toFile();
+
+                if (entry.isDirectory())
+                {
+                    // Directory, recreate if not present
+                    if (!destFile.exists() && !destFile.mkdirs())
+                    {
+                        Bukkit.getLogger().warning("extractZipResource() can't create destination folder : " + destFile.getAbsolutePath());
+                    }
+                    continue;
+                }
+                // Plain file, copy it
+                try (FileOutputStream fos = new FileOutputStream(destFile);
+                     BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length))
+                {
+                    int len;
+                    while ((len = zis.read(buffer)) > 0)
+                    {
+                        bos.write(buffer, 0, len);
+                    }
+                }
+                res.add(destFile);
             }
-            zipIn.closeEntry();
-            entry = zipIn.getNextEntry();
+        } catch (IOException ex)
+        {
+            Bukkit.getLogger().warning("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
-        zipIn.close();
-    }
-    /**
-     * Extracts a zip entry (file entry)
-     * @param zipIn
-     * @param filePath
-     * @throws IOException
-     */
-    private static void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
-        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
-        byte[] bytesIn = new byte[BUFFER_SIZE];
-        int read = 0;
-        while ((read = zipIn.read(bytesIn)) != -1) {
-            bos.write(bytesIn, 0, read);
-        }
-        bos.close();
+        return res;
     }}
