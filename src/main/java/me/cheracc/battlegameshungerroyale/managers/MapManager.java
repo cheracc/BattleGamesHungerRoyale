@@ -41,7 +41,7 @@ public class MapManager implements Listener {
 
         if (!mapsDirectory.exists()) {
             try {
-                Tools.unzip(plugin.getResource("BGHR_Maps.zip"), mapsDirectory.getAbsolutePath());
+                Tools.unzip(plugin.getResource("BGHR_Maps.zip"), mapsDirectory.getParentFile().getAbsolutePath());
             } catch (IOException e) {
                 e.printStackTrace();
             }
