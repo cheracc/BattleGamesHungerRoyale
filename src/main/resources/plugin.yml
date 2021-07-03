@@ -3,8 +3,7 @@ main: me.cheracc.battlegameshungerroyale.BGHR
 version: ${project.version}
 api-version: 1.16
 load: STARTUP
-softdepend:
-  - Vault
+softdepend: [Vault]
 commands:
   savemap:
     usage: "/savemap"

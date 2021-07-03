@@ -53,7 +53,7 @@ public class MapManager implements Listener {
     }
 
     private void loadLobby() {
-        String relativePath = mainConfig.getString("lobby world", "maps/lobby");
+        String relativePath = mainConfig.getString("lobby world to copy", "BGHR_Maps/islandtower");
         File lobby = new File(plugin.getDataFolder().getParentFile().getParent(), relativePath);
         boolean resetLobby = mainConfig.getBoolean("reset lobby on restart", false);
 
