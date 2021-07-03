@@ -36,10 +36,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.7.0</version>
                 <configuration>
                     <source>16</source>
                     <target>16</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <outputDirectory>C:\Users\shawn.DESKTOP-2T6DHCO\IdeaProjects\BattleGamesHungerRoyale\test_server\plugins\</outputDirectory>
                 </configuration>
             </plugin>
         </plugins>
@@ -78,7 +86,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.5</version>
+            <version>2.6</version>
         </dependency>
         <dependency>
             <groupId>dev.triumphteam</groupId>
