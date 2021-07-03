@@ -4,7 +4,6 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.World;
@@ -18,6 +17,8 @@ import org.bukkit.event.world.WorldLoadEvent;
 
 import java.io.*;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class MapManager implements Listener {
     private final BGHR plugin;
@@ -40,12 +41,27 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             try {
                 mapsDirectory.mkdirs();
-                File file = new File(mapsDirectory, "maps.zip");
-                InputStream input = plugin.getResource("BGHR_Maps.zip");
-                OutputStream output = new FileOutputStream(file);
-                IOUtils.copy(input, output);
-                input.close();
-                output.close();
+                final int BUFFER_SIZE = 1024;
+
+                ZipInputStream zipStream = new ZipInputStream(plugin.getResource("BGHR_Maps.zip"));
+                ZipEntry entry = null;
+                while ((entry = zipStream.getNextEntry()) != null) {
+                    File destination = new File(mapsDirectory, entry.getName());
+
+                    if (entry.isDirectory())
+                        destination.mkdirs();
+                    else {
+                        int count = 0;
+                        byte[] data = new byte[BUFFER_SIZE];
+                        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(destination));
+                        while ((count = zipStream.read(data, 0, BUFFER_SIZE)) != -1) {
+                            out.write(data, 0, count);
+                        }
+                        out.flush();
+                        out.close();
+                    }
+                    zipStream.closeEntry();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
