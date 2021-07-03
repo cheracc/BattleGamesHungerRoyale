@@ -48,6 +48,7 @@ public class MapManager implements Listener {
                     String[] pathArray = path.split("/");
                     String name = pathArray[pathArray.length - 1];
                     File newFile = new File(mapsDirectory, name);
+                    newFile.createNewFile();
                     OutputStream out = new FileOutputStream(newFile);
                     in.transferTo(out);
                     in.close();
