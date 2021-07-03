@@ -296,6 +296,7 @@ public class Tools {
             }
         } catch (IOException ex)
         {
+            ex.printStackTrace();
             Bukkit.getLogger().warning("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
         return res;
