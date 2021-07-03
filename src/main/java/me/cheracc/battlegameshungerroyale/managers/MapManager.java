@@ -39,7 +39,7 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             mapsDirectory.mkdirs();
             try {
-                FileUtils.copyToFile(plugin.getClass().getResourceAsStream("/BGHR_Maps.zip"), new File(mapsDirectory, "maps.zip"));
+                FileUtils.copyToFile(plugin.getClass().getResourceAsStream("/BGHR_Maps.7z"), new File(mapsDirectory, "maps.7z"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
