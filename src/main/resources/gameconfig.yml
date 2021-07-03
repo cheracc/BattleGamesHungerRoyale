@@ -1,0 +1,11 @@
+maps:
+- King of the Ring
+lives per player: 1
+players needed to start: 2
+allow regular building: false
+timers:
+  pregame: 60
+  invincibility: 15
+  main: 30
+  border: 60
+  postgame: 60

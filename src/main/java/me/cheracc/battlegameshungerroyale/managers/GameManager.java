@@ -4,10 +4,13 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +57,19 @@ public class GameManager {
     private List<GameOptions> getAllConfigs() {
         File configDir = new File(BGHR.getPlugin().getDataFolder(), "gameconfigs/");
         List<GameOptions> configs = new ArrayList<>();
+
+        if (!configDir.exists())
+            configDir.mkdirs();
+
+        if (configDir.listFiles().length == 0) {
+            File baseConfig = new File(configDir, "default.yml");
+            InputStream config = BGHR.getPlugin().getResource("gameconfig.yml");
+            try {
+                FileUtils.copyToFile(config, baseConfig);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         for (File file : configDir.listFiles()) {
             if (file.exists() && file.getName().contains(".yml")) {
