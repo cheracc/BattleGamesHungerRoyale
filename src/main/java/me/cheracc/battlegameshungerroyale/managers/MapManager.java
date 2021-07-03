@@ -44,6 +44,8 @@ public class MapManager implements Listener {
                 InputStream input = plugin.getResource("BGHR_Maps.zip");
                 OutputStream output = new FileOutputStream(file);
                 IOUtils.copy(input, output);
+                input.close();
+                output.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
