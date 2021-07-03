@@ -68,6 +68,7 @@ public class MapManager implements Listener {
                 }
             } catch (IOException e) {
                 Bukkit.getLogger().warning("could not copy default maps from jar");
+                e.printStackTrace();
             }
         }
 
