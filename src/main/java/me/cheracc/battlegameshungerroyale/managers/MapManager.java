@@ -46,8 +46,8 @@ public class MapManager implements Listener {
 
             try {
                 while ((entry = zip.getNextEntry()) != null) {
-                    File newFile = Tools.newFile(mapsDirectory.getAbsoluteFile(), entry);
-                    if (entry.isDirectory() || newFile.isDirectory()) {
+                    File newFile = new File(mapsDirectory, entry.getName());
+                    if (entry.isDirectory()) {
                         if (!newFile.isDirectory() && !newFile.mkdirs()) {
                             Bukkit.getLogger().warning("could not create directory " + newFile.getAbsolutePath());
                             return;
