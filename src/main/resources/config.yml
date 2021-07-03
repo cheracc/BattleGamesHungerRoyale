@@ -1,4 +1,4 @@
-maps directory: /BGHR_Maps/
+maps directory: BGHR_Maps/
 lobby world: BGHR_Maps/island_tower
 reset lobby on restart: true
 loaded maps directory: loaded_maps/

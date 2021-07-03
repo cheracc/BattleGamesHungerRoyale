@@ -2,7 +2,6 @@ package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
-import me.cheracc.battlegameshungerroyale.tools.ResourceCopy;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -20,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class MapManager implements Listener {
@@ -42,10 +42,9 @@ public class MapManager implements Listener {
 
         if (!mapsDirectory.exists()) {
             mapsDirectory.mkdirs();
-            ResourceCopy copier = new ResourceCopy();
             try {
-                copier.copyResourcesToDir(mapsDirectory, false, "BGHR_Maps");
-            } catch (IOException e) {
+                Tools.copyFromJar("/src/main/java/resources/BGHR_Maps", mapsDirectory.toPath());
+            } catch (URISyntaxException | IOException e) {
                 e.printStackTrace();
             }
         }
