@@ -85,12 +85,15 @@ public class LootManager implements Listener {
             }
         }
 
+        int count = 0;
         for (Location l : selected) {
             if (makeLootChestAt(l)) {
                 usedChestLocations.add(l);
+                count++;
             }
             unusedChestLocations.remove(l);
         }
+        Bukkit.getLogger().info("Created " + count + " chests (" + selected.size() + " attempted)");
     }
 
     private BukkitTask updateChests() {
@@ -99,7 +102,7 @@ public class LootManager implements Listener {
             public void run() {
                 Set<Location> toRemove = new HashSet<>();
                 for (Location l : usedChestLocations) {
-                    if (l.getBlock().getType() != Material.CHEST) {
+                    if (l.getBlock() == null || l.getBlock().getType() != Material.CHEST) {
                         toRemove.add(l);
                         continue;
                     }
@@ -109,6 +112,7 @@ public class LootManager implements Listener {
                 }
                 usedChestLocations.removeAll(toRemove);
                 unusedChestLocations.addAll(toRemove);
+                toRemove.clear();
             }
         };
         return addShinies.runTaskTimer(BGHR.getPlugin(), 10L, 8L);
@@ -217,8 +221,6 @@ public class LootManager implements Listener {
                 }
                 if (count > 0) {
                     long time = System.currentTimeMillis() - start;
-                    //Bukkit.getLogger().info(String.format("(%s,%s): found:%s tries:%s time:%sms", chunk.getX(), chunk.getZ(),
-                    //        count, tries, time));
                 }
             }
         }.runTaskAsynchronously(BGHR.getPlugin());

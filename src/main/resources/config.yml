@@ -1,4 +1,4 @@
-maps directory: /maps/
-lobby world: maps/lobby
+maps directory: /BGHR_Maps/
+lobby world: BGHR_Maps/lobby
 reset lobby on restart: true
-game world folder: BGHR
+loaded maps directory: loaded_maps/

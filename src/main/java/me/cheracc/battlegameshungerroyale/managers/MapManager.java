@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.tools.ResourceCopy;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -35,9 +36,23 @@ public class MapManager implements Listener {
     private MapManager() {
         plugin = BGHR.getPlugin();
         mainConfig = plugin.getMainConfig();
-        mapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("maps directory", "maps/")).getAbsoluteFile();
+        mapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("maps directory", "BGHR_Maps/")).getAbsoluteFile();
         mainWorldFolder = getMainWorldFolder();
         activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();
+
+        if (!mapsDirectory.exists()) {
+            if (!mapsDirectory.mkdirs()) {
+                Bukkit.getLogger().warning("no maps directory and couldn't create one. Aborting.");
+                Bukkit.getPluginManager().disablePlugin(plugin);
+                return;
+            }
+            ResourceCopy copier = new ResourceCopy();
+            try {
+                copier.copyResourcesToDir(mapsDirectory, false, "BGHR_Maps");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         deleteCompletedMaps();
         loadLobby();

@@ -44,6 +44,7 @@ public class Game implements Listener {
     private final Map<UUID, Integer> participants = new HashMap<>();
     private final List<Location> hardSpawnPoints = new ArrayList<>();
     private GamePhase currentPhase;
+    private long lastChestRespawn;
     enum GamePhase { PREGAME, INVINCIBILITY, MAIN, BORDER, POSTGAME }
 
     public Game(MapData map, GameOptions options) {
@@ -93,7 +94,8 @@ public class Game implements Listener {
         world.setGameRule(GameRule.DO_FIRE_TICK, true);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
-        lootManager.placeLootChests(getActivePlayers().size() * 5);
+        lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
+        lastChestRespawn = System.currentTimeMillis();
 
 
         if (options.getStartType() == GameOptions.StartType.ELYTRA)
@@ -314,9 +316,6 @@ public class Game implements Listener {
                         cancel();
                     }
                     else {
-                        //debug
-                        lootManager.placeLootChests(100);
-
                         pregameTime = options.getPregameTime();
                     }
 
@@ -345,6 +344,11 @@ public class Game implements Listener {
                 }
                 if (currentPhase == GamePhase.MAIN && gameTime >= options.getInvincibilityTime() + options.getMainPhaseTime()) {
                     startBorderPhase();
+                }
+
+                if (System.currentTimeMillis() - lastChestRespawn >= options.getChestRespawnTime()) {
+                    lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
+                    lastChestRespawn = System.currentTimeMillis();
                 }
 
                 updateBossBar();
