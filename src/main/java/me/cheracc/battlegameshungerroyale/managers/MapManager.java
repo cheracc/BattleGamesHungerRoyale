@@ -50,7 +50,7 @@ public class MapManager implements Listener {
 
                 ZipFile newZipFile = new ZipFile(zipFile);
                 newZipFile.extractAll(mapsDirectory.getAbsolutePath());
-                zipFile.delete();
+                zipFile.deleteOnExit();
 
             } catch (IOException e) {
                 e.printStackTrace();
