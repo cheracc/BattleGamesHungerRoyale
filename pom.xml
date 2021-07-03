@@ -21,14 +21,6 @@
                         </goals>
                         <configuration>
                             <minimizeJar>true</minimizeJar>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.*</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
                         </configuration>
                     </execution>
                 </executions>
@@ -115,13 +107,10 @@
         <repository>
             <id>papermc</id>
             <url>https://papermc.io/repo/repository/maven-public/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </repository>
         <repository>
             <id>central</id>
-            <url>https://repo1.maven.org/maven2</url>
+            <url>https://maven-central.storage.googleapis.com/maven2/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -134,5 +123,14 @@
             </snapshots>
         </repository>
     </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>maven-snapshots</id>
+            <url>https://repository.apache.org/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
 </project>
