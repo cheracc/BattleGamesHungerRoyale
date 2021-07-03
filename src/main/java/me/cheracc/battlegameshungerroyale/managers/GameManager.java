@@ -84,9 +84,9 @@ public class GameManager {
     private void startWithRandomConfig() {
         List<GameOptions> configs = getAllConfigs();
         Collections.shuffle(configs);
-        int random = ThreadLocalRandom.current().nextInt(0, configs.size() - 1);
+        int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
-        startWithRandomMap(configs.get(random));
+        startWithRandomMap(configs.get(index));
     }
 
     private void startWithRandomMap(GameOptions options) {
