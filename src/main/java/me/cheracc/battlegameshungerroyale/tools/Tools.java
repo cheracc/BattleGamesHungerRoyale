@@ -8,6 +8,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -18,17 +19,22 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class Tools {
     public static TextComponent BLANK_LINE = Component.text("");
     public static NamespacedKey UUID_KEY = new NamespacedKey(BGHR.getPlugin(), "uuid_key");
 
     public static String getTimestamp() {
-        return Instant.now().toString().replace(":", "-").split("\\.")[0];
+        return Instant.now().toString().replace(":","-").split("\\.")[0];
     }
 
     public static void saveUuidToItemMeta(UUID uuid, ItemMeta meta) {
@@ -129,9 +135,9 @@ public class Tools {
     }
 
     public static TextComponent formatInstructions(String instructions, String currentValue) {
-        TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255, 0, 0));
-        TextComponent instComp = Component.text(instructions).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255, 255, 255))
-                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the current text into the chat input box")));
+        TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255,0,0));
+        TextComponent instComp = Component.text(instructions).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255,255,255))
+                                          .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the current text into the chat input box")));
 
         return borderBar.append(Component.newline()).append(instComp).append(Component.newline()).append(borderBar);
 
@@ -175,5 +181,64 @@ public class Tools {
                 return i;
         }
         return -1;
+    }
+
+    /**
+     * Extract the contents of a .zip resource file to a destination directory.
+     * <p>
+     * Overwrite existing files.
+     *
+     * @param myClass     The class used to find the zipResource.
+     * @param zipResource Must end with ".zip".
+     * @param destDir     The path of the destination directory, which must exist.
+     * @return The list of created files in the destination directory.
+     */
+    public static List<File> extractZipResource(Class myClass, String zipResource, Path destDir)
+    {
+        if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir))
+        {
+            throw new IllegalArgumentException("myClass=" + myClass + " zipResource=" + zipResource + " destDir=" + destDir);
+        }
+
+        ArrayList<File> res = new ArrayList<>();
+
+        try (InputStream is = myClass.getResourceAsStream(zipResource);
+             BufferedInputStream bis = new BufferedInputStream(is);
+             ZipInputStream zis = new ZipInputStream(bis))
+        {
+            ZipEntry entry;
+            byte[] buffer = new byte[2048];
+            while ((entry = zis.getNextEntry()) != null)
+            {
+                // Build destination file
+                File destFile = destDir.resolve(entry.getName()).toFile();
+
+                if (entry.isDirectory())
+                {
+                    // Directory, recreate if not present
+                    if (!destFile.exists() && !destFile.mkdirs())
+                    {
+                        Bukkit.getLogger().warning("extractZipResource() can't create destination folder : " + destFile.getAbsolutePath());
+                    }
+                    continue;
+                }
+                // Plain file, copy it
+                try (FileOutputStream fos = new FileOutputStream(destFile);
+                     BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length))
+                {
+                    int len;
+                    while ((len = zis.read(buffer)) > 0)
+                    {
+                        bos.write(buffer, 0, len);
+                    }
+                }
+                res.add(destFile);
+            }
+        } catch (IOException ex)
+        {
+            ex.printStackTrace();
+            Bukkit.getLogger().warning("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
+        }
+        return res;
     }
 }
