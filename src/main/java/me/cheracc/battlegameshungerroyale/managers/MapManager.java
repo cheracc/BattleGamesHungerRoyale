@@ -40,7 +40,7 @@ public class MapManager implements Listener {
             try {
                 mapsDirectory.mkdirs();
                 File file = new File(mapsDirectory, "maps.zip");
-                InputStream input = this.getClass().getResourceAsStream("BGHR_Maps.zip");
+                InputStream input = this.getClass().getResourceAsStream("src/java/resources/BGHR_Maps.zip");
                 OutputStream output = new FileOutputStream(file);
                 input.transferTo(output);
                 input.close();
