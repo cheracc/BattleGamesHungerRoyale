@@ -54,6 +54,8 @@ public class MapManager implements Listener {
                         destination.createNewFile();
                         int count = 0;
                         byte[] data = new byte[BUFFER_SIZE];
+                        Bukkit.getLogger().info(entry.getName());
+                        Bukkit.getLogger().info(destination.getAbsolutePath());
                         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(destination));
                         while ((count = zipStream.read(data, 0, BUFFER_SIZE)) != -1) {
                             out.write(data, 0, count);
