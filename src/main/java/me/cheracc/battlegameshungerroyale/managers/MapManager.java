@@ -15,10 +15,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class MapManager implements Listener {
     private final BGHR plugin;
@@ -40,36 +41,9 @@ public class MapManager implements Listener {
 
         if (!mapsDirectory.exists()) {
             mapsDirectory.mkdirs();
-            InputStream is = plugin.getResource("BGHR_Maps.zip");
-            ZipInputStream zip = new ZipInputStream(is);
-            ZipEntry entry;
-
             try {
-                while ((entry = zip.getNextEntry()) != null) {
-                    File newFile = new File(mapsDirectory, entry.getName());
-                    if (entry.isDirectory() || newFile.isDirectory()) {
-                        if (!newFile.isDirectory() && !newFile.mkdirs()) {
-                            Bukkit.getLogger().warning("could not create directory " + newFile.getAbsolutePath());
-                            return;
-                        }
-                    } else {
-                        File parent = newFile.getParentFile();
-                        if (!parent.isDirectory() && !parent.mkdirs()) {
-                            Bukkit.getLogger().warning("could not create directory " + parent.getAbsolutePath());
-                            return;
-                        }
-                        FileOutputStream out = new FileOutputStream(newFile);
-                        int len;
-                        while ((len = zip.read(new byte[1024])) > 0) {
-                            out.write(new byte[1024], 0, len);
-                        }
-                        out.close();
-                    }
-                }
-                zip.closeEntry();
-                zip.close();
+                Tools.unzip(plugin.getResource("BGHR_Maps.zip"), mapsDirectory.getAbsolutePath());
             } catch (IOException e) {
-                Bukkit.getLogger().warning("could not copy default maps from jar");
                 e.printStackTrace();
             }
         }
