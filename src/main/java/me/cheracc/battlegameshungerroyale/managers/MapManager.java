@@ -46,16 +46,16 @@ public class MapManager implements Listener {
 
             try {
                 while ((entry = zip.getNextEntry()) != null) {
-                    File newFile = Tools.newFile(mapsDirectory, entry);
+                    File newFile = Tools.newFile(mapsDirectory.getAbsoluteFile(), entry);
                     if (entry.isDirectory()) {
                         if (!newFile.isDirectory() && !newFile.mkdirs()) {
-                            Bukkit.getLogger().warning("cannot create maps directory");
+                            Bukkit.getLogger().warning("could not create directory " + newFile.getAbsolutePath());
                             return;
                         }
                     } else {
                         File parent = newFile.getParentFile();
                         if (!parent.isDirectory() && !parent.mkdirs()) {
-                            Bukkit.getLogger().warning("cannot create maps directory");
+                            Bukkit.getLogger().warning("could not create directory " + parent.getAbsolutePath());
                             return;
                         }
                         FileOutputStream out = new FileOutputStream(newFile);
@@ -66,6 +66,8 @@ public class MapManager implements Listener {
                         out.close();
                     }
                 }
+                zip.closeEntry();
+                zip.close();
             } catch (IOException e) {
                 Bukkit.getLogger().warning("could not copy default maps from jar");
                 e.printStackTrace();
