@@ -41,7 +41,6 @@ public class MapManager implements Listener {
             try {
                 mapsDirectory.mkdirs();
                 File zipFile = new File(mapsDirectory, "maps.zip");
-                zipFile.createNewFile();
                 InputStream input = plugin.getResource("BGHR_Maps.zip");
                 OutputStream output = new FileOutputStream(zipFile);
                 input.transferTo(output);
