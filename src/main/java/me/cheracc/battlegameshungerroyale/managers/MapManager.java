@@ -15,10 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class MapManager implements Listener {
@@ -41,7 +38,7 @@ public class MapManager implements Listener {
 
         if (!mapsDirectory.exists()) {
             mapsDirectory.mkdirs();
-            Tools.extractZipResource(plugin.getClass(), "BGHR_Maps.zip", mapsDirectory.getParentFile().toPath());
+            plugin.saveResource("BGHR_Maps.zip", true);
         }
 
         deleteCompletedMaps();

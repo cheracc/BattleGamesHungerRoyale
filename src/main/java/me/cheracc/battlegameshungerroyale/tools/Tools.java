@@ -8,51 +8,31 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.block.Block;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class Tools {
     public static TextComponent BLANK_LINE = Component.text("");
     public static NamespacedKey UUID_KEY = new NamespacedKey(BGHR.getPlugin(), "uuid_key");
 
     public static String getTimestamp() {
-        return Instant.now().toString().replace(":","-").split("\\.")[0];
+        return Instant.now().toString().replace(":", "-").split("\\.")[0];
     }
 
     public static void saveUuidToItemMeta(UUID uuid, ItemMeta meta) {
         meta.getPersistentDataContainer().set(UUID_KEY, PersistentDataType.STRING, uuid.toString());
-    }
-
-    public static String getRandomId(boolean withLeadingUnderscore) {
-        if (withLeadingUnderscore)
-            return "_" + getRandomId();
-        else
-            return getRandomId();
-    }
-
-    public static String getRandomId() {
-        return UUID.randomUUID().toString().split("-")[0];
     }
 
     public static @Nullable UUID getUuidFromItem(ItemStack item) {
@@ -65,10 +45,6 @@ public class Tools {
         if (data != null) {
             return UUID.fromString(data);
         }
-        return null;
-    }
-
-    public static @Nullable UUID getUuidFromBlock(Block block) {
         return null;
     }
 
@@ -153,9 +129,9 @@ public class Tools {
     }
 
     public static TextComponent formatInstructions(String instructions, String currentValue) {
-        TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255,0,0));
-        TextComponent instComp = Component.text(instructions).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255,255,255))
-                                          .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the current text into the chat input box")));
+        TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255, 0, 0));
+        TextComponent instComp = Component.text(instructions).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255, 255, 255))
+                .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the current text into the chat input box")));
 
         return borderBar.append(Component.newline()).append(instComp).append(Component.newline()).append(borderBar);
 
@@ -176,21 +152,6 @@ public class Tools {
         return sb.toString();
     }
 
-    public static String fieldNameToConfigOption(String string) {
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < string.length(); i++) {
-            Character c = string.charAt(i);
-            if (Character.isUpperCase(c)) {
-                sb.append(" ");
-                sb.append(Character.toLowerCase(c));
-            }
-            else
-                sb.append(c);
-        }
-        return sb.toString();
-    }
-
     public static String integerToRomanNumeral(int input) {
         String[] numerals = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"};
 
@@ -207,33 +168,6 @@ public class Tools {
         p.setMetadata(key, new FixedMetadataValue(BGHR.getPlugin(), object));
     }
 
-    public static @Nullable Object getObjectFromPlayer(String key, Player p) {
-        if (p.getMetadata(key) != null && !p.getMetadata(key).isEmpty()) {
-            Object o = p.getMetadata(key).get(0).value();
-            if (o instanceof PotionEffect) {
-                Bukkit.getLogger().info("Fetched Potion Effect: " + ((PotionEffect) o).serialize());
-            }
-            return o;
-        }
-        Bukkit.getLogger().info("no object on " + p.getName() + " with key " + key);
-
-        return null;
-    }
-
-    public static void removeObjectFromPlayer(String key, Player p) {
-        if (p.hasMetadata(key)) {
-            Object o = p.getMetadata(key).get(0).value();
-            p.removeMetadata(key, BGHR.getPlugin());
-        }
-    }
-
-    // debug
-    public static void outputSectionToConsole(ConfigurationSection section) {
-        for (String s : section.getKeys(false)) {
-            Bukkit.getLogger().info(s + ": " + section.get(s));
-        }
-    }
-
     public static int getLastEmptyHotbarSlot(Player p) {
         for (int i = 8; i >= 0; i--) {
             ItemStack item = p.getInventory().getItem(i);
@@ -242,62 +176,4 @@ public class Tools {
         }
         return -1;
     }
-
-    /**
-     * Extract the contents of a .zip resource file to a destination directory.
-     * <p>
-     * Overwrite existing files.
-     *
-     * @param myClass     The class used to find the zipResource.
-     * @param zipResource Must end with ".zip".
-     * @param destDir     The path of the destination directory, which must exist.
-     * @return The list of created files in the destination directory.
-     */
-    public static List<File> extractZipResource(Class myClass, String zipResource, Path destDir)
-    {
-        if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir))
-        {
-            throw new IllegalArgumentException("myClass=" + myClass + " zipResource=" + zipResource + " destDir=" + destDir);
-        }
-
-        ArrayList<File> res = new ArrayList<>();
-
-        try (InputStream is = myClass.getResourceAsStream(zipResource);
-             BufferedInputStream bis = new BufferedInputStream(is);
-             ZipInputStream zis = new ZipInputStream(bis))
-        {
-            ZipEntry entry;
-            byte[] buffer = new byte[2048];
-            while ((entry = zis.getNextEntry()) != null)
-            {
-                // Build destination file
-                File destFile = destDir.resolve(entry.getName()).toFile();
-
-                if (entry.isDirectory())
-                {
-                    // Directory, recreate if not present
-                    if (!destFile.exists() && !destFile.mkdirs())
-                    {
-                        Bukkit.getLogger().warning("extractZipResource() can't create destination folder : " + destFile.getAbsolutePath());
-                    }
-                    continue;
-                }
-                // Plain file, copy it
-                try (FileOutputStream fos = new FileOutputStream(destFile);
-                     BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length))
-                {
-                    int len;
-                    while ((len = zis.read(buffer)) > 0)
-                    {
-                        bos.write(buffer, 0, len);
-                    }
-                }
-                res.add(destFile);
-            }
-        } catch (IOException ex)
-        {
-            ex.printStackTrace();
-            Bukkit.getLogger().warning("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
-        }
-        return res;
-    }}
+}
