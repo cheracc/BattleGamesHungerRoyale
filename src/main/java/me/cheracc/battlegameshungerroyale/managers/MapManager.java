@@ -40,7 +40,7 @@ public class MapManager implements Listener {
 
         if (!mapsDirectory.exists()) {
             mapsDirectory.mkdirs();
-            InputStream input = plugin.getResource("BGHR_Maps.zip");
+            InputStream input = this.getClass().getResourceAsStream("src/main/resources/BGHR_Maps.zip");
             ZipInputStream zis = new ZipInputStream(input);
             ZipEntry ze;
             try {
