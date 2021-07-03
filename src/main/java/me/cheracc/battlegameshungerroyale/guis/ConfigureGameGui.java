@@ -46,6 +46,7 @@ public class ConfigureGameGui extends Gui {
         setItem(3, playersNeededIcon());
         setItem(4, allowBuildingIcon());
         setItem(5, spawnTypeIcon());
+        setItem(6, lootIcon());
 
         setItem(7, saveConfigIcon());
         setItem(8, startGameIcon());
@@ -196,6 +197,25 @@ public class ConfigureGameGui extends Gui {
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
             sendStartGameGui(e.getWhoClicked());
+        });
+
+    }
+
+    private GuiItem lootIcon() {
+        ItemBuilder icon = ItemBuilder.from(Material.CHEST).name(Tools.componentalize("&eLoot Settings:"));
+        List<String> lore = new ArrayList<>();
+
+        lore.add("&fRandom Chests: &7" + (options.isGenerateChests() ? "on" : "off"));
+        lore.add("&fChest Respawn Time: &7" + options.getChestRespawnTime());
+        lore.add("&fChest Spawns/Block: &7" + options.getMaxChestsPerChunk());
+        lore.add("&fLoot Table: &7" + options.getLootTable());
+        lore.add("");
+        lore.add("&bClick to modify loot settings");
+        icon.lore(Tools.componentalize(lore));
+
+        return icon.asGuiItem(e -> {
+           e.getWhoClicked().closeInventory();
+           new ConfigureLootGui(e.getWhoClicked(), options);
         });
 
     }

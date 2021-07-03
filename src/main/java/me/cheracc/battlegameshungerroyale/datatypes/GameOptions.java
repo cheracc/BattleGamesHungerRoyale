@@ -26,6 +26,13 @@ public class GameOptions {
     private StartType startType;
     public enum StartType { HUNGERGAMES, ELYTRA }
 
+    private boolean generateChests;
+    private boolean fillAllChests;
+    private boolean loosenSearchRestrictions;
+    private int maxChestsPerChunk;
+    private int chestRespawnTime;
+    private String lootTable;
+
     public GameOptions() {
         loadConfig(null);
     }
@@ -60,6 +67,12 @@ public class GameOptions {
         borderTime = config.getInt("timers.border", 300);
         postGameTime = config.getInt("timers.postgame", 60);
         startType = StartType.valueOf(config.getString("start type", "elytra").toUpperCase());
+        generateChests = config.getBoolean("loot.generate chests", true);
+        loosenSearchRestrictions = config.getBoolean("loot.loosen search restrictions", true);
+        maxChestsPerChunk = config.getInt("loot.max chests per chunk", 10);
+        lootTable = config.getString("loot.loot table", "random");
+        chestRespawnTime = config.getInt("loot.chest respawn time", 45);
+        fillAllChests = config.getBoolean("loot.fill all chests", true);
     }
 
     public void saveConfig(String configName) {
@@ -86,6 +99,12 @@ public class GameOptions {
         config.set("timers.border", borderTime);
         config.set("timers.postgame", postGameTime);
         config.set("start type", startType.name().toLowerCase());
+        config.set("loot.generate chests", generateChests);
+        config.set("loot.loosen search restrictions", loosenSearchRestrictions);
+        config.set("loot.max chests per chunk", maxChestsPerChunk);
+        config.set("loot.loot table", lootTable);
+        config.set("loot.chest respawn time", chestRespawnTime);
+        config.set("loot.fill all chests", fillAllChests);
 
         try {
             config.save(configFile);
@@ -188,4 +207,45 @@ public class GameOptions {
     public void setAllowRegularBuilding(boolean allowRegularBuilding) {
         this.allowRegularBuilding = allowRegularBuilding;
     }
+
+    public boolean isGenerateChests() {
+        return generateChests;
+    }
+
+    public void toggleGenerateChests() {
+        generateChests = !generateChests;
+    }
+
+    public boolean isFillAllChests() {
+        return fillAllChests;
+    }
+
+    public void toggleFillAllChests() {
+        fillAllChests = !fillAllChests;
+    }
+
+    public boolean isLoosenSearchRestrictions() {
+        return loosenSearchRestrictions;
+    }
+
+    public void toggleLoosenSearchRestrictions() {
+        loosenSearchRestrictions = !loosenSearchRestrictions;
+    }
+
+    public int getMaxChestsPerChunk() {
+        return maxChestsPerChunk;
+    }
+
+    public void setMaxChestsPerChunk(int value) {
+        maxChestsPerChunk = value;
+    }
+
+    public int getChestRespawnTime() {
+        return chestRespawnTime;
+    }
+
+    public String getLootTable() {
+        return lootTable;
+    }
+
 }

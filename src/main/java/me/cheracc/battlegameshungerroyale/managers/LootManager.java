@@ -28,10 +28,9 @@ public class LootManager implements Listener {
     private final BukkitTask updateChests;
     private final BukkitTask chestRecycler;
 
-    private final boolean generateChests = true;
-    private final int maxChestsPerChunk = 10;
-    private final boolean loosenChestSearchRestrictions = true;
-    private final boolean disableScalingLootByLightLevel = false;
+    private final boolean generateChests;
+    private final int maxChestsPerChunk;
+    private final boolean loosenChestSearchRestrictions;
     private final LootTable[] tables = {
             LootTables.VILLAGE_ARMORER.getLootTable(),
             LootTables.VILLAGE_WEAPONSMITH.getLootTable(),
@@ -54,6 +53,9 @@ public class LootManager implements Listener {
 
     public LootManager(Game game) {
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
+        this.generateChests = game.getOptions().isGenerateChests();
+        this.maxChestsPerChunk = game.getOptions().getMaxChestsPerChunk();
+        this.loosenChestSearchRestrictions = game.getOptions().isLoosenSearchRestrictions();
         this.game = game;
         this.asyncChunkScanner = asyncChunkScanner();
         this.updateChests = updateChests();
@@ -276,10 +278,9 @@ public class LootManager implements Listener {
     }
 
     private LootTable randomLootTable() {
-        int rand = ThreadLocalRandom.current().nextInt(tables.length - 1);
-        return tables[rand];
+        int rand = ThreadLocalRandom.current().nextInt(LootTables.values().length - 1);
+        return LootTables.values()[rand].getLootTable();
     }
-
 
     private BlockFace getGoodFacing(Block block) {
         BlockFace[] sides = {BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};

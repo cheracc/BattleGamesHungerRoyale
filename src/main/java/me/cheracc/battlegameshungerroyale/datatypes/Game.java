@@ -354,6 +354,10 @@ public class Game implements Listener {
         return task.runTaskTimer(BGHR.getPlugin(), 20L, 4L);
     }
 
+    public GameOptions getOptions() {
+        return options;
+    }
+
     public int getStartingPlayersSize() {
         return participants.size();
     }
