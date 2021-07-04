@@ -215,7 +215,7 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
            e.getWhoClicked().closeInventory();
-           new ConfigureLootGui(e.getWhoClicked(), options);
+           new ConfigureLootGui(e.getWhoClicked(), this, options);
         });
 
     }
@@ -262,8 +262,7 @@ public class ConfigureGameGui extends Gui {
 
         gui.addItem(ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("&eCreate New Configuration")).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            fillGui();
-            open(e.getWhoClicked());
+            new ConfigureGameGui(e.getWhoClicked(), options);
         }));
 
         gui.open(player);

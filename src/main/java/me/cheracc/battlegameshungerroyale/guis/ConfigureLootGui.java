@@ -5,18 +5,22 @@ import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 
 public class ConfigureLootGui extends Gui {
     private final GameOptions options;
-    public ConfigureLootGui(HumanEntity player, GameOptions options) {
+
+    public ConfigureLootGui(HumanEntity player, Gui sendingGui, GameOptions options) {
         super(1, Tools.componentalize("&0Loot Settings"));
+        Bukkit.getLogger().info("Called it!");
         this.options = options;
         disableAllInteractions();
         setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();
-            new ConfigureGameGui(player, options);
+            sendingGui.open(player);
         });
 
         setItem(0, generateChestsIcon());
@@ -24,8 +28,10 @@ public class ConfigureLootGui extends Gui {
         setItem(2, lenientSearchingIcon());
         setItem(3, densityIcon());
         setItem(4, respawnTimeIcon());
-        setItem(5, lootTableIcon());
+        //setItem(5, lootTableIcon());
         setItem(8, saveIcon());
+
+        open(player);
     }
 
     private GuiItem generateChestsIcon() {
@@ -107,6 +113,21 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem saveIcon() {
-        return null;
+        GuiItem saveIcon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave Loot Settings&f" +
+                (options.isFillAllChests() ? "on" : "off"))).asGuiItem();
+        saveIcon.setAction(e -> {
+            if (options.getConfigFile() != null)
+                options.saveConfig(options.getConfigFile().getName());
+            else {
+                Tools.formatInstructions("You need to save the game configuration first. Enter a name for these game settings (only letter, numbers, dash and underscores - no spaces):", "");
+                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
+                    options.saveConfig(text);
+                    new ConfigureGameGui(e.getWhoClicked(), options);
+                });
+            }
+            updateItem(1, fillChestsIcon());
+        });
+
+        return saveIcon;
     }
 }

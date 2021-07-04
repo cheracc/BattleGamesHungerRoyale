@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
@@ -8,6 +9,7 @@ import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.*;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,9 +61,10 @@ public class ConfigureMapGui extends Gui {
         lore.add("&bRight click to change description");
         icon.lore(Tools.componentalize(lore));
 
-        return icon.asGuiItem(e -> {
+        GuiAction<InventoryClickEvent> action = e -> {
+            e.getWhoClicked().closeInventory();
             if (e.isLeftClick()) {
-                Tools.formatInstructions("Type a new name for this map in the chat window: ", map.getMapName());
+                e.getWhoClicked().sendMessage(Tools.formatInstructions("Type a new name for this map in the chat window: ", map.getMapName()));
                 TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
                     map.setName(text);
                     e.getWhoClicked().closeInventory();
@@ -70,8 +73,8 @@ public class ConfigureMapGui extends Gui {
                 });
             }
             if (e.isRightClick()) {
-                Tools.formatInstructions("Type a new description for this map in the chat window. " +
-                        "You can click this message to load the current description so that you may edit it.", map.getMapDescription());
+                e.getWhoClicked().sendMessage(Tools.formatInstructions("Type a new description for this map in the chat window. " +
+                        "You can click this message to load the current description so that you may edit it.", map.getMapDescription()));
                 TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
                     map.setDescription(text);
                     e.getWhoClicked().closeInventory();
@@ -79,8 +82,9 @@ public class ConfigureMapGui extends Gui {
                     open(e.getWhoClicked());
                 });
             }
+        };
+        return icon.asGuiItem(action);
 
-        });
     }
 
     public GuiItem borderIcon() {

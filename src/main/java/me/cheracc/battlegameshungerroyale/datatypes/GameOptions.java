@@ -76,7 +76,11 @@ public class GameOptions {
     }
 
     public void saveConfig(String configName) {
-        File configFile = new File(BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/gameconfigs", configName + ".yml");
+        String filename = configName;
+        if (!configName.contains(".yml"))
+            filename = configName + ".yml";
+
+        File configFile = new File(BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/gameconfigs", filename);
 
         if (!configFile.exists()) {
             if (configFile.getParentFile().mkdirs())
