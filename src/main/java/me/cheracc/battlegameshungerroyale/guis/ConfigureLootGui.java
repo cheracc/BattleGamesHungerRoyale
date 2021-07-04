@@ -1,14 +1,20 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
+import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.loot.LootTable;
+
+import java.util.List;
 
 public class ConfigureLootGui extends Gui {
     private final GameOptions options;
@@ -28,7 +34,7 @@ public class ConfigureLootGui extends Gui {
         setItem(2, lenientSearchingIcon());
         setItem(3, densityIcon());
         setItem(4, respawnTimeIcon());
-        //setItem(5, lootTableIcon());
+        setItem(5, lootTableIcon());
         setItem(8, saveIcon());
 
         open(player);
@@ -82,6 +88,7 @@ public class ConfigureLootGui extends Gui {
                 value -= change;
 
             options.setMaxChestsPerChunk(value);
+            updateItem(3, densityIcon());
         });
         return icon;
     }
@@ -101,20 +108,44 @@ public class ConfigureLootGui extends Gui {
                 value -= change;
 
             options.setMaxChestsPerChunk(value);
+            updateItem(4, respawnTimeIcon());
         });
 
         return icon;
     }
 
     private GuiItem lootTableIcon() {
-        GuiItem icon = null;
+        ItemBuilder lootTableIcon = ItemBuilder.from(Material.ENDER_CHEST).name(Tools.componentalize("&eLoot Table: &f" +
+                options.getLootTable()));
 
-        return icon;
+        lootTableIcon.lore(Tools.componentalize("&bClick to cycle through loot table"), Tools.componentalize("&bRight click to cycle backwards"));
+        List<LootTable> allLootTables = LootManager.getLootTables();
+
+        GuiAction<InventoryClickEvent> action = (e -> {
+            int index = 0;
+            for (LootTable t : allLootTables) {
+                if (t.getKey().getKey().equals(options.getLootTable())) {
+                    index = allLootTables.indexOf(t);
+                }
+            }
+            if (e.isLeftClick())
+                index++;
+            else
+                index--;
+            if (index < 0)
+                index = allLootTables.size() - 1;
+            if (index >= allLootTables.size() - 1)
+                index = 0;
+
+            options.setLootTable(allLootTables.get(index));
+            updateItem(5, lootTableIcon());
+        });
+
+        return lootTableIcon.asGuiItem(action);
     }
 
     private GuiItem saveIcon() {
-        GuiItem saveIcon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave Loot Settings&f" +
-                (options.isFillAllChests() ? "on" : "off"))).asGuiItem();
+        GuiItem saveIcon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave Loot Settings&f")).asGuiItem();
         saveIcon.setAction(e -> {
             if (options.getConfigFile() != null)
                 options.saveConfig(options.getConfigFile().getName());
@@ -125,7 +156,7 @@ public class ConfigureLootGui extends Gui {
                     new ConfigureGameGui(e.getWhoClicked(), options);
                 });
             }
-            updateItem(1, fillChestsIcon());
+            updateItem(8, fillChestsIcon());
         });
 
         return saveIcon;

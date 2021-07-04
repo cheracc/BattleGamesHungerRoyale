@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.loot.LootTable;
 
 import java.io.File;
 import java.io.IOException;
@@ -250,6 +251,10 @@ public class GameOptions {
 
     public String getLootTable() {
         return lootTable;
+    }
+
+    public void setLootTable(LootTable table) {
+        this.lootTable = table.getKey().getKey();
     }
 
 }

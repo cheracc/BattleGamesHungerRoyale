@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.datatypes.CustomLootTable;
 import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -17,6 +18,7 @@ import org.bukkit.loot.LootTables;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
@@ -31,22 +33,8 @@ public class LootManager implements Listener {
     private final boolean generateChests;
     private final int maxChestsPerChunk;
     private final boolean loosenChestSearchRestrictions;
-    private final LootTable[] tables = {
-            LootTables.VILLAGE_ARMORER.getLootTable(),
-            LootTables.VILLAGE_WEAPONSMITH.getLootTable(),
-            LootTables.VILLAGE_FLETCHER.getLootTable(),
-            LootTables.END_CITY_TREASURE.getLootTable(),
-            LootTables.IGLOO_CHEST.getLootTable(),
-            LootTables.UNDERWATER_RUIN_BIG.getLootTable(),
-            LootTables.UNDERWATER_RUIN_SMALL.getLootTable(),
-            LootTables.VILLAGE_BUTCHER.getLootTable(),
-            LootTables.VILLAGE_FISHER.getLootTable(),
-            LootTables.PILLAGER_OUTPOST.getLootTable(),
-            LootTables.WOODLAND_MANSION.getLootTable(),
-            LootTables.NETHER_BRIDGE.getLootTable(),
-            LootTables.FISHING_TREASURE.getLootTable()
-    };
 
+    private static final List<LootTable> lootTables = new ArrayList<>();
     private final List<Location> unusedChestLocations = new ArrayList<>();
     private final Set<Location> usedChestLocations = new HashSet<>();
     private final Queue<ChunkSnapshot> toSearch = new ConcurrentLinkedQueue<>();
@@ -60,6 +48,7 @@ public class LootManager implements Listener {
         this.asyncChunkScanner = asyncChunkScanner();
         this.updateChests = updateChests();
         this.chestRecycler = chestRecycler();
+        lootTables.addAll(LootManager.getLootTables());
         Bukkit.getLogger().info("starting chunk scanner");
     }
 
@@ -359,5 +348,29 @@ public class LootManager implements Listener {
             if (centerX - 1 >= 0)
                 sides.add(chunk.getBlockData(centerX - 1, centerY, centerZ));
         }
+    }
+
+    private static void loadLootTables() {
+        for (LootTables t : LootTables.values()) {
+            if (t.getKey().getKey().contains("chest"))
+                lootTables.add(t.getLootTable());
+        }
+        lootTables.add(getCustomLootTable("custom_table"));
+    }
+
+    public static List<LootTable> getLootTables() {
+        if (lootTables.isEmpty())
+            loadLootTables();
+        return new ArrayList<>(lootTables);
+    }
+
+    private static LootTable getCustomLootTable(String filename) {
+        File file = new File(BGHR.getPlugin().getDataFolder(), filename + ".json");
+
+        if (!file.exists()) {
+            Bukkit.getLogger().warning("Can't find .json file for loot table " + filename);
+            return null;
+        }
+        return new CustomLootTable(file);
     }
 }

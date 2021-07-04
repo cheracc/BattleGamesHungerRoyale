@@ -58,11 +58,21 @@ public class ConfigureMapGui extends Gui {
         lore.addAll(Tools.wrapText("&fDescription: &2" + map.getMapDescription(), ChatColor.DARK_GREEN));
         lore.add("");
         lore.add("&bClick to change name");
+        lore.add("&bShift click to change map creator");
         lore.add("&bRight click to change description");
         icon.lore(Tools.componentalize(lore));
 
         GuiAction<InventoryClickEvent> action = e -> {
             e.getWhoClicked().closeInventory();
+            if (e.isShiftClick()) {
+                e.getWhoClicked().sendMessage(Tools.formatInstructions("Enter the name of the map creator(s) in the chat window: ", map.getMapName()));
+                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
+                    map.setCreator(text);
+                    e.getWhoClicked().closeInventory();
+                    updateItem(0, nameAndDescriptionIcon());
+                    open(e.getWhoClicked());
+                });
+            }
             if (e.isLeftClick()) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions("Type a new name for this map in the chat window: ", map.getMapName()));
                 TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {

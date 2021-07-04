@@ -6,10 +6,7 @@ import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
 import me.cheracc.battlegameshungerroyale.listeners.AbilityListeners;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.managers.*;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -47,6 +44,7 @@ public class BGHR extends JavaPlugin implements Listener {
         }
         kitManager.loadKits();
         playerManager = new PlayerManager();
+        LootManager.getLootTables();
 
         this.getCommand("savemap").setExecutor(new SaveMap());
         this.getCommand("mapconfig").setExecutor(new MapConfig());
