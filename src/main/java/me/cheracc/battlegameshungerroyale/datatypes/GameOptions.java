@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.datatypes;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -32,7 +33,7 @@ public class GameOptions {
     private boolean loosenSearchRestrictions;
     private int maxChestsPerChunk;
     private int chestRespawnTime;
-    private String lootTable;
+    private LootTable lootTable = LootManager.getDefaultLootTable();
 
     public GameOptions() {
         loadConfig(null);
@@ -71,7 +72,9 @@ public class GameOptions {
         generateChests = config.getBoolean("loot.generate chests", true);
         loosenSearchRestrictions = config.getBoolean("loot.loosen search restrictions", true);
         maxChestsPerChunk = config.getInt("loot.max chests per chunk", 10);
-        lootTable = config.getString("loot.loot table", "random");
+        lootTable = LootManager.getLootTableFromKey(config.getString("loot.loot table", "default"));
+        if (lootTable == null)
+            lootTable = LootManager.getDefaultLootTable();
         chestRespawnTime = config.getInt("loot.chest respawn time", 45);
         fillAllChests = config.getBoolean("loot.fill all chests", true);
     }
@@ -107,7 +110,7 @@ public class GameOptions {
         config.set("loot.generate chests", generateChests);
         config.set("loot.loosen search restrictions", loosenSearchRestrictions);
         config.set("loot.max chests per chunk", maxChestsPerChunk);
-        config.set("loot.loot table", lootTable);
+        config.set("loot.loot table", lootTable.getKey().getKey());
         config.set("loot.chest respawn time", chestRespawnTime);
         config.set("loot.fill all chests", fillAllChests);
 
@@ -249,12 +252,12 @@ public class GameOptions {
         return chestRespawnTime;
     }
 
-    public String getLootTable() {
+    public LootTable getLootTable() {
         return lootTable;
     }
 
     public void setLootTable(LootTable table) {
-        this.lootTable = table.getKey().getKey();
+        this.lootTable = table;
     }
 
 }

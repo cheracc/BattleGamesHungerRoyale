@@ -69,6 +69,8 @@ public class BGHR extends JavaPlugin implements Listener {
                 GameManager.getInstance();
             }
         }.runTaskLater(this, 10L);
+        if (MapManager.getInstance().wasDatapackUpdated())
+            Bukkit.reloadData();
     }
 
     @Override

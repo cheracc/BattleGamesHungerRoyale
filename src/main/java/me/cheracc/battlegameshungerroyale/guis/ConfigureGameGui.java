@@ -7,7 +7,6 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
@@ -208,7 +207,7 @@ public class ConfigureGameGui extends Gui {
         lore.add("&fRandom Chests: &7" + (options.isGenerateChests() ? "on" : "off"));
         lore.add("&fChest Respawn Time: &7" + options.getChestRespawnTime());
         lore.add("&fChest Spawns/Block: &7" + options.getMaxChestsPerChunk());
-        lore.add("&fLoot Table: &7" + options.getLootTable());
+        lore.add("&fLoot Table: &7" + options.getLootTable().getKey().getKey());
         lore.add("");
         lore.add("&bClick to modify loot settings");
         icon.lore(Tools.componentalize(lore));
@@ -389,18 +388,13 @@ public class ConfigureGameGui extends Gui {
             GuiItem icon = mapInfoIcon(map);
             icon.setAction(e -> {
                 e.getWhoClicked().closeInventory();
-                Game game = new Game(map, options);
-
-                GameManager.getInstance().setupGame(game);
-                new SelectGameGui(player);
+                Game.createNewGameWithCallback(map, options, game -> new SelectGameGui(player));
             });
             gui.addItem(icon);
         }
 
         if (options.getMaps().size() == 1) {
-            Game game = new Game(options.getMaps().get(0), options);
-            GameManager.getInstance().setupGame(game);
-            new SelectGameGui(player);
+            Game.createNewGameWithCallback(options.getMaps().get(0), options, game -> new SelectGameGui(player));
             return;
         }
 

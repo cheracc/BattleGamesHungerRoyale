@@ -21,6 +21,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
@@ -32,27 +34,29 @@ public class Game implements Listener {
     private final GameLog gameLog;
     private final GameOptions options;
     private final BossBar bar;
-    private final World world;
+    private World world;
     private final LootManager lootManager;
 
     private boolean openToPlayers;
     private double postgameTime;
     private double pregameTime;
     private double gameTime;
+    private long startTime;
     private Player winner = null;
     private BukkitTask gameTick = null;
+    private BukkitTask pregameTimer = null;
+    private BukkitTask postgameTimer = null;
     private final Map<UUID, Integer> participants = new HashMap<>();
     private final List<Location> hardSpawnPoints = new ArrayList<>();
     private GamePhase currentPhase;
     private long lastChestRespawn;
     enum GamePhase { PREGAME, INVINCIBILITY, MAIN, BORDER, POSTGAME }
 
-    public Game(MapData map, GameOptions options) {
+    private Game(MapData map, GameOptions options, GameLoaded callback) {
         currentPhase = GamePhase.PREGAME;
         this.map = map;
         this.options = options;
         this.lootManager = new LootManager(this);
-        this.world = MapManager.getInstance().createNewWorld(map);
         bar = Bukkit.createBossBar("Pregame", BarColor.WHITE, BarStyle.SOLID);
         bar.setVisible(true);
         gameLog = new GameLog(this);
@@ -61,7 +65,31 @@ public class Game implements Listener {
         gameTime = -1;
         postgameTime = -1;
 
+        long time = System.currentTimeMillis();
+        MapManager.getInstance().createNewWorldAsync(map, w -> {
+            setGameWorld(w);
+            setupGame();
+            Bukkit.getLogger().info("started new game. elapsed time: " + (System.currentTimeMillis() - time));
+        });
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
+        if (callback != null)
+            callback.finished(this);
+    }
+
+    public interface GameLoaded {
+        void finished(Game game);
+    }
+
+    public static void createNewGameWithCallback(MapData map, GameOptions options, GameLoaded callback) {
+        new Game(map, options, callback);
+    }
+
+    public static void createNewGame(MapData map, GameOptions options) {
+        new Game(map, options, null);
+    }
+
+    private void setGameWorld(World world) {
+        this.world = world;
     }
 
     public void setupGame() {
@@ -84,7 +112,8 @@ public class Game implements Listener {
 
         gameLog.addPhaseEntry(currentPhase);
 
-        startPregameTimer();
+        pregameTimer = startPregameTimer();
+        GameManager.getInstance().setupGame(this);
     }
 
     public void startGame() {
@@ -95,7 +124,7 @@ public class Game implements Listener {
         world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
         lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
-        lastChestRespawn = System.currentTimeMillis();
+        lastChestRespawn = startTime = System.currentTimeMillis();
 
 
         if (options.getStartType() == GameOptions.StartType.ELYTRA)
@@ -115,7 +144,6 @@ public class Game implements Listener {
             p.setInvulnerable(true);
             p.setBedSpawnLocation(p.getLocation(), true);
         }
-
     }
 
     private interface ImFinished {
@@ -149,20 +177,28 @@ public class Game implements Listener {
     private void doPostGame() {
         map.addGamePlayed((int) gameTime);
         gameTick.cancel();
-        startPostGameTimer();
+        postgameTimer = startPostGameTimer();
         currentPhase = GamePhase.POSTGAME;
         gameLog.addPhaseEntry(currentPhase);
+        world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
     }
 
     public void endGame() {
         if (gameTick != null)
             gameTick.cancel();
+        if (pregameTimer != null)
+            pregameTimer.cancel();
+        if (postgameTimer != null)
+            postgameTimer.cancel();
         lootManager.close();
         gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
             quit(p);
 
-        world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
+        if (winner != null) {
+            map.addGamePlayed((int) (System.currentTimeMillis() - startTime / 1000));
+        }
+
         bar.setVisible(false);
         bar.removeAll();
 
@@ -279,7 +315,7 @@ public class Game implements Listener {
         return winner;
     }
 
-    private void startPostGameTimer() {
+    private BukkitTask startPostGameTimer() {
         postgameTime = options.getPostGameTime();
 
         BukkitRunnable postGameTimer = new BukkitRunnable() {
@@ -298,10 +334,10 @@ public class Game implements Listener {
             }
         };
 
-        postGameTimer.runTaskTimer(BGHR.getPlugin(), 20L, 4L);
+        return postGameTimer.runTaskTimer(BGHR.getPlugin(), 20L, 4L);
     }
 
-    private void startPregameTimer() {
+    private BukkitTask startPregameTimer() {
         BukkitRunnable pregameTimer = new BukkitRunnable() {
             double last = System.currentTimeMillis();
             @Override
@@ -312,11 +348,12 @@ public class Game implements Listener {
                 if (pregameTime <= 0) {
                     // check if there's enough players to start
                     if (getActivePlayers().size() >= options.getPlayersNeededToStart()) {
-                        startGame();
                         cancel();
+                        startGame();
                     }
                     else {
                         pregameTime = options.getPregameTime();
+                        lootManager.placeLootChests(10);
                     }
 
                 } else
@@ -326,7 +363,7 @@ public class Game implements Listener {
                 last = System.currentTimeMillis();
             }
         };
-        pregameTimer.runTaskTimer(BGHR.getPlugin(), 20L, 4L);
+        return pregameTimer.runTaskTimer(BGHR.getPlugin(), 20L, 4L);
     }
 
     private BukkitTask startGameTick() {
@@ -346,7 +383,7 @@ public class Game implements Listener {
                     startBorderPhase();
                 }
 
-                if (System.currentTimeMillis() - lastChestRespawn >= options.getChestRespawnTime()) {
+                if ((System.currentTimeMillis() - lastChestRespawn)/1000/60 >= options.getChestRespawnTime()) {
                     lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
                     lastChestRespawn = System.currentTimeMillis();
                 }
@@ -434,20 +471,16 @@ public class Game implements Listener {
 
         Collections.shuffle(spawns);
         int count = 0;
+
+        PotionEffect noMove = new PotionEffect(PotionEffectType.SLOW, 50, 99999, false, false, false);
+        PotionEffect noJump = new PotionEffect(PotionEffectType.JUMP, 50, -99999, false, false, false);
         for (Player p : getActivePlayers()) {
             p.teleport(spawns.get(count));
-            p.setWalkSpeed(0F);
+            p.addPotionEffect(noMove);
+            p.addPotionEffect(noJump);
             count++;
         }
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (Player p : getActivePlayers())
-                    p.setWalkSpeed(0.2F);
-                callback.finished();
-            }
-        }.runTaskLater(BGHR.getPlugin(), 40L);
     }
 
     // gets the spawn points using map configuration - intensive so only done once

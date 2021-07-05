@@ -14,6 +14,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.*;
 import java.util.*;
@@ -28,6 +29,7 @@ public class MapManager implements Listener {
     private final Map<MapData, List<World>> maps = new HashMap<>();
     private World lobbyWorld;
     private boolean canFlyInLobby = false;
+    private boolean updatedDatapack = false;
 
     private MapManager() {
         plugin = BGHR.getPlugin();
@@ -60,6 +62,8 @@ public class MapManager implements Listener {
         if (resetLobby && lobby.exists() && lobby.isDirectory()) {
             copyMap(lobby, mainWorldFolder);
         }
+
+        installDataPack();
 
         File lobbyConfig = new File(lobby, "lobby.yml");
         if (lobbyConfig.exists()) {
@@ -133,6 +137,10 @@ public class MapManager implements Listener {
         return new File(plugin.getDataFolder().getParentFile().getParentFile(), worldName);
     }
 
+    public boolean wasDatapackUpdated() {
+        return updatedDatapack;
+    }
+
     public World getLobbyWorld() {
         if (lobbyWorld == null)
             lobbyWorld = Bukkit.getWorlds().get(0);
@@ -191,23 +199,152 @@ public class MapManager implements Listener {
         maps.get(map).remove(world);
     }
 
-    public World createNewWorld(MapData mapData) {
+    public interface LoadedWorld {
+        void loadedWorld(World world);
+    }
+
+    public void createNewWorldAsync(MapData mapData, LoadedWorld callback) {
         String uid = UUID.randomUUID().toString().split("-")[0];
         File loadedMap = new File(activeMapsDirectory, mapData.getMapDirectory().getName() + "_" + uid);
-        copyMap(mapData.getMapDirectory(), loadedMap);
-        World world = Bukkit.createWorld(new WorldCreator(activeMapsDirectory.getName() + "/" + loadedMap.getName()));
-        if (world == null)
-            return null;
-        world.setAutoSave(false);
-        world.setKeepSpawnInMemory(false);
-        world.setClearWeatherDuration(Integer.MAX_VALUE);
-        world.setTime(0);
-        if (mapData.isUseBorder() && mapData.getBorderRadius() > 0) {
-            world.getWorldBorder().setCenter(mapData.getBorderCenter(world));
-            world.getWorldBorder().setSize(mapData.getBorderRadius() * 2);
+        asyncCopyMap(mapData.getMapDirectory(), loadedMap, () -> {
+            World world = Bukkit.createWorld(new WorldCreator(activeMapsDirectory.getName() + "/" + loadedMap.getName()));
+            if (world == null) {
+                Bukkit.getLogger().warning("could not load world " + activeMapsDirectory.getName());
+                return;
+            }
+            world.setAutoSave(false);
+            world.setKeepSpawnInMemory(false);
+            world.setClearWeatherDuration(Integer.MAX_VALUE);
+            world.setTime(0);
+            if (mapData.isUseBorder() && mapData.getBorderRadius() > 0) {
+                world.getWorldBorder().setCenter(mapData.getBorderCenter(world));
+                world.getWorldBorder().setSize(mapData.getBorderRadius() * 2);
+            }
+            maps.get(mapData).add(world);
+
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    callback.loadedWorld(world);
+                }
+            }.runTask(plugin);
+
+        });
+    }
+
+    private interface ImFinished {
+        void done();
+    }
+
+    private void asyncCopyMap(File mapSourceDirectory, File destination, ImFinished callback) {
+        List<String> filesToIgnore = new ArrayList<>(Arrays.asList("uid.dat", "session.lock"));
+
+        if (destination.exists()) {
+            try {
+                FileUtils.deleteDirectory(destination);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        maps.get(mapData).add(world);
-        return world;
+        if (destination.mkdirs())
+            Bukkit.getLogger().info("copying " + mapSourceDirectory.getAbsolutePath() + " to " + destination.getAbsolutePath());
+
+        if (mapSourceDirectory.listFiles() == null)
+            return;
+
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                List<File> mapFiles = new ArrayList<>(Arrays.asList(Objects.requireNonNull(mapSourceDirectory.listFiles())));
+
+                try {
+                    for (File file : mapFiles) {
+                        if (filesToIgnore.contains(file.getName()))
+                            continue;
+                        if (file.isDirectory())
+                            FileUtils.copyDirectoryToDirectory(file, destination);
+                        else
+                            FileUtils.copyFileToDirectory(file, destination);
+                    }
+
+                    if (destination.equals(mainWorldFolder)) {
+                        File playerdataDirectory = new File(destination, "playerdata");
+                        if (!playerdataDirectory.exists())
+                            if (!playerdataDirectory.mkdirs())
+                                Bukkit.getLogger().warning("could not create empty playerdata directory");
+                    }
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            callback.done();
+                        }
+                    }.runTask(plugin);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.runTaskAsynchronously(plugin);
+    }
+
+    private void installDataPack() {
+        File datapackDirectory = new File(mainWorldFolder, "datapacks/bghr_datapack");
+        if (!datapackDirectory.exists())
+            if (datapackDirectory.mkdirs())
+                updatedDatapack = true;
+
+        File datapackLootTablesDirectory = new File(datapackDirectory, "data/battlegameshungerroyale/loot_tables");
+        if (!datapackLootTablesDirectory.exists())
+            if (datapackLootTablesDirectory.mkdirs())
+                updatedDatapack = true;
+
+        File mcmeta = new File(datapackDirectory, "pack.mcmeta");
+        if (!mcmeta.exists()) {
+            try {
+                mcmeta.createNewFile();
+                OutputStream out = new FileOutputStream(mcmeta);
+                plugin.getResource("datapack_files/pack.mcmeta").transferTo(out);
+                out.close();
+                updatedDatapack = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        File pluginLootTablesDir = new File(plugin.getDataFolder(), "loot_tables");
+        if (!pluginLootTablesDir.exists())
+            if (pluginLootTablesDir.mkdirs())
+                Bukkit.getLogger().info("creating directory " + pluginLootTablesDir.getAbsolutePath());
+
+        File defaultLootTable = new File(pluginLootTablesDir, "default.json");
+        if (!defaultLootTable.exists()) {
+            try {
+                defaultLootTable.createNewFile();
+                OutputStream out = new FileOutputStream(defaultLootTable);
+                plugin.getResource("datapack_files/default.json").transferTo(out);
+                out.close();
+                Bukkit.getLogger().info("creating file " + defaultLootTable.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        for (File file : pluginLootTablesDir.listFiles()) {
+            try {
+                File datapackFile = new File(datapackLootTablesDirectory, file.getName());
+                if (!datapackFile.exists()) {
+                    FileUtils.copyFileToDirectory(file, datapackLootTablesDirectory);
+                    updatedDatapack = true;
+                }
+                if (FileUtils.contentEquals(file, datapackFile)) {
+                    FileUtils.deleteQuietly(datapackFile);
+                    FileUtils.copyFileToDirectory(file, datapackLootTablesDirectory);
+                    updatedDatapack = true;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void copyMap(File mapSourceDirectory, File destination) {

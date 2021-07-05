@@ -5,6 +5,7 @@ import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
 import org.apache.commons.io.FileUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +45,8 @@ public class GameManager {
     }
 
     public void setupGame(Game game) {
+        Bukkit.getLogger().info("added a game");
         activeGames.add(game);
-        game.setupGame();
     }
 
     public void gameOver(Game game) {
@@ -98,6 +99,6 @@ public class GameManager {
         else
             random = 0;
 
-        setupGame(new Game(maps.get(random), options));
+        Game.createNewGame(maps.get(random), options);
     }
 }

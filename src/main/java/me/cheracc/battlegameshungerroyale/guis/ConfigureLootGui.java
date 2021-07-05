@@ -7,7 +7,6 @@ import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
 import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -21,7 +20,6 @@ public class ConfigureLootGui extends Gui {
 
     public ConfigureLootGui(HumanEntity player, Gui sendingGui, GameOptions options) {
         super(1, Tools.componentalize("&0Loot Settings"));
-        Bukkit.getLogger().info("Called it!");
         this.options = options;
         disableAllInteractions();
         setOutsideClickAction(e -> {
@@ -115,16 +113,17 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem lootTableIcon() {
-        ItemBuilder lootTableIcon = ItemBuilder.from(Material.ENDER_CHEST).name(Tools.componentalize("&eLoot Table: &f" +
-                options.getLootTable()));
+        ItemBuilder lootTableIcon = ItemBuilder.from(Material.ENDER_CHEST);
+        String[] split = options.getLootTable().getKey().getKey().split("/");
+        lootTableIcon.name(Tools.componentalize("&eLoot Table: &f" + split[split.length - 1]));
 
-        lootTableIcon.lore(Tools.componentalize("&bClick to cycle through loot table"), Tools.componentalize("&bRight click to cycle backwards"));
+        lootTableIcon.lore(Tools.componentalize("&bClick to cycle through loot tables"), Tools.componentalize("&bRight click to cycle backwards"));
         List<LootTable> allLootTables = LootManager.getLootTables();
 
         GuiAction<InventoryClickEvent> action = (e -> {
             int index = 0;
             for (LootTable t : allLootTables) {
-                if (t.getKey().getKey().equals(options.getLootTable())) {
+                if (t.equals(options.getLootTable())) {
                     index = allLootTables.indexOf(t);
                 }
             }
@@ -132,9 +131,10 @@ public class ConfigureLootGui extends Gui {
                 index++;
             else
                 index--;
+
             if (index < 0)
                 index = allLootTables.size() - 1;
-            if (index >= allLootTables.size() - 1)
+            else if (index >= allLootTables.size() - 1)
                 index = 0;
 
             options.setLootTable(allLootTables.get(index));
@@ -147,8 +147,11 @@ public class ConfigureLootGui extends Gui {
     private GuiItem saveIcon() {
         GuiItem saveIcon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave Loot Settings&f")).asGuiItem();
         saveIcon.setAction(e -> {
-            if (options.getConfigFile() != null)
+            if (options.getConfigFile() != null) {
+                e.getWhoClicked().closeInventory();
                 options.saveConfig(options.getConfigFile().getName());
+                new ConfigureGameGui(e.getWhoClicked(), options);
+            }
             else {
                 Tools.formatInstructions("You need to save the game configuration first. Enter a name for these game settings (only letter, numbers, dash and underscores - no spaces):", "");
                 TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
@@ -156,7 +159,7 @@ public class ConfigureLootGui extends Gui {
                     new ConfigureGameGui(e.getWhoClicked(), options);
                 });
             }
-            updateItem(8, fillChestsIcon());
+            updateItem(8, saveIcon());
         });
 
         return saveIcon;
