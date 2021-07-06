@@ -37,7 +37,7 @@ public class GameManager {
 
     public @Nullable Game getPlayersCurrentGame(Player player) {
         for (Game game : activeGames) {
-            if (game.getWorld().getPlayers().contains(player))
+            if (game.isPlaying(player) || game.isSpectating(player))
                 return game;
         }
         return null;

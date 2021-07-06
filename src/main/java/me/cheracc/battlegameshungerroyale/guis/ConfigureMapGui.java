@@ -5,6 +5,7 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.*;
 import org.bukkit.entity.HumanEntity;
@@ -17,11 +18,13 @@ import java.util.List;
 public class ConfigureMapGui extends Gui {
     private final MapData map;
     private final Gui sendingGui;
+    private final HumanEntity player;
 
     public ConfigureMapGui(HumanEntity player, Gui sendingGui, MapData map) {
         super(1, Tools.componentalize("&0Configure Map: " + map.getMapName()));
         this.map = map;
         this.sendingGui = sendingGui;
+        this.player = player;
 
         disableAllInteractions();
         setOutsideClickAction(e -> {
@@ -36,11 +39,12 @@ public class ConfigureMapGui extends Gui {
 
     public void fillGui() {
         setItem(0, nameAndDescriptionIcon());
-        setItem(1, centerIcon());
-        setItem(2, borderIcon());
-        setItem(3, spawnBlockIcon());
-        setItem(4, spawnCenterIcon());
-        setItem(5, spawnRadiusIcon());
+        setItem(1, iconIcon());
+        setItem(2, centerIcon());
+        setItem(3, borderIcon());
+        setItem(4, spawnBlockIcon());
+        setItem(5, spawnCenterIcon());
+        setItem(6, spawnRadiusIcon());
         setItem(8, saveQuitIcon());
     }
 
@@ -73,7 +77,7 @@ public class ConfigureMapGui extends Gui {
                     open(e.getWhoClicked());
                 });
             }
-            if (e.isLeftClick()) {
+            else if (e.isLeftClick()) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions("Type a new name for this map in the chat window: ", map.getMapName()));
                 TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
                     map.setName(text);
@@ -82,7 +86,7 @@ public class ConfigureMapGui extends Gui {
                     open(e.getWhoClicked());
                 });
             }
-            if (e.isRightClick()) {
+            else if (e.isRightClick()) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions("Type a new description for this map in the chat window. " +
                         "You can click this message to load the current description so that you may edit it.", map.getMapDescription()));
                 TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
@@ -97,109 +101,168 @@ public class ConfigureMapGui extends Gui {
 
     }
 
+    public GuiItem iconIcon() {
+        ItemBuilder icon = ItemBuilder.from(map.getIcon()).name(Tools.componentalize("&eMap Icon"));
+        icon.lore(Tools.componentalize("&bClick to change the icon for this map"));
+
+        return icon.asGuiItem(e -> {
+           e.getWhoClicked().closeInventory();
+           new SelectMaterialGui(e.getWhoClicked(), this, mat -> {
+               map.setIcon(mat);
+               updateItem(1, iconIcon());
+               open(e.getWhoClicked());
+           });
+        });
+    }
+
     public GuiItem borderIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.GLASS).name(Tools.componentalize("&eBorder: &f" + (map.isUseBorder() ? "on" : "off")));
         List<String> lore = new ArrayList<>();
-        if (map.isUseBorder())
-            lore.add("&fBorder Radius: &7" + map.getBorderRadius());
+        boolean editable = false;
 
         lore.add("");
-        if (map.isUseBorder())
-            lore.add("&bClick to turn border on");
-        else
-            lore.add("&bClick to increase border size");
-        if (map.getBorderRadius() > 0) {
-            lore.add("&bRight click to decrease");
-            lore.add("&7(Set to zero to turn border off)");
+
+        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+            editable = true;
+            if (map.isUseBorder())
+                lore.add("&fBorder Radius: &7" + map.getBorderRadius());
+            if (map.isUseBorder())
+                lore.add("&bClick to turn border on");
+            else
+                lore.add("&bClick to increase border size");
+            if (map.getBorderRadius() > 0) {
+                lore.add("&bRight click to decrease");
+                lore.add("&7(Set to zero to turn border off)");
+            }
+        } else {
+            icon.lore(Tools.componentalize(Tools.wrapText("&cYou must be on this map to edit this setting. Load this world from the admin menu to change this.", ChatColor.RED)));
         }
         icon.lore(Tools.componentalize(lore));
 
+        boolean finalEditable = editable;
         return icon.asGuiItem(e -> {
-            int current = map.getBorderRadius();
-            if (e.isLeftClick()) {
-                if (!map.isUseBorder())
-                    map.toggleUseBorder();
-                current += 10;
-            }
-            if (e.isRightClick() && map.isUseBorder() && map.getBorderRadius() >= 0) {
-                current -= 10;
-                if (current <= 0) {
-                    current = 0;
-                    map.toggleUseBorder();
+            if (finalEditable) {
+                int current = map.getBorderRadius();
+                if (e.isLeftClick()) {
+                    if (!map.isUseBorder())
+                        map.toggleUseBorder();
+                    current += 10;
                 }
+                if (e.isRightClick() && map.isUseBorder() && map.getBorderRadius() >= 0) {
+                    current -= 10;
+                    if (current <= 0) {
+                        current = 0;
+                        map.toggleUseBorder();
+                    }
+                }
+                map.setBorderRadius(current);
+                setBorderFromConfig(e.getWhoClicked().getWorld());
+                updateItem(2, borderIcon());
             }
-            map.setBorderRadius(current);
-            setBorderFromConfig(e.getWhoClicked().getWorld());
-            updateItem(2, borderIcon());
         });
     }
 
     public GuiItem centerIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.CONDUIT).name(Tools.componentalize("&eBorder Center"));
-        icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center at your location. You can also stand where you want the center to be and type &f/mapconfig &fbordercenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
+        boolean editable = false;
+        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+            icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center at your location. You can also stand where you want the center to be and type &f/mapconfig &fbordercenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
+            editable = true;
+        } else {
+            icon.lore(Tools.componentalize(Tools.wrapText("&cYou must be on this map to edit this setting. Load this world from the admin menu to change this.", ChatColor.RED)));
 
+        }
+        boolean finalEditable = editable;
         return icon.asGuiItem(e -> {
-            if (e.isRightClick()) {
-                Location center = map.getBorderCenter(e.getWhoClicked().getWorld());
-                e.getWhoClicked().getWorld().strikeLightningEffect(center);
-                return;
+            if (finalEditable) {
+                if (e.isRightClick()) {
+                    Location center = map.getBorderCenter(e.getWhoClicked().getWorld());
+                    e.getWhoClicked().getWorld().strikeLightningEffect(center);
+                    return;
+                }
+                map.setBorderCenter(e.getWhoClicked().getLocation());
+                e.getWhoClicked().sendMessage(Tools.componentalize("Center of border set to your location."));
             }
-            map.setBorderCenter(e.getWhoClicked().getLocation());
-            e.getWhoClicked().sendMessage(Tools.componentalize("Center of border set to your location."));
         });
     }
 
     private GuiItem spawnBlockIcon() {
         Material type = Material.DIRT;
+        boolean editable = false;
         if (map.getSpawnBlockType() != null)
             type = map.getSpawnBlockType();
         if (type == null || type.isAir() || !type.isItem())
             type = Material.DIRT;
         Bukkit.getLogger().info(type.name());
         ItemBuilder icon = ItemBuilder.from(type).name(Tools.componentalize("&eSpawn Point Block"));
-        icon.lore(Tools.componentalize(Tools.wrapText("Games will look for this block type to spawn players on. Click to open a gui and select a new block type. You can also stand on a spawn point and type /mapconfig spawn", ChatColor.GRAY)));
-
+        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+            icon.lore(Tools.componentalize(Tools.wrapText("Games will look for this block type to spawn players on. Click to open a gui and select a new block type. You can also stand on a spawn point and type /mapconfig spawn", ChatColor.GRAY)));
+            editable = true;
+        } else {
+            icon.lore(Tools.componentalize(Tools.wrapText("&cYou must be on this map to edit this setting. Load this world from the admin menu to change this.", ChatColor.RED)));
+        }
+        boolean finalEditable = editable;
         return icon.asGuiItem(e -> {
-            e.getWhoClicked().closeInventory();
-            new SelectMaterialGui(e.getWhoClicked(), this, mat -> {
-                map.setSpawnBlockType(mat);
+            if (finalEditable) {
                 e.getWhoClicked().closeInventory();
-                updateItem(3, spawnBlockIcon());
-                open(e.getWhoClicked());
-            });
+                new SelectMaterialGui(e.getWhoClicked(), this, mat -> {
+                    map.setSpawnBlockType(mat);
+                    e.getWhoClicked().closeInventory();
+                    updateItem(3, spawnBlockIcon());
+                    open(e.getWhoClicked());
+                });
+            }
         });
     }
 
     public GuiItem spawnRadiusIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.ENDER_EYE).name(Tools.componentalize("&eSpawn Radius: &f" + map.getSpawnRadius()));
-        icon.lore(Tools.componentalize(Tools.wrapText("How far away players will spawn from the center. Click to increase, Right click to decrease", ChatColor.GRAY)));
+        boolean editable = false;
+        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+            editable = true;
+            icon.lore(Tools.componentalize(Tools.wrapText("How far away players will spawn from the center. Click to increase, Right click to decrease", ChatColor.GRAY)));
+        } else {
+            icon.lore(Tools.componentalize(Tools.wrapText("&cYou must be on this map to edit this setting. Load this world from the admin menu to change this.", ChatColor.RED)));
+        }
 
+        boolean finalEditable = editable;
         return icon.asGuiItem(e -> {
-            int current = map.getSpawnRadius();
-            if (e.isLeftClick() && current < 24) {
-                current++;
+            if (finalEditable) {
+                int current = map.getSpawnRadius();
+                if (e.isLeftClick() && current < 24) {
+                    current++;
+                }
+                if (e.isRightClick() && current > 5) {
+                    current--;
+                }
+                map.setSpawnRadius(current);
+                updateItem(5, spawnRadiusIcon());
+                visualizeRadius((Player) e.getWhoClicked());
             }
-            if (e.isRightClick() && current > 5) {
-                current--;
-            }
-            map.setSpawnRadius(current);
-            updateItem(5, spawnRadiusIcon());
-            visualizeRadius((Player) e.getWhoClicked());
         });
     }
 
     public GuiItem spawnCenterIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Tools.componentalize("&eSpawn Center"));
-        icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center of spawn at your location. You can also stand where you want the center to be and type &f/mapconfig &fspawncenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
+        boolean editable = false;
+        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+            editable = true;
+            icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center of spawn at your location. You can also stand where you want the center to be and type &f/mapconfig &fspawncenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
+        } else {
+            icon.lore(Tools.componentalize(Tools.wrapText("&cYou must be on this map to edit this setting. Load this world from the admin menu to change this.", ChatColor.RED)));
+        }
 
+        boolean finalEditable = editable;
         return icon.asGuiItem(e -> {
-            if (e.isRightClick()) {
-                Location center = map.getSpawnCenter(e.getWhoClicked().getWorld());
-                e.getWhoClicked().getWorld().strikeLightningEffect(center);
-                return;
+            if (finalEditable) {
+                if (e.isRightClick()) {
+                    Location center = map.getSpawnCenter(e.getWhoClicked().getWorld());
+                    e.getWhoClicked().getWorld().strikeLightningEffect(center);
+                    return;
+                }
+                map.setSpawnCenter(e.getWhoClicked().getLocation());
+                e.getWhoClicked().sendMessage(Tools.componentalize("Center of spawn set to your location."));
             }
-            map.setSpawnCenter(e.getWhoClicked().getLocation());
-            e.getWhoClicked().sendMessage(Tools.componentalize("Center of spawn set to your location."));
         });
     }
 

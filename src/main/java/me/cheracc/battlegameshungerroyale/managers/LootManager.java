@@ -331,7 +331,7 @@ public class LootManager implements Listener {
             center = chunk.getBlockData(centerX, centerY, centerZ);
             if (centerY - 1 >= 0)
                 above = chunk.getBlockData(centerX, centerY + 1, centerZ);
-            if (centerY - 1 <= 256)
+            if (centerY - 1 <= 256 && centerY >= 0)
                 below = chunk.getBlockData(centerX, centerY - 1, centerZ);
             if (centerZ - 1 >= 0)
                 sides.add(chunk.getBlockData(centerX, centerY, centerZ - 1));

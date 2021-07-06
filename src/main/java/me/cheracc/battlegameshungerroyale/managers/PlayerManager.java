@@ -8,7 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlayerManager {
-    List<PlayerData> loadedPlayers = new ArrayList<>();
+    private static PlayerManager singletonInstance = null;
+    private final List<PlayerData> loadedPlayers = new ArrayList<>();
+
+    private PlayerManager() {
+    }
 
     public @NotNull PlayerData getPlayerData(Player player) {
         for (PlayerData d : loadedPlayers) {
@@ -20,4 +24,9 @@ public class PlayerManager {
         return data;
     }
 
+    public static PlayerManager getInstance() {
+        if (singletonInstance == null)
+            singletonInstance = new PlayerManager();
+        return singletonInstance;
+    }
 }

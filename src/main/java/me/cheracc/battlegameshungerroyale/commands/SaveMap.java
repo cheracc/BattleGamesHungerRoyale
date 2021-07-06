@@ -39,7 +39,7 @@ public class SaveMap implements CommandExecutor {
                     MapManager.getInstance().saveMap(mapDataToSave, w);
                     double elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000;
 
-                    p.sendMessage(Tools.componentalize(String.format("&fWorld and Config for &e%s &fhas been saved. That took %.3f seconds.", mapName, elapsedSeconds)));
+                    p.sendMessage(Tools.componentalize(String.format("&fWorld and Config for &e%s &fhas been saved. That took %.3f seconds. You can type &e/quit&f at any time to unload this map and return to the main world.", mapName, elapsedSeconds)));
                     return true;
                 }
                 else

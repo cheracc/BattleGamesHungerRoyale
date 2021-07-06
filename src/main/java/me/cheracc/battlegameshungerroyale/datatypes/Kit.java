@@ -147,7 +147,7 @@ public class Kit implements Cloneable {
     }
 
     private void loadAbilities(ConfigurationSection section) {
-        KitManager kits = BGHR.getKitManager();
+        KitManager kits = KitManager.getInstance();
         Set<String> keys = section.getKeys(false);
 
         for (String key : keys) {

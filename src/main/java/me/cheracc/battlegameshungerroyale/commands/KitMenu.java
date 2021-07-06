@@ -5,7 +5,6 @@ import dev.triumphteam.gui.guis.BaseGui;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.ScrollingGui;
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Kit;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
@@ -27,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class KitMenu implements CommandExecutor {
-    KitManager kitManager = BGHR.getKitManager();
+    KitManager kitManager = KitManager.getInstance();
 
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {

@@ -5,27 +5,71 @@ import me.cheracc.battlegameshungerroyale.datatypes.PlayerData;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
+import me.cheracc.battlegameshungerroyale.managers.GameManager;
+import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class AbilityListeners implements Listener {
-    PlayerManager playerManager = BGHR.getPlayerManager();
+public class GeneralListeners implements Listener {
+    private static GeneralListeners singletonInstance = null;
+
+    private GeneralListeners() {
+        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
+    }
+
+    public static void start() {
+        if (singletonInstance == null)
+            singletonInstance = new GeneralListeners();
+    }
+
+    @EventHandler
+    public void handlePlayersChangingWorlds(PlayerChangedWorldEvent event) {
+        Player p = event.getPlayer();
+        PlayerData pData = PlayerManager.getInstance().getPlayerData(p);
+// check if player is leaving a game or loaded map and handle it - this should only happen if admins are using /tp commands
+        if (!p.hasCooldown(Material.AIR)) {
+            Bukkit.dispatchCommand(p, "quit");
+        }
+        // check if player is transferring TO the main (lobby) world and handle it
+        if (p.getWorld().equals(MapManager.getInstance().getLobbyWorld())) {
+            GameMode defaultGameMode = GameMode.valueOf(BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
+            p.setGameMode(defaultGameMode);
+            pData.resetInventory();
+            if (BGHR.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false)) {
+                p.teleport(p.getWorld().getSpawnLocation());
+            }
+        }
+        // they are going FROM the lobby world this time
+        else if (event.getFrom().equals(MapManager.getInstance().getLobbyWorld())) {
+            if (GameManager.getInstance().getPlayersCurrentGame(p) != null) {
+                pData.saveInventory();
+                p.getInventory().clear();
+                for (ItemStack item : p.getInventory().getArmorContents())
+                    item.setType(Material.AIR);
+                if (pData.getKit() != null)
+                    pData.getKit().outfitPlayer(p, pData);
+            }
+        }
+    }
 
     // makes players keep their ability items (and not drop them) when they die
     @EventHandler
-    public void KeepKitItems(PlayerDeathEvent event) {
+    public void keepKitItems(PlayerDeathEvent event) {
         Player p = event.getEntity();
-        PlayerData data = playerManager.getPlayerData(p);
+        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
         if (data.getKit() != null) {
             for (ItemStack item : data.getAbilityItems()) {
@@ -50,7 +94,7 @@ public class AbilityListeners implements Listener {
             if (Tools.getUuidFromItem(activeItem) == null)
                 return;
 
-            PlayerData data = playerManager.getPlayerData(p);
+            PlayerData data = PlayerManager.getInstance().getPlayerData(p);
             Ability ability = data.getAbilityFromItem(activeItem);
             event.setCancelled(true);
 

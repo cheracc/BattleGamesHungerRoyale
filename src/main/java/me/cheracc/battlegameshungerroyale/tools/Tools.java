@@ -135,8 +135,9 @@ public class Tools {
     }
 
     public static TextComponent formatInstructions(String instructions, String currentValue) {
+        TextComponent formattedInstructions = LegacyComponentSerializer.legacyAmpersand().deserialize(instructions);
         TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255,0,0));
-        TextComponent instComp = Component.text(instructions).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255,255,255))
+        TextComponent instComp = formattedInstructions.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255,255,255))
                                           .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the current text into the chat input box")));
 
         return borderBar.append(Component.newline()).append(instComp).append(Component.newline()).append(borderBar);

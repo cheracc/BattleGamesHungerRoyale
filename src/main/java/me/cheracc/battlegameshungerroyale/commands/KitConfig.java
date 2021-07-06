@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.commands;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Kit;
 import me.cheracc.battlegameshungerroyale.guis.ConfigureKitGui;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -21,7 +21,7 @@ public class KitConfig implements CommandExecutor {
 
             // TODO add checks etc
             if (args.length > 0) {
-                Kit kit = BGHR.getKitManager().getKit(Tools.rebuildString(args, 0));
+                Kit kit = KitManager.getInstance().getKit(Tools.rebuildString(args, 0));
 
                 if (kit != null) {
                     new ConfigureKitGui(kit, null, p);

@@ -3,9 +3,9 @@ package me.cheracc.battlegameshungerroyale.guis;
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.guis.interfaces.GetAbilityResponse;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
@@ -30,7 +30,7 @@ public class SelectAbilityGui extends Gui {
             sendingGui.open(e.getWhoClicked());
         });
 
-        for (Ability a : BGHR.getKitManager().getDefaultAbilities())
+        for (Ability a : KitManager.getInstance().getDefaultAbilities())
             addItem(abilityIcon(a.newWithDefaults(), callback));
 
         open(player);

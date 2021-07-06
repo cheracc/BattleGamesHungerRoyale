@@ -34,7 +34,7 @@ public class MapManager implements Listener {
 
     private MapManager() {
         plugin = BGHR.getPlugin();
-        mainConfig = plugin.getMainConfig();
+        mainConfig = plugin.getConfig();
         mapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("maps directory", "BGHR_Maps/")).getAbsoluteFile();
         mainWorldFolder = getMainWorldFolder();
         activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();

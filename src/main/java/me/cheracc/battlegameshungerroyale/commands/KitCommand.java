@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.commands;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Kit;
 import me.cheracc.battlegameshungerroyale.datatypes.PlayerData;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
@@ -21,11 +21,10 @@ public class KitCommand implements CommandExecutor {
 
             if (args.length >= 1) {
                 String kitName = Tools.rebuildString(args, 0);
-                Kit kit = BGHR.getKitManager().getKit(kitName);
+                Kit kit = KitManager.getInstance().getKit(kitName);
 
                 if (kit != null) {
-                    PlayerManager playerManager = BGHR.getPlayerManager();
-                    PlayerData data = playerManager.getPlayerData(p);
+                    PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
                     if (data.getKit() != null && data.getKit().equals(kit)) {
                         p.sendMessage(Component.text("You are already using kit " + kit.getName()));

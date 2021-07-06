@@ -2,16 +2,22 @@ package me.cheracc.battlegameshungerroyale.datatypes;
 
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
+import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.io.IOException;
 import java.util.*;
 
 public class PlayerData {
     private final UUID uuid;
+    private String[] lastInventory;
+    private Location lastLocation;
     PlayerStats stats;
 
     Game currentGame;
@@ -53,6 +59,31 @@ public class PlayerData {
         this.kit = kit;
         kit.outfitPlayer(getPlayer(), this);
         getPlayer().sendMessage(Component.text("You have been given Kit " + kit.getName()));
+    }
+
+    public void saveInventory() {
+        lastInventory = InventorySerializer.playerInventoryToBase64(getPlayer().getInventory());
+    }
+
+    public void resetInventory() {
+        Player p = getPlayer();
+        try {
+            Inventory mainInventory = InventorySerializer.fromBase64(lastInventory[0]);
+            Inventory armorInventory = InventorySerializer.fromBase64(lastInventory[1]);
+
+            p.closeInventory();
+            p.getInventory().clear();
+            p.setItemOnCursor(null);
+
+            for (int i = 0; i < mainInventory.getSize(); i++) {
+                p.getInventory().setItem(i, mainInventory.getItem(i));
+            }
+            for (int i = 0; i < armorInventory.getSize(); i++) {
+                p.getInventory().setArmorContents(armorInventory.getContents());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void registerAbilityItem(Ability ability, ItemStack item) {

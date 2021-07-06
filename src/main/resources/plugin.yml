@@ -22,10 +22,6 @@ commands:
     usage: "/kitconfig"
     description: "opens a gui to configure a kit"
     permission: bghr.admin.kits
-  newgame:
-    usage: "/newgame"
-    description: "opens a gui to configure a new game"
-    permission: bghr.admin.games
   games:
     usage: "/games"
     description: "shows currently active games to join or spectate"
@@ -35,4 +31,4 @@ commands:
   bghr:
     usage: "/bghr"
     description: "opens the BGHR admin menu"
-    permission: bghr.admin
+    permission: bghr.admin.menu

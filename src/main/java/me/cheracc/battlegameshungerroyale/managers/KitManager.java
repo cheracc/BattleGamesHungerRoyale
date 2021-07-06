@@ -16,9 +16,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class KitManager {
+    private static KitManager singletonInstance = null;
     private final BGHR plugin = BGHR.getPlugin();
     private final List<Kit> loadedKits = new ArrayList<>();
     private final List<Ability> defaultAbilities = new ArrayList<>();
+
+    private KitManager() {
+
+    }
 
     public List<Kit> getLoadedKits() {
         return new ArrayList<>(loadedKits);
@@ -82,5 +87,11 @@ public class KitManager {
             if (o instanceof Ability)
                 defaultAbilities.add((Ability) o);
         }
+    }
+
+    public static KitManager getInstance() {
+        if (singletonInstance == null)
+            singletonInstance = new KitManager();
+        return singletonInstance;
     }
 }

@@ -53,7 +53,6 @@ public class GameOptions {
         String mapName = config.getString("map");
         MapData map = MapManager.getInstance().getMapByMapDirectoryName(mapName);
         if (mapName == null || map == null) {
-            Bukkit.getLogger().info("couldn't find map directory " + mapName);
             this.map = MapManager.getInstance().getMaps().get(0);
         } else
             this.map = map;
@@ -235,6 +234,10 @@ public class GameOptions {
 
     public int getChestRespawnTime() {
         return chestRespawnTime;
+    }
+
+    public void setChestRespawnTime(int value) {
+        chestRespawnTime = value;
     }
 
     public LootTable getLootTable() {

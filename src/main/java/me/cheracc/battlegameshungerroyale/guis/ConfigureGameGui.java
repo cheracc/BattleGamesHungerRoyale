@@ -14,6 +14,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,11 +22,16 @@ import java.util.List;
 
 public class ConfigureGameGui extends Gui {
     private final GameOptions options;
+    private final Gui sendingGui;
 
-    public ConfigureGameGui(HumanEntity player, GameOptions options) {
+    public ConfigureGameGui(HumanEntity player, GameOptions options, Gui sendingGui) {
         super(1, Tools.componentalize("&0Configure Game"));
+        this.sendingGui = sendingGui;
         disableAllInteractions();
-        setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
+        setOutsideClickAction(e -> {
+            e.getWhoClicked().closeInventory();
+            sendingGui.open(e.getWhoClicked());
+        });
 
         if (options == null) {
             this.options = new GameOptions();
@@ -114,7 +120,8 @@ public class ConfigureGameGui extends Gui {
     }
 
     private GuiItem allowBuildingIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.WOODEN_AXE).name(Tools.componentalize("&eAllow Regular Building: &f" + options.isAllowRegularBuilding()));
+        ItemBuilder icon = ItemBuilder.from(Material.WOODEN_PICKAXE).name(Tools.componentalize("&eAllow Regular Building: &f" + options.isAllowRegularBuilding()));
+        icon.flags(ItemFlag.HIDE_ATTRIBUTES);
         icon = icon.lore(Component.space(), Tools.componentalize("&bClick to toggle"));
 
         return icon.asGuiItem(e -> {
@@ -163,18 +170,25 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            e.getWhoClicked().sendMessage(Tools.formatInstructions("Enter a name for this configuration. If you enter an existing configuration name, the old configuration will be overwritten.",
-                    options.getConfigFile() == null ? "" : options.getConfigFile().getName().split("\\.")[0]));
-            TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), filename -> {
-                if (filename.matches("[^-_.A-Za-z0-9]")) {
-                    e.getWhoClicked().sendMessage(Tools.componentalize("Config names may not contain spaces or other odd characters"));
-                    open(e.getWhoClicked());
-                    return;
-                }
-                options.saveConfig(filename);
-                e.getWhoClicked().sendMessage(Tools.componentalize("&eSaved game configuration to " + filename + ".yml"));
-                open(e.getWhoClicked());
-            });
+
+            if (options.getConfigFile() == null) {
+                e.getWhoClicked().sendMessage(Tools.formatInstructions("Enter a name for this configuration. If you enter an existing configuration name, the old configuration will be overwritten.",
+                        options.getConfigFile() == null ? "" : options.getConfigFile().getName().split("\\.")[0]));
+                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), filename -> {
+                    if (filename.matches("[^-_.A-Za-z0-9]")) {
+                        e.getWhoClicked().sendMessage(Tools.componentalize("Config names may not contain spaces or other odd characters"));
+                        open(e.getWhoClicked());
+                        return;
+                    }
+                    options.saveConfig(filename);
+                    e.getWhoClicked().sendMessage(Tools.componentalize("&eSaved game configuration to " + filename + ".yml"));
+                    new ConfigureGameGui(e.getWhoClicked(), options, new AdminGui(e.getWhoClicked()));
+                });
+            } else {
+                options.saveConfig(options.getConfigFile().getName());
+                e.getWhoClicked().sendMessage(Tools.componentalize("&eSaved game configuration to " + options.getConfigFile().getName()));
+                new ConfigureGameGui(e.getWhoClicked(), options, new AdminGui(e.getWhoClicked()));
+            }
         });
     }
 
@@ -194,7 +208,7 @@ public class ConfigureGameGui extends Gui {
 
         lore.add("&fRandom Chests: &7" + (options.isGenerateChests() ? "on" : "off"));
         lore.add("&fChest Respawn Time: &7" + options.getChestRespawnTime());
-        lore.add("&fChest Spawns/Block: &7" + options.getMaxChestsPerChunk());
+        lore.add("&fMax Chests per Chunk: &7" + options.getMaxChestsPerChunk());
         lore.add("&fLoot Table: &7" + options.getLootTable().getKey().getKey());
         lore.add("");
         lore.add("&bClick to modify loot settings");
@@ -234,13 +248,13 @@ public class ConfigureGameGui extends Gui {
                     Tools.componentalize("&bRight click to view or modify it")).asGuiItem(e -> {
                         e.getWhoClicked().closeInventory();
                         options.loadConfig(file);
-                        new ConfigureGameGui(e.getWhoClicked(), options);
+                        new ConfigureGameGui(e.getWhoClicked(), options, this);
             }));
         }
 
         gui.addItem(ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("&eCreate New Configuration")).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            new ConfigureGameGui(e.getWhoClicked(), options);
+            new ConfigureGameGui(e.getWhoClicked(), options, this);
         }));
 
         gui.open(player);
@@ -263,7 +277,7 @@ public class ConfigureGameGui extends Gui {
             icon.setAction(e -> {
                 options.setMap(map);
                 e.getWhoClicked().closeInventory();
-                new ConfigureGameGui(e.getWhoClicked(), options);
+                new ConfigureGameGui(e.getWhoClicked(), options, this);
             });
             gui.addItem(icon);
         }

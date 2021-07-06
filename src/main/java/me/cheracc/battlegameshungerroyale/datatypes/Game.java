@@ -35,7 +35,7 @@ public class Game implements Listener {
     private final GameOptions options;
     private final BossBar bar;
     private World world;
-    private final LootManager lootManager;
+    private LootManager lootManager;
 
     private boolean openToPlayers;
     private double postgameTime;
@@ -184,12 +184,18 @@ public class Game implements Listener {
     }
 
     public void endGame() {
-        if (gameTick != null)
+        if (gameTick != null) {
             gameTick.cancel();
-        if (pregameTimer != null)
+            gameTick = null;
+        }
+        if (pregameTimer != null) {
             pregameTimer.cancel();
-        if (postgameTimer != null)
+            pregameTimer = null;
+        }
+        if (postgameTimer != null) {
             postgameTimer.cancel();
+            postgameTimer = null;
+        }
         lootManager.close();
         gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
@@ -202,9 +208,19 @@ public class Game implements Listener {
         bar.setVisible(false);
         bar.removeAll();
 
+        gameLog = null;
+        lootManager = null;
+
+        winner = null;
+        gameTick = null;
+        pregameTimer = null;
+        postgameTimer = null;
+        participants.clear();
+        hardSpawnPoints.clear();
         MapManager.getInstance().unloadWorld(world);
         GameManager.getInstance().gameOver(this);
         HandlerList.unregisterAll(this);
+        world = null;
     }
 
     public int getCurrentGameTime() {

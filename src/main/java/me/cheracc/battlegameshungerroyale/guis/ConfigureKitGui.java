@@ -3,7 +3,6 @@ package me.cheracc.battlegameshungerroyale.guis;
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Kit;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
@@ -228,7 +227,7 @@ public class ConfigureKitGui extends Gui {
         return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave and Exit"))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
-                        KitManager kitManager = BGHR.getKitManager();
+                        KitManager kitManager = KitManager.getInstance();
                         Player p = (Player) e.getWhoClicked();
                         p.closeInventory();
 
