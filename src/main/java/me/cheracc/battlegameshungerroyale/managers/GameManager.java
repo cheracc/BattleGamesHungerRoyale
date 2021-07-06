@@ -3,7 +3,6 @@ package me.cheracc.battlegameshungerroyale.managers;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
-import me.cheracc.battlegameshungerroyale.datatypes.MapData;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -55,7 +54,7 @@ public class GameManager {
             startWithRandomConfig();
     }
 
-    private List<GameOptions> getAllConfigs() {
+    public List<GameOptions> getAllConfigs() {
         File configDir = new File(BGHR.getPlugin().getDataFolder(), "gameconfigs/");
         List<GameOptions> configs = new ArrayList<>();
 
@@ -87,18 +86,7 @@ public class GameManager {
         Collections.shuffle(configs);
         int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
-        startWithRandomMap(configs.get(index));
-    }
-
-    private void startWithRandomMap(GameOptions options) {
-        List<MapData> maps = options.getMaps();
-        Collections.shuffle(maps);
-        int random;
-        if (maps.size() > 1)
-            random = ThreadLocalRandom.current().nextInt(0, maps.size() - 1);
-        else
-            random = 0;
-
-        Game.createNewGame(maps.get(random), options);
+        GameOptions options = configs.get(index);
+        Game.createNewGame(options.getMap(), options);
     }
 }

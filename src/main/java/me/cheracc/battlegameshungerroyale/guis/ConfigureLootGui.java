@@ -147,8 +147,8 @@ public class ConfigureLootGui extends Gui {
     private GuiItem saveIcon() {
         GuiItem saveIcon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave Loot Settings&f")).asGuiItem();
         saveIcon.setAction(e -> {
+            e.getWhoClicked().closeInventory();
             if (options.getConfigFile() != null) {
-                e.getWhoClicked().closeInventory();
                 options.saveConfig(options.getConfigFile().getName());
                 new ConfigureGameGui(e.getWhoClicked(), options);
             }

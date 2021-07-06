@@ -31,7 +31,7 @@ import java.util.*;
 
 public class Game implements Listener {
     private final MapData map;
-    private final GameLog gameLog;
+    private GameLog gameLog;
     private final GameOptions options;
     private final BossBar bar;
     private World world;
@@ -59,7 +59,6 @@ public class Game implements Listener {
         this.lootManager = new LootManager(this);
         bar = Bukkit.createBossBar("Pregame", BarColor.WHITE, BarStyle.SOLID);
         bar.setVisible(true);
-        gameLog = new GameLog(this);
         openToPlayers = false;
         pregameTime = -1;
         gameTime = -1;
@@ -70,6 +69,8 @@ public class Game implements Listener {
             setGameWorld(w);
             setupGame();
             Bukkit.getLogger().info("started new game. elapsed time: " + (System.currentTimeMillis() - time));
+            gameLog = new GameLog(this);
+            gameLog.addPhaseEntry(currentPhase);
         });
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
         if (callback != null)
@@ -110,7 +111,6 @@ public class Game implements Listener {
         world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
 
-        gameLog.addPhaseEntry(currentPhase);
 
         pregameTimer = startPregameTimer();
         GameManager.getInstance().setupGame(this);
@@ -353,7 +353,6 @@ public class Game implements Listener {
                     }
                     else {
                         pregameTime = options.getPregameTime();
-                        lootManager.placeLootChests(10);
                     }
 
                 } else

@@ -17,10 +17,6 @@ import org.bukkit.loot.LootTables;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
@@ -79,11 +75,9 @@ public class LootManager implements Listener {
             }
         }
 
-        int count = 0;
         for (Location l : selected) {
             if (makeLootChestAt(l)) {
                 usedChestLocations.add(l);
-                count++;
             }
             unusedChestLocations.remove(l);
         }
@@ -119,8 +113,8 @@ public class LootManager implements Listener {
             public void run() {
                 if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0)) {
                     cancel();
-                    Bukkit.getLogger().info(String.format("LootManager> found %s viable chest locations in %s chunks",
-                            unusedChestLocations.size() + usedChestLocations.size(), scanned));
+                    Bukkit.getLogger().info(String.format("LootManager> found %s viable chest locations in %s chunks (%sms)",
+                            unusedChestLocations.size() + usedChestLocations.size(), scanned, System.currentTimeMillis() - last));
                     return;
                 }
 
@@ -265,7 +259,6 @@ public class LootManager implements Listener {
         Chest chest = (Chest) b.getState();
         LootTable table = Bukkit.getLootTable(new NamespacedKey(BGHR.getPlugin(), lootTable.getKey().getKey()));
         chest.setLootTable(table);
-        Bukkit.getLogger().info("setting loot table " + table.getKey().asString());
         chest.update(true);
         Directional data = (Directional) chest.getBlockData();
         data.setFacing(getGoodFacing(b));
@@ -359,11 +352,21 @@ public class LootManager implements Listener {
     private static void loadLootTables() {
         BGHR plugin = BGHR.getPlugin();
 
-        for (String s : getCustomLootTableNames()) {
-            LOOT_TABLES.add(Bukkit.getLootTable(new NamespacedKey(plugin, s)));
+        for (String s : MapManager.getInstance().getLootTableNames()) {
+            LootTable t = Bukkit.getLootTable(new NamespacedKey(plugin, s));
+            if (t != null)
+                LOOT_TABLES.add(t);
         }
 
-        if (LOOT_TABLES.isEmpty()) {
+        if (!LOOT_TABLES.isEmpty()) {
+            StringBuilder names = new StringBuilder(" ");
+            for (LootTable t : LOOT_TABLES) {
+                names.append(t.getKey().getKey());
+                names.append(" ");
+            }
+            Bukkit.getLogger().info(String.format("loaded custom loot tables: [%s]", names));
+        }
+        else {
             // default loot tables
             for (LootTables t : LootTables.values()) {
                 if (t.getKey().getKey().contains("chest"))
@@ -376,32 +379,6 @@ public class LootManager implements Listener {
         if (LOOT_TABLES.isEmpty())
             loadLootTables();
         return new ArrayList<>(LOOT_TABLES);
-    }
-
-    public static Collection<String> getCustomLootTableNames() {
-        BGHR plugin = BGHR.getPlugin();
-        Set<String> customFiles = new HashSet<>();
-
-        File customTablesDirectory = new File(plugin.getDataFolder(), "loot_tables");
-        if (!customTablesDirectory.exists())
-            customTablesDirectory.mkdirs();
-        if (customTablesDirectory.list().length == 0) {
-            Bukkit.getLogger().info("No custom loot tables found. Adding default...");
-            File defaultLootTable = new File(customTablesDirectory, "default.json");
-            try {
-                OutputStream out = new FileOutputStream(defaultLootTable);
-                plugin.getResource("datapack_files/default.json").transferTo(out);
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        for (File file : customTablesDirectory.listFiles()) {
-            if (file.getName().toLowerCase().contains(".json"))
-                customFiles.add(file.getName().split("\\.")[0]);
-        }
-        return customFiles;
     }
 
     public static LootTable getDefaultLootTable() {

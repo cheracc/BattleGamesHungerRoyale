@@ -11,12 +11,10 @@ import org.bukkit.loot.LootTable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class GameOptions {
     private File configFile;
-    private final List<MapData> maps = new ArrayList<>();
+    private MapData map;
     private int livesPerPlayer;
     private int playersNeededToStart;
     private int pregameTime;
@@ -52,13 +50,13 @@ public class GameOptions {
             }
         }
 
-        maps.clear();
-        for (String s : config.getStringList("maps")) {
-            for (MapData map : MapManager.getInstance().getMaps()) {
-                if (map.getMapName().equalsIgnoreCase(s))
-                    maps.add(map);
-            }
-        }
+        String mapName = config.getString("map");
+        MapData map = MapManager.getInstance().getMapByMapDirectoryName(mapName);
+        if (mapName == null || map == null) {
+            Bukkit.getLogger().info("couldn't find map directory " + mapName);
+            this.map = MapManager.getInstance().getMaps().get(0);
+        } else
+            this.map = map;
 
         livesPerPlayer = config.getInt("lives per player", 1);
         playersNeededToStart = config.getInt("players needed to start", 2);
@@ -91,13 +89,8 @@ public class GameOptions {
                 Bukkit.getLogger().warning("creating directory: " + configFile.getAbsolutePath());
         }
 
-        List<String> mapNames = new ArrayList<>();
-        for (MapData map : maps) {
-            mapNames.add(map.getMapName());
-        }
-
         FileConfiguration config = new YamlConfiguration();
-        config.set("maps", mapNames);
+        config.set("map", map.getMapDirectory().getName());
         config.set("lives per player", livesPerPlayer);
         config.set("players needed to start", playersNeededToStart);
         config.set("allow regular building", allowRegularBuilding);
@@ -121,24 +114,16 @@ public class GameOptions {
         }
     }
 
-    public List<MapData> getMaps() {
-        return new ArrayList<>(maps);
+    public MapData getMap() {
+        return map;
     }
 
-    public void addMap(MapData map) {
-        maps.add(map);
+    public void setMap(MapData map) {
+        this.map = map;
     }
 
     public File getConfigFile() {
         return configFile;
-    }
-
-    public void removeMap(MapData map) {
-        maps.remove(map);
-    }
-
-    public void clearMaps() {
-        maps.clear();
     }
 
     public StartType getStartType() {

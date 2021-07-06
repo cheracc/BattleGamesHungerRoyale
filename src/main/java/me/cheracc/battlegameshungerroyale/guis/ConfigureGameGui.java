@@ -61,30 +61,18 @@ public class ConfigureGameGui extends Gui {
 
     private GuiItem mapsIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.FILLED_MAP);
-        icon = icon.name(Tools.componentalize("&eEligible Maps:"));
+        icon = icon.name(Tools.componentalize("&eMap: &7" + options.getMap().getMapName()));
 
         List<Component> lore = new ArrayList<>();
 
-        if (options.getMaps().isEmpty())
-            lore.add(Tools.componentalize("None!"));
-        else {
-            for (MapData map : options.getMaps())
-                lore.add(Tools.componentalize(map.getMapName()));
-        }
         lore.add(Component.space());
-        lore.add(Tools.componentalize("&bClick to add maps to this list"));
-        lore.add(Tools.componentalize("&bRight click to clear"));
+        lore.add(Tools.componentalize("&bClick to select a new map"));
 
         icon = icon.lore(lore);
 
         return icon.asGuiItem(e -> {
-            if (e.isLeftClick()) {
                 e.getWhoClicked().closeInventory();
                 sendSelectMapsGui(e.getWhoClicked());
-            }
-            if (e.isRightClick()) {
-                options.clearMaps();
-            }
         });
     }
 
@@ -195,7 +183,7 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            sendStartGameGui(e.getWhoClicked());
+            Game.createNewGameWithCallback(options.getMap(), options, game -> new SelectGameGui(e.getWhoClicked()));
         });
 
     }
@@ -238,24 +226,15 @@ public class ConfigureGameGui extends Gui {
         Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Select a saved config:")).create();
 
         gui.disableAllInteractions();
-        gui.setOutsideClickAction(e -> {
-            e.getWhoClicked().closeInventory();
-            open(e.getWhoClicked());
-        });
+        gui.setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 
         for (File file : configFiles) {
             gui.addItem(ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.componentalize(file.getName().split("\\.")[0]))
-                    .lore(Tools.componentalize("&bClick to start a game using this config"),
-                            Tools.componentalize("&bRight click to view or modify it")).asGuiItem(e -> {
-                                if (e.isRightClick()) {
-                                    e.getWhoClicked().closeInventory();
-                                    options.loadConfig(file);
-                                    new ConfigureGameGui(e.getWhoClicked(), options);
-                                } else {
-                                    e.getWhoClicked().closeInventory();
-                                    options.loadConfig(file);
-                                    sendStartGameGui(e.getWhoClicked());
-                                }
+                .lore(Tools.componentalize("&bClick to start a game using this config"),
+                    Tools.componentalize("&bRight click to view or modify it")).asGuiItem(e -> {
+                        e.getWhoClicked().closeInventory();
+                        options.loadConfig(file);
+                        new ConfigureGameGui(e.getWhoClicked(), options);
             }));
         }
 
@@ -269,9 +248,9 @@ public class ConfigureGameGui extends Gui {
 
     private void sendSelectMapsGui(HumanEntity player) {
         List<MapData> maps = MapManager.getInstance().getMaps();
-        int rows = (maps.size() - options.getMaps().size()) / 9 + 1;
+        int rows = maps.size() / 9 + 1;
 
-        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Add a Map to this Game")).create();
+        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Select a map for this Game")).create();
 
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> {
@@ -280,16 +259,13 @@ public class ConfigureGameGui extends Gui {
         });
 
         for (MapData map : maps) {
-            if (!options.getMaps().contains(map)) {
-                GuiItem icon = mapInfoIcon(map);
-                icon.setAction(e -> {
-                    options.addMap(map);
-                    e.getWhoClicked().closeInventory();
-                    updateItem(0, mapsIcon());
-                    open(e.getWhoClicked());
-                });
-                gui.addItem(icon);
-            }
+            GuiItem icon = mapInfoIcon(map);
+            icon.setAction(e -> {
+                options.setMap(map);
+                e.getWhoClicked().closeInventory();
+                new ConfigureGameGui(e.getWhoClicked(), options);
+            });
+            gui.addItem(icon);
         }
         gui.open(player);
     }
@@ -375,29 +351,4 @@ public class ConfigureGameGui extends Gui {
         return icon.asGuiItem();
     }
 
-    private void sendStartGameGui(HumanEntity player) {
-        int rows = options.getMaps().size() / 9 + 1;
-        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Select a Map for This Game:")).create();
-        gui.disableAllInteractions();
-        gui.setOutsideClickAction(e -> {
-            e.getWhoClicked().closeInventory();
-            new ConfigureGameGui(player, options);
-        });
-
-        for (MapData map : options.getMaps()) {
-            GuiItem icon = mapInfoIcon(map);
-            icon.setAction(e -> {
-                e.getWhoClicked().closeInventory();
-                Game.createNewGameWithCallback(map, options, game -> new SelectGameGui(player));
-            });
-            gui.addItem(icon);
-        }
-
-        if (options.getMaps().size() == 1) {
-            Game.createNewGameWithCallback(options.getMaps().get(0), options, game -> new SelectGameGui(player));
-            return;
-        }
-
-        gui.open(player);
-    }
 }

@@ -27,6 +27,7 @@ public class MapManager implements Listener {
     private final File mainWorldFolder;
     private final File activeMapsDirectory;
     private final Map<MapData, List<World>> maps = new HashMap<>();
+    private final Set<String> lootTableNames = new HashSet<>();
     private World lobbyWorld;
     private boolean canFlyInLobby = false;
     private boolean updatedDatapack = false;
@@ -141,6 +142,10 @@ public class MapManager implements Listener {
         return updatedDatapack;
     }
 
+    public Set<String> getLootTableNames() {
+        return new HashSet<>(lootTableNames);
+    }
+
     public World getLobbyWorld() {
         if (lobbyWorld == null)
             lobbyWorld = Bukkit.getWorlds().get(0);
@@ -158,6 +163,14 @@ public class MapManager implements Listener {
 
     public List<MapData> getMaps() {
         return new ArrayList<>(maps.keySet());
+    }
+
+    public MapData getMapByMapDirectoryName(String folderName) {
+        for (MapData map : getMaps()) {
+            if (map.getMapDirectory().getName().equalsIgnoreCase(folderName))
+                return map;
+        }
+        return null;
     }
 
     @EventHandler
@@ -330,6 +343,7 @@ public class MapManager implements Listener {
         }
 
         for (File file : pluginLootTablesDir.listFiles()) {
+            lootTableNames.add(file.getName().split("\\.")[0]);
             try {
                 File datapackFile = new File(datapackLootTablesDirectory, file.getName());
                 if (!datapackFile.exists()) {
