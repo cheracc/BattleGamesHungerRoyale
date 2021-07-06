@@ -8,7 +8,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.IOException;
@@ -67,19 +66,21 @@ public class PlayerData {
 
     public void resetInventory() {
         Player p = getPlayer();
+        if (lastInventory == null)
+            return;
         try {
-            Inventory mainInventory = InventorySerializer.fromBase64(lastInventory[0]);
-            Inventory armorInventory = InventorySerializer.fromBase64(lastInventory[1]);
+            ItemStack[] mainInventory = InventorySerializer.itemStackArrayFromBase64(lastInventory[0]);
+            ItemStack[] armorInventory = InventorySerializer.itemStackArrayFromBase64(lastInventory[1]);
 
             p.closeInventory();
             p.getInventory().clear();
             p.setItemOnCursor(null);
 
-            for (int i = 0; i < mainInventory.getSize(); i++) {
-                p.getInventory().setItem(i, mainInventory.getItem(i));
+            for (int i = 0; i < mainInventory.length; i++) {
+                p.getInventory().setItem(i, mainInventory[i]);
             }
-            for (int i = 0; i < armorInventory.getSize(); i++) {
-                p.getInventory().setArmorContents(armorInventory.getContents());
+            for (int i = 0; i < armorInventory.length; i++) {
+                p.getInventory().setArmorContents(armorInventory);
             }
         } catch (IOException e) {
             e.printStackTrace();

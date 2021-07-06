@@ -16,7 +16,10 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Kit implements Cloneable {
@@ -31,7 +34,10 @@ public class Kit implements Cloneable {
     public Kit(String key, ConfigurationSection config) {
         this.id = key;
         this.config = config;
-        this.equipment = (EquipmentSet) config.get("equipment", new EquipmentSet());
+        this.equipment = EquipmentSet.newEquipmentSet();
+        String equipmentBase64 = config.getString("equipment", "");
+        if (equipmentBase64 != null && !equipmentBase64.equals(""))
+            equipment.loadItemsFromBase64(equipmentBase64);
         name = config.getString("name", "Nameless Kit");
         description = config.getString("description", "Give this kit a description");
         iconItemType = config.getString("icon", "chest").toUpperCase();
@@ -39,20 +45,12 @@ public class Kit implements Cloneable {
             loadAbilities(Objects.requireNonNull(config.getConfigurationSection("abilities")));
     }
 
-    public Kit copyThis() {
-        try {
-            return (Kit) this.clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     public Kit(String id) {
         this.id = id;
         config = new YamlConfiguration();
         setName("Some New Kit");
         setDescription("Can't be sure what it does because nobody ever changed the default description!");
+        this.equipment = EquipmentSet.newEquipmentSet();
         setIcon(Material.STONE);
     }
 
@@ -86,12 +84,6 @@ public class Kit implements Cloneable {
             return;
         }
         abilities.remove(ability);
-        saveConfig();
-    }
-
-    public void setEquipment(EquipmentSet equipment) {
-        this.equipment = equipment;
-        config.set("equipment", this.equipment);
         saveConfig();
     }
 
@@ -167,6 +159,10 @@ public class Kit implements Cloneable {
         return name;
     }
 
+    public void setEquipment(EquipmentSet equipment) {
+        this.equipment = equipment;
+    }
+
     public void saveConfig() {
         BGHR plugin = BGHR.getPlugin();
         File configFile = new File(plugin.getDataFolder(), "kits.yml");
@@ -183,8 +179,7 @@ public class Kit implements Cloneable {
 
         }
 
-        if (equipment != null)
-            this.config.set("equipment", equipment);
+        this.config.set("equipment", equipment.serializeAsBase64());
 
         FileConfiguration kitsConfig = new YamlConfiguration();
 

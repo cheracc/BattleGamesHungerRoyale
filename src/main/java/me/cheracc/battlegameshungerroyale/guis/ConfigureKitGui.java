@@ -153,6 +153,7 @@ public class ConfigureKitGui extends Gui {
                     new EquipmentSetGui(e.getWhoClicked(), kit.getEquipment(), this, equipment -> {
                         kit.setEquipment(equipment);
                         updateItem(e.getSlot(), equipmentIcon());
+                        new ConfigureKitGui(kit, null, e.getWhoClicked());
                     });
                 });
     }

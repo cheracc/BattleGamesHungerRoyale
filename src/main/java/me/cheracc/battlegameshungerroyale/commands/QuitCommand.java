@@ -27,6 +27,7 @@ public class QuitCommand implements CommandExecutor {
 
             if (game == null && !p.getWorld().equals(MapManager.getInstance().getLobbyWorld())) {
                 World world = p.getWorld();
+                p.setCooldown(Material.AIR, 2);
                 p.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
                 MapManager.getInstance().unloadWorld(world);
                 p.sendMessage(Tools.componentalize("Finished editing, world unloaded."));

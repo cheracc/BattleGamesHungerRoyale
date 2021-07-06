@@ -266,6 +266,7 @@ public class Game implements Listener {
 
     public void joinAsSpectator(Player player) {
         player.setGameMode(GameMode.SPECTATOR);
+        player.setCooldown(Material.AIR, 2);
         player.teleport(map.getSpawnCenter(world));
         bar.addPlayer(player);
     }
@@ -273,6 +274,7 @@ public class Game implements Listener {
     public void join(Player player) {
         participants.put(player.getUniqueId(), options.getLivesPerPlayer());
         player.setGameMode(GameMode.ADVENTURE);
+        player.setCooldown(Material.AIR, 2);
         player.teleport(map.getSpawnCenter(world));
         bar.addPlayer(player);
         if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.INVINCIBILITY)
@@ -291,6 +293,7 @@ public class Game implements Listener {
         player.setGameMode(GameMode.ADVENTURE);
         player.setWalkSpeed(0.2F);
         player.setAllowFlight(false);
+        player.setCooldown(Material.AIR, 2);
         player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
         bar.removePlayer(player);
     }

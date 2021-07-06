@@ -39,16 +39,20 @@ public class GeneralListeners implements Listener {
     public void handlePlayersChangingWorlds(PlayerChangedWorldEvent event) {
         Player p = event.getPlayer();
         PlayerData pData = PlayerManager.getInstance().getPlayerData(p);
-// check if player is leaving a game or loaded map and handle it - this should only happen if admins are using /tp commands
+
+        // check if player is leaving a game or loaded map and handle it - this should only happen if admins are using /tp commands
         if (!p.hasCooldown(Material.AIR)) {
             Bukkit.dispatchCommand(p, "quit");
         }
+
         // check if player is transferring TO the main (lobby) world and handle it
         if (p.getWorld().equals(MapManager.getInstance().getLobbyWorld())) {
             GameMode defaultGameMode = GameMode.valueOf(BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
             p.setGameMode(defaultGameMode);
             pData.resetInventory();
             if (BGHR.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false)) {
+                Bukkit.getLogger().info("teleporting to lobby spawn");
+                p.setCooldown(Material.AIR, 2);
                 p.teleport(p.getWorld().getSpawnLocation());
             }
         }
@@ -58,7 +62,8 @@ public class GeneralListeners implements Listener {
                 pData.saveInventory();
                 p.getInventory().clear();
                 for (ItemStack item : p.getInventory().getArmorContents())
-                    item.setType(Material.AIR);
+                    if (item != null)
+                        item.setType(Material.AIR);
                 if (pData.getKit() != null)
                     pData.getKit().outfitPlayer(p, pData);
             }

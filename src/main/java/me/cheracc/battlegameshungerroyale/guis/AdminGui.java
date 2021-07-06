@@ -232,6 +232,7 @@ public class AdminGui extends Gui {
                         new ConfigureMapGui(player, this, map);
                     else {
                         MapManager.getInstance().createNewWorldAsync(map, world -> {
+                            e.getWhoClicked().setCooldown(Material.AIR, 2);
                             e.getWhoClicked().teleport(world.getSpawnLocation());
                             e.getWhoClicked().sendMessage(Tools.formatInstructions("&fThis world has been loaded for editing. Any changes to this map can be saved to the map template by typing &e/savemap&f at any time. When you are finished, type &e/quit &fto unload this world and return to the main world.", ""));
                         });

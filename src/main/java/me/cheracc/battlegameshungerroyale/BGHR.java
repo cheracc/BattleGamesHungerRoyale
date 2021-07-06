@@ -1,7 +1,6 @@
 package me.cheracc.battlegameshungerroyale;
 
 import me.cheracc.battlegameshungerroyale.commands.*;
-import me.cheracc.battlegameshungerroyale.datatypes.EquipmentSet;
 import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
@@ -34,7 +33,6 @@ public class BGHR extends JavaPlugin implements Listener {
         saveDefaultConfig();
         MapManager.getInstance();
         ConfigurationSerialization.registerClass(SoundEffect.class);
-        ConfigurationSerialization.registerClass(EquipmentSet.class);
         try {
             KitManager.getInstance().findAndLoadDefaultAbilities();
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
@@ -76,7 +74,6 @@ public class BGHR extends JavaPlugin implements Listener {
         saveConfig();
         HandlerList.unregisterAll((Plugin) this);
         ConfigurationSerialization.unregisterClass(SoundEffect.class);
-        ConfigurationSerialization.unregisterClass(EquipmentSet.class);
     }
 
     private static void setupPermissions() {

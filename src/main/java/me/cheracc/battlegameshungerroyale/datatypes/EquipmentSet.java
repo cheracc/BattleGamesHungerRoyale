@@ -1,10 +1,11 @@
 package me.cheracc.battlegameshungerroyale.datatypes;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -12,20 +13,58 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.*;
 
-public class EquipmentSet implements ConfigurationSerializable {
+public class EquipmentSet {
+    private final static NamespacedKey EQUIPMENT_KEY = new NamespacedKey(BGHR.getPlugin(), "equipment");
+    private final static EquipmentSlot[] SLOTS = { EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND };
+
     private final UUID uuid = UUID.randomUUID();
     private final Map<EquipmentSlot, ItemStack> armor = new HashMap<>();
     private final List<ItemStack> otherItems = new ArrayList<>();
-    private final static NamespacedKey key = new NamespacedKey(BGHR.getPlugin(), "equipment");
 
-    public EquipmentSet() {
+    private EquipmentSet() {
 
     }
 
-    public EquipmentSet(Map<String, Object> inputMap) {
+    public static EquipmentSet newEquipmentSet() {
+        EquipmentSet set = new EquipmentSet();
 
+        for (EquipmentSlot slot : SLOTS)
+            set.setArmor(slot, null);
+
+        return set;
+    }
+
+    public String serializeAsBase64() {
+        List<ItemStack> orderedList = new ArrayList<>();
+
+        for (EquipmentSlot slot : SLOTS) {
+            ItemStack item = armor.get(slot);
+            if (item == null)
+                item = new ItemStack(Material.AIR);
+            orderedList.add(item);
+        }
+        orderedList.addAll(otherItems);
+
+        return InventorySerializer.itemStackArrayToBase64(orderedList.toArray(new ItemStack[0]));
+    }
+
+    public void loadItemsFromBase64(String data) {
+        EquipmentSlot[] slots = { EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND };
+        try {
+            ItemStack[] items = InventorySerializer.itemStackArrayFromBase64(data);
+            for (int i = 0; i < items.length - 1; i++) {
+                if (i < slots.length - 1)
+                    setArmor(slots[i], items[i]);
+                else
+                    addOtherItem(items[i]);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public HashMap<EquipmentSlot, ItemStack> getArmor() {
@@ -34,21 +73,6 @@ public class EquipmentSet implements ConfigurationSerializable {
 
     public List<ItemStack> getOtherItems() {
         return new ArrayList<>(otherItems);
-    }
-
-    @Override
-    public @NotNull Map<String, Object> serialize() {
-        Map<String, Object> output = new HashMap<>();
-        for (Map.Entry<EquipmentSlot, ItemStack> e : armor.entrySet()) {
-            output.put("armor." + e.getKey().name().toLowerCase(), e.getValue());
-        }
-
-        int count = 1;
-        for (ItemStack other : getOtherItems()) {
-            output.put("other." + count, other);
-            count++;
-        }
-        return output;
     }
 
     public void setArmor(@NotNull EquipmentSlot slot, @NotNull ItemStack armor) {
@@ -107,7 +131,7 @@ public class EquipmentSet implements ConfigurationSerializable {
         if (item == null) return false;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
-        String id = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        String id = meta.getPersistentDataContainer().get(EQUIPMENT_KEY, PersistentDataType.STRING);
 
         return (id != null && id.equalsIgnoreCase(uuid.toString()));
     }
@@ -117,7 +141,7 @@ public class EquipmentSet implements ConfigurationSerializable {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, uuid.toString());
+        meta.getPersistentDataContainer().set(EQUIPMENT_KEY, PersistentDataType.STRING, uuid.toString());
         item.setItemMeta(meta);
         return item;
     }

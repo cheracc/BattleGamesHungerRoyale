@@ -24,13 +24,15 @@ import java.util.List;
 public class EquipmentSetGui extends Gui {
     private final EquipmentSet set;
     private final static Material EMPTY_ARMOR_ICON = Material.ARMOR_STAND;
-    private final static EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND};
+    private final static EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND};
     private final static String[] slotArmorNames = {"a helmet", "a chestplate", "some leggings",  "some boots", "an off hand item"};
 
     public EquipmentSetGui(HumanEntity player, EquipmentSet set, Gui sendingGui, GetEquipmentSet callback) {
         super(1, Tools.componentalize("&0Current Equipment:"));
         this.setDefaultTopClickAction(e -> e.setCancelled(true));
         this.set = set;
+        if (set == null)
+            set = EquipmentSet.newEquipmentSet();
 
         setOutsideClickAction(e -> sendingGui.open(e.getWhoClicked()));
         fillArmorSlots();
@@ -38,7 +40,7 @@ public class EquipmentSetGui extends Gui {
         setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("Save this Equipment")).asGuiItem(e -> {
             Tools.saveObjectToPlayer("equipment", this.set, (Player) e.getWhoClicked());
             e.getWhoClicked().closeInventory();
-            callback.equipmentCallback(set);
+            callback.equipmentCallback(this.set);
         }));
 
         open(player);
@@ -48,7 +50,7 @@ public class EquipmentSetGui extends Gui {
         String instructions = "Click here to remove this item, or drop another item here to replace it.";
         String emptyInstructions = "Drop an item here to add it to this kit's hotbar.";
         String hotbarWarning = "Items placed here will be locked to the player's hotbar or off hand slots and cannot be dropped.";
-        int slot = slots.length;
+        int slot = SLOTS.length;
 
         for (ItemStack item : set.getOtherItems()) {
             ItemStack iconItem = item.clone();
@@ -84,12 +86,12 @@ public class EquipmentSetGui extends Gui {
         String offHandWarning = "Items placed here CANNOT be removed from the off hand slot. This makes it impossible for this kit to move ability items in their hotbar - use with caution!";
         String replaceInstructions = "&bClick here to remove this item, or drop another item here to replace it.";
 
-        for (int i = 0; i < slots.length; i++) {
-            if (set.getArmor().get(slots[i]) == null) {
+        for (int i = 0; i < SLOTS.length; i++) {
+            if (set.getArmor().get(SLOTS[i]) == null) {
                 Component name = Tools.componentalize("&eEmpty Armor Slot");
                 List<Component> lore = Tools.componentalize(Tools.wrapText(String.format(instructions, slotArmorNames[i]), ChatColor.AQUA));
 
-                if (slots[i] == EquipmentSlot.OFF_HAND) {
+                if (SLOTS[i] == EquipmentSlot.OFF_HAND) {
                     lore.add(Tools.BLANK_LINE);
                     lore.addAll(Tools.componentalize(Tools.wrapText(offHandWarning, ChatColor.RED)));
                 }
@@ -101,7 +103,7 @@ public class EquipmentSetGui extends Gui {
                 else
                     setItem(i, guiItem);
             } else {
-                ItemStack item = set.getArmor().get(slots[i]).clone();
+                ItemStack item = set.getArmor().get(SLOTS[i]).clone();
                 List<Component> lore = new ArrayList<>();
                 lore.add(Tools.BLANK_LINE);
                 lore.addAll(Tools.componentalize(Tools.wrapText(replaceInstructions, ChatColor.AQUA)));
@@ -122,15 +124,15 @@ public class EquipmentSetGui extends Gui {
             ItemStack cursor = event.getCursor();
 
             if (cursor == null || cursor.getItemMeta() == null || cursor.getType().isAir()) {
-                if (set.getArmor().get(slots[slotNumber]) != null) {
-                    set.removeArmor(slots[slotNumber]);
+                if (set.getArmor().get(SLOTS[slotNumber]) != null) {
+                    set.removeArmor(SLOTS[slotNumber]);
                     fillArmorSlots();
                     return;
                 }
             }
 
-            if (armorFitsInSlot(cursor, slots[slotNumber])) {
-                set.setArmor(slots[slotNumber], cursor);
+            if (armorFitsInSlot(cursor, SLOTS[slotNumber])) {
+                set.setArmor(SLOTS[slotNumber], cursor);
                 event.getWhoClicked().setItemOnCursor(null);
                 fillArmorSlots();
             } else {
@@ -164,10 +166,10 @@ public class EquipmentSetGui extends Gui {
     private boolean armorFitsInSlot(ItemStack armor, EquipmentSlot slot) {
         if (slot == EquipmentSlot.OFF_HAND)
             return true;
-        for (int i = 0; i < slots.length; i++) {
+        for (int i = 0; i < SLOTS.length; i++) {
             String[] words = armor.getType().name().toLowerCase().split("_");
             for (String word : words)
-                if (slot == slots[i] && slotArmorNames[i].contains(word))
+                if (slot == SLOTS[i] && slotArmorNames[i].contains(word))
                     return true;
         }
         return false;
