@@ -34,8 +34,7 @@ public class PlayerData {
 
         this.kit = kit;
 
-        kit.outfitPlayer(getPlayer());
-        getPlayer().sendMessage(Component.text("You have been given Kit " + kit.getName()));
+        getPlayer().sendMessage(Component.text("Your chosen Kit has been set to " + kit.getName()));
     }
 
     public Location getLastLocation() {

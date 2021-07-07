@@ -87,7 +87,7 @@ public class Tools {
         StringBuilder currentLine = new StringBuilder();
 
         for (int i = 0; i < words.length; i++) {
-            if (currentLine.length() > 28 || currentLine.toString().endsWith(".") || currentLine.toString().endsWith("!")) {
+            if (ChatColor.stripColor(currentLine.toString()).length() > 28 || currentLine.toString().endsWith(".") || currentLine.toString().endsWith("!")) {
                 wrappedText.add(color + currentLine.toString());
                 if (currentLine.toString().endsWith(".") || currentLine.toString().endsWith("!"))
                     wrappedText.add("");

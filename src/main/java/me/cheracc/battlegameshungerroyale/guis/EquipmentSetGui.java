@@ -8,6 +8,7 @@ import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.EquipmentSet;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -18,14 +19,12 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class EquipmentSetGui extends Gui {
     private final EquipmentSet set;
+    private final Gui sendingGui;
     private final static Material EMPTY_ARMOR_ICON = Material.ARMOR_STAND;
     private final static EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND};
     private final static String[] slotArmorNames = {"a helmet", "a chestplate", "some leggings",  "some boots", "an off hand item"};
@@ -34,6 +33,7 @@ public class EquipmentSetGui extends Gui {
         super(1, "Current Equipment:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.setDefaultTopClickAction(e -> e.setCancelled(true));
         this.set = set;
+        this.sendingGui = sendingGui;
         if (set == null)
             set = EquipmentSet.newEquipmentSet();
 
@@ -66,7 +66,7 @@ public class EquipmentSetGui extends Gui {
             lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
 
             GuiItem guiItem = ItemBuilder.from(iconItem).name(name).lore(lore).asGuiItem();
-            guiItem.setAction(handleOtherItems(item));
+            guiItem.setAction(handleClicks(slot));
 
             if (getGuiItem(slot) != null)
                 updateItem(slot, guiItem);
@@ -79,7 +79,7 @@ public class EquipmentSetGui extends Gui {
             List<Component> lore = Tools.componentalize(Tools.wrapText(emptyInstructions, ChatColor.AQUA));
             lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
             lore.add(0, Tools.BLANK_LINE);
-            addItem(ItemBuilder.from(Material.LIME_STAINED_GLASS_PANE).name(name).lore(lore).asGuiItem(handleOtherItems(null)));
+            addItem(ItemBuilder.from(Material.LIME_STAINED_GLASS_PANE).name(name).lore(lore).asGuiItem(handleClicks(slot)));
             slot++;
         }
     }
@@ -99,7 +99,7 @@ public class EquipmentSetGui extends Gui {
                     lore.addAll(Tools.componentalize(Tools.wrapText(offHandWarning, ChatColor.RED)));
                 }
                 lore.add(0, Tools.BLANK_LINE);
-                GuiItem guiItem = ItemBuilder.from(EMPTY_ARMOR_ICON).name(name).lore(lore).asGuiItem(handleArmorClicks(i));
+                GuiItem guiItem = ItemBuilder.from(EMPTY_ARMOR_ICON).name(name).lore(lore).asGuiItem(handleClicks(i));
 
                 if (getGuiItem(i) != null)
                     updateItem(i, guiItem);
@@ -111,7 +111,7 @@ public class EquipmentSetGui extends Gui {
                 lore.add(Tools.BLANK_LINE);
                 lore.addAll(Tools.componentalize(Tools.wrapText(replaceInstructions, ChatColor.AQUA)));
                 item.lore(lore);
-                GuiItem guiItem = ItemBuilder.from(item).asGuiItem(handleArmorClicks(i));
+                GuiItem guiItem = ItemBuilder.from(item).asGuiItem(handleClicks(i));
                 if (getGuiItem(i) != null)
                     updateItem(i, guiItem);
                 else
@@ -120,49 +120,36 @@ public class EquipmentSetGui extends Gui {
         }
     }
 
-    private GuiAction<InventoryClickEvent> handleArmorClicks(int slotNumber) {
-        Component errorMessage = Tools.componentalize("That won't fit there");
 
+    private GuiAction<InventoryClickEvent> handleClicks(int slot) {
         return event -> {
-            ItemStack cursor = event.getCursor();
+            ItemStack itemOnCursor = event.getWhoClicked().getItemOnCursor();
+            ItemStack itemInSlot = Objects.requireNonNull(getGuiItem(slot)).getItemStack();
 
-            if (cursor == null || cursor.getItemMeta() == null || cursor.getType().isAir()) {
-                if (set.getArmor().get(SLOTS[slotNumber]) != null) {
-                    set.removeArmor(SLOTS[slotNumber]);
-                    fillArmorSlots();
-                    return;
+            if (itemInSlot == null || LegacyComponentSerializer.legacyAmpersand().serialize(itemInSlot.displayName()).contains("Empty")) {
+                if (itemOnCursor.getItemMeta() != null) {
+                    set.setItem(slot, itemOnCursor);
+                    event.getWhoClicked().setItemOnCursor(null);
                 }
             }
+            if (getGuiItem(slot) != null && itemInSlot != null) {
+                itemInSlot.lore(new ArrayList<>());
+                set.setItem(slot, null);
 
-            if (armorFitsInSlot(cursor, SLOTS[slotNumber])) {
-                set.setArmor(SLOTS[slotNumber], cursor);
-                event.getWhoClicked().setItemOnCursor(null);
+                event.getWhoClicked().setItemOnCursor(itemInSlot);
+
+                if (itemOnCursor.getItemMeta() != null)
+                    set.setItem(slot, itemOnCursor);
+
+                fillOtherSlots();
                 fillArmorSlots();
-            } else {
-                event.getWhoClicked().sendMessage(errorMessage);
             }
-
         };
     }
 
-    private GuiAction<InventoryClickEvent> handleOtherItems(@Nullable ItemStack currentItem) {
+
+    private GuiAction<InventoryClickEvent> itTakesTheItemFromTheSlot(int slot) {
         return event -> {
-            ItemStack cursorItem = event.getWhoClicked().getItemOnCursor();
-
-            if (cursorItem == null && currentItem != null) {
-                Bukkit.getLogger().info("cursor: null current: " + currentItem.getI18NDisplayName());
-                set.removeItem(currentItem);
-                fillOtherSlots();
-            } else if (cursorItem != null) {
-                Bukkit.getLogger().info("cursor: " + cursorItem.getI18NDisplayName() + " current: " + ((currentItem == null) ? "null" : currentItem.getI18NDisplayName()) );
-                if (currentItem != null)
-                    set.removeItem(currentItem);
-                set.addOtherItem(cursorItem);
-
-                event.getWhoClicked().setItemOnCursor(null);
-                fillOtherSlots();
-            } else
-                Bukkit.getLogger().info("both null");
         };
     }
 

@@ -6,7 +6,7 @@
 
     <groupId>me.cheracc</groupId>
     <artifactId>BattleGamesHungerRoyale</artifactId>
-    <version>1.16.5_alpha1</version>
+    <version>1.17.1_alpha1</version>
     <build>
         <plugins>
             <plugin>
@@ -39,8 +39,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>16</source>
+                    <target>16</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -61,9 +61,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.destroystokyo.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>1.16.5-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>papermc</artifactId>
+            <version>1.17.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
