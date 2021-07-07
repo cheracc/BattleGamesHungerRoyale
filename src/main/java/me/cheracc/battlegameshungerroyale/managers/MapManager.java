@@ -202,34 +202,23 @@ public class MapManager implements Listener {
 
     private void registerMaps() {
         for (File file : Objects.requireNonNull(mapsDirectory.listFiles())) {
+            FileConfiguration config = new YamlConfiguration();
             if (file.isDirectory() && !file.getAbsolutePath().contains("old_maps")) {
                 File configFile = new File(file, "mapconfig.yml");
-                if (!configFile.exists()) {
-                    File levelDat = new File(file, "level.dat");
-                    if (levelDat.exists()) {
-                        try {
-                            configFile.createNewFile();
-                            OutputStream out = new FileOutputStream(configFile);
-                            BGHR.getPlugin().getResource("mapconfig.yml").transferTo(out);
-                            Bukkit.getLogger().warning("found a new map " + file.getName() + " in maps directory. creating config.");
-                            out.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        Bukkit.getLogger().warning("error creating file " + configFile.getAbsolutePath());
+                boolean saveNewConfig = true;
+
+                if (configFile.exists()) {
+                    try {
+                        config.load(configFile);
+                        saveNewConfig = false;
+                    } catch (IOException | InvalidConfigurationException e) {
+                        Bukkit.getLogger().warning("could not load config file " + configFile.getAbsolutePath());
                     }
                 }
-
-                FileConfiguration config = new YamlConfiguration();
-                try {
-                    config.load(configFile);
-                } catch (IOException | InvalidConfigurationException e) {
-                    e.printStackTrace();
-                }
-
-                MapData mapData = new MapData(config, file);
+                MapData mapData = MapData.createFromConfig(config, file);
                 maps.put(mapData, new ArrayList<>());
+                if (saveNewConfig)
+                    mapData.saveConfig();
             }
         }
     }

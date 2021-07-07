@@ -66,13 +66,20 @@ public class GameManager {
             configDir.mkdirs();
 
         if (configDir.listFiles().length == 0) {
-            File baseConfig = new File(configDir, "default.yml");
-            InputStream config = BGHR.getPlugin().getResource("gameconfig.yml");
-            try {
-                FileUtils.copyToFile(config, baseConfig);
-            } catch (IOException e) {
-                e.printStackTrace();
+            String[] defaultConfigNames = { "crystal_avalanche.yml", "horizon_city.yml", "island_tower.yml", "king_of_the_ring.yml" };
+
+            for (String filename : defaultConfigNames) {
+                File defaultConfig = new File(configDir, filename);
+                try {
+                    defaultConfig.createNewFile();
+                    InputStream in = BGHR.getPlugin().getResource("default_game_configs/" + filename);
+                    FileUtils.copyToFile(in, defaultConfig);
+                    in.close();
+                } catch (IOException e) {
+                    Bukkit.getLogger().warning("couldn't create file " + defaultConfig.getAbsolutePath());
+                }
             }
+
         }
 
         for (File file : configDir.listFiles()) {

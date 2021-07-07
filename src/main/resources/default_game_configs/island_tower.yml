@@ -1,0 +1,18 @@
+map: islandtower
+lives per player: 1
+players needed to start: 3
+allow regular building: false
+timers:
+  pregame: 60
+  invincibility: 90
+  main: 300
+  border: 300
+  postgame: 60
+start type: elytra
+loot:
+  generate chests: true
+  loosen search restrictions: true
+  max chests per chunk: 12
+  loot table: default
+  chest respawn time: 3
+  fill all chests: true

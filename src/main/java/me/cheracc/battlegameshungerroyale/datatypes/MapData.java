@@ -31,7 +31,7 @@ public class MapData {
     private int spawnCenterY;
     private int spawnCenterZ;
 
-    public MapData(FileConfiguration config, File mapDirectory) {
+    private MapData(FileConfiguration config, File mapDirectory) {
         this.config = config;
         this.mapDirectory = mapDirectory;
         mapName = config.getString("name",  mapDirectory.getName());
@@ -42,6 +42,8 @@ public class MapData {
         icon = Material.getMaterial(config.getString("icon", "map").toUpperCase());
         if (config.contains("spawn block type"))
             spawnBlockType = Material.getMaterial(config.getString("spawn block type").toUpperCase());
+        else
+            spawnBlockType = null;
         borderCenterX = config.getInt("border center.x", 0);
         borderCenterY = config.getInt("border center.y", 100);
         borderCenterZ = config.getInt("border center.z", 0);
@@ -51,6 +53,10 @@ public class MapData {
         spawnCenterX = config.getInt("spawn center.x", 0);
         spawnCenterY = config.getInt("spawn center.y", 100);
         spawnCenterZ = config.getInt("spawn center.z", 0);
+    }
+
+    public static MapData createFromConfig(FileConfiguration config, File mapDirectory) {
+        return new MapData(config, mapDirectory);
     }
 
     public void setIcon(Material material) {

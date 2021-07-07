@@ -1,0 +1,18 @@
+map: horizon_city
+lives per player: 1
+players needed to start: 4
+allow regular building: false
+timers:
+  pregame: 60
+  invincibility: 90
+  main: 600
+  border: 300
+  postgame: 60
+start type: elytra
+loot:
+  generate chests: true
+  loosen search restrictions: true
+  max chests per chunk: 8
+  loot table: default
+  chest respawn time: 4
+  fill all chests: false
