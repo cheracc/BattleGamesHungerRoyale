@@ -21,7 +21,7 @@ import java.util.List;
 public class SelectGameGui extends Gui {
 
     public SelectGameGui(HumanEntity player) {
-        super(1, "&0Current Games:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, "Current Games:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 

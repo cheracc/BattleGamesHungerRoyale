@@ -4,7 +4,6 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetPotionEffect;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
@@ -16,13 +15,14 @@ import org.bukkit.potion.PotionEffectType;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class ConfigurePotionEffectGui extends Gui {
     PotionEffect effect;
-    GetPotionEffect callback;
+    Consumer<PotionEffect> callback;
 
-    public ConfigurePotionEffectGui(HumanEntity player, PotionEffect effect, Gui sendingGui, GetPotionEffect callback) {
-        super(1, "&0Customize Potion Effect", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+    public ConfigurePotionEffectGui(HumanEntity player, PotionEffect effect, Gui sendingGui, Consumer<PotionEffect> callback) {
+        super(1, "Customize Potion Effect", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.effect = Objects.requireNonNullElseGet(effect, () -> PotionEffectType.SPEED.createEffect(Integer.MAX_VALUE, 0));
         this.callback = callback;
         disableAllInteractions();
@@ -141,7 +141,7 @@ public class ConfigurePotionEffectGui extends Gui {
         return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave this Effect"))
                 .asGuiItem(e -> {
                     e.getWhoClicked().closeInventory();
-                    callback.potionEffectCallback(effect);
+                    callback.accept(effect);
                 });
     }
 

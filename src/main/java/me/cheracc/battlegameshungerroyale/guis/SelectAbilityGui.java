@@ -5,7 +5,6 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetAbilityResponse;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
@@ -17,11 +16,12 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.potion.PotionEffect;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class SelectAbilityGui extends Gui {
 
-    public SelectAbilityGui(HumanEntity player, Gui sendingGui, GetAbilityResponse callback) {
-        super(1, "&0Select an Ability:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+    public SelectAbilityGui(HumanEntity player, Gui sendingGui, Consumer<Ability> callback) {
+        super(1, "Select an Ability:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
 
         disableAllInteractions();
         setOutsideClickAction(e -> {
@@ -34,7 +34,7 @@ public class SelectAbilityGui extends Gui {
 
         open(player);
     }
-    private GuiItem abilityIcon(Ability ability, GetAbilityResponse callback) {
+    private GuiItem abilityIcon(Ability ability, Consumer<Ability> callback) {
         Material icon = Material.BELL;
         Component name = Tools.componentalize(ChatColor.WHITE + ability.getName());
         List<Component> lore = new ArrayList<>();
@@ -73,7 +73,7 @@ public class SelectAbilityGui extends Gui {
 
                 p.closeInventory();
                 Ability newAbility = ability.newWithDefaults();
-                callback.abilityCallback(newAbility);
+                callback.accept(newAbility);
             }
         });
     }

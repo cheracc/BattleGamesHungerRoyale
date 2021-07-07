@@ -34,6 +34,10 @@ public class Tools {
     public static NamespacedKey UUID_KEY = new NamespacedKey(BGHR.getPlugin(), "uuid_key");
     public static NamespacedKey PLUGIN_KEY = new NamespacedKey(BGHR.getPlugin(), "battlegameshungerroyale");
 
+    public static String getRandomShortId() {
+        return UUID.randomUUID().toString().split("-")[0];
+    }
+
     public static ItemStack tagAsPluginItem(ItemStack item) {
         if (item == null)
             return item;

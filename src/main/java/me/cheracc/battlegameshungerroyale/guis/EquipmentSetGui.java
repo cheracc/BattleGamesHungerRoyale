@@ -6,7 +6,6 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.EquipmentSet;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetEquipmentSet;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -23,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class EquipmentSetGui extends Gui {
     private final EquipmentSet set;
@@ -30,8 +30,8 @@ public class EquipmentSetGui extends Gui {
     private final static EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFF_HAND};
     private final static String[] slotArmorNames = {"a helmet", "a chestplate", "some leggings",  "some boots", "an off hand item"};
 
-    public EquipmentSetGui(HumanEntity player, EquipmentSet set, Gui sendingGui, GetEquipmentSet callback) {
-        super(1, "&0Current Equipment:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+    public EquipmentSetGui(HumanEntity player, EquipmentSet set, Gui sendingGui, Consumer<EquipmentSet> callback) {
+        super(1, "Current Equipment:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.setDefaultTopClickAction(e -> e.setCancelled(true));
         this.set = set;
         if (set == null)
@@ -43,7 +43,7 @@ public class EquipmentSetGui extends Gui {
         setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("Save this Equipment")).asGuiItem(e -> {
             Tools.saveObjectToPlayer("equipment", this.set, (Player) e.getWhoClicked());
             e.getWhoClicked().closeInventory();
-            callback.equipmentCallback(this.set);
+            callback.accept(this.set);
         }));
 
         open(player);

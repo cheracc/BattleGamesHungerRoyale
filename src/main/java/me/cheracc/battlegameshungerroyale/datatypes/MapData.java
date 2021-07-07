@@ -12,12 +12,12 @@ import java.io.IOException;
 public class MapData {
     private final FileConfiguration config;
     private final File mapDirectory;
+    private Material icon;
     private String mapName;
     private String mapCreator;
     private String mapDescription;
-    private int timesPlayed;
     private double averageLength;
-    private Material icon;
+    private int timesPlayed;
 
     private boolean useBorder;
     private int borderRadius;

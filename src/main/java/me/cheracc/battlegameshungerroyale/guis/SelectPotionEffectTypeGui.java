@@ -5,7 +5,6 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.components.ScrollType;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.ScrollingGui;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetPotionEffectType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -15,13 +14,14 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.function.Consumer;
 
 public class SelectPotionEffectTypeGui extends ScrollingGui {
     private final Gui sendingGui;
-    private final GetPotionEffectType callback;
+    private final Consumer<PotionEffectType> callback;
     private final boolean allowInstant;
 
-    public SelectPotionEffectTypeGui(HumanEntity p, Gui sendingGui, GetPotionEffectType callback, boolean allowInstant) {
+    public SelectPotionEffectTypeGui(HumanEntity p, Gui sendingGui, Consumer<PotionEffectType> callback, boolean allowInstant) {
         super(6, 45, "Select a Potion Effect:", ScrollType.VERTICAL, new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.sendingGui = sendingGui;
         this.callback = callback;
@@ -54,7 +54,7 @@ public class SelectPotionEffectTypeGui extends ScrollingGui {
                         Player p = (Player) e.getWhoClicked();
                         if (e.getCurrentItem() != null) {
                             p.closeInventory();
-                            callback.potionEffectTypeCallback(type);
+                            callback.accept(type);
                         }
                     }
                 }));

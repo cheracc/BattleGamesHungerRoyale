@@ -29,7 +29,7 @@ import java.util.*;
 public class AdminGui extends Gui {
 
     public AdminGui(HumanEntity player) {
-        super(1, "&0Admin Menu", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, "Admin Menu", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 
@@ -99,7 +99,7 @@ public class AdminGui extends Gui {
         BGHR plugin = BGHR.getPlugin();
         FileConfiguration config = plugin.getConfig();
         List<BaseIcon> icons = new ArrayList<>();
-        BaseAdminGui pluginGui = new BaseAdminGui(player, "&0Plugin Configuration", null);
+        BaseAdminGui pluginGui = new BaseAdminGui(player, "Plugin Configuration", null);
 
         icons.add(slot -> {
             boolean value = config.getBoolean("reset main world on each restart", false);
@@ -158,12 +158,12 @@ public class AdminGui extends Gui {
                 pluginGui.updateIcon(slot);
                 boolean kitsAllowed = !value;
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (GameManager.getInstance().getPlayersCurrentGame(p) == null) {
+                    if (!GameManager.getInstance().isInAGame(p)) {
                         PlayerData data = PlayerManager.getInstance().getPlayerData(p);
                         if (data.getKit() != null && !kitsAllowed)
                             data.getKit().disrobePlayer(data);
                         else if (data.getKit() != null && kitsAllowed)
-                            data.getKit().outfitPlayer(p, data);
+                            data.getKit().outfitPlayer(p);
                     }
                 }
             });
@@ -206,7 +206,7 @@ public class AdminGui extends Gui {
                 });
             });
         }
-        new BaseAdminGui(player, "&0Kit Configurations", icons);
+        new BaseAdminGui(player, "Kit Configurations", icons);
     }
 
     public void sendMapsAdminGui(HumanEntity player) {
@@ -241,7 +241,7 @@ public class AdminGui extends Gui {
                 });
             });
         }
-        new BaseAdminGui(player, "&0Map Configurations", icons);
+        new BaseAdminGui(player, "Map Configurations", icons);
     }
 
     public void sendGameAdminGui(HumanEntity player) {
@@ -276,13 +276,13 @@ public class AdminGui extends Gui {
                     }
                 });
             });
-        new BaseAdminGui(player, "&0Game Configurations", icons);
+        new BaseAdminGui(player, "Game Configurations", icons);
     }
 
     private static class BaseAdminGui extends Gui {
         Map<Integer, BaseIcon> guiIcons = new HashMap<>();
         public BaseAdminGui(HumanEntity player, String title, Collection<BaseIcon> icons) {
-            super(1,"&0" + title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
+            super(1,"" + title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
             disableAllInteractions();
             setOutsideClickAction(e -> {
                 e.getWhoClicked().closeInventory();

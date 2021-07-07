@@ -30,7 +30,7 @@ public class ConfigureKitGui extends Gui {
     Gui sendingGui;
 
     public ConfigureKitGui(Kit kit, @Nullable Gui sendingGui, HumanEntity player) {
-        super(1, "&0Configuring Kit: &1" + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, "Configuring Kit: &1" + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.kit = kit;
         this.sendingGui = sendingGui;
 
@@ -83,7 +83,7 @@ public class ConfigureKitGui extends Gui {
                         p.sendMessage(Tools.formatInstructions("    Enter a new name for this kit:", kit.getName()));
                         TextInputListener.getInstance().getNextInputFrom(p, text -> {
                             kit.setName(text);
-                            updateTitle("&0Configuring Kit: &1" + kit.getName());
+                            updateTitle("Configuring Kit: &1" + kit.getName());
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
                             open(p);
                         });

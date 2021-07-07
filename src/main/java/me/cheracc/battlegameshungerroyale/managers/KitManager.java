@@ -25,6 +25,14 @@ public class KitManager {
 
     }
 
+    public Set<Ability> getAllAbilitiesInUse() {
+        Set<Ability> abilities = new HashSet<>();
+        for (Kit kit : loadedKits) {
+            abilities.addAll(kit.getAbilities());
+        }
+        return abilities;
+    }
+
     public List<Kit> getLoadedKits() {
         return new ArrayList<>(loadedKits);
     }

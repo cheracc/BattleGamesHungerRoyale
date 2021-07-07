@@ -22,14 +22,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 public class ConfigureGameGui extends Gui {
     private final GameOptions options;
-    private final Gui sendingGui;
 
     public ConfigureGameGui(HumanEntity player, GameOptions options, Gui sendingGui) {
-        super(1, "&0Configure Game", new HashSet<>(Arrays.asList(InteractionModifier.values())));
-        this.sendingGui = sendingGui;
+        super(1, "Configure Game", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         disableAllInteractions();
         setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();
@@ -58,14 +57,6 @@ public class ConfigureGameGui extends Gui {
 
         setItem(7, saveConfigIcon());
         setItem(8, startGameIcon());
-    }
-
-    private void updateAll() {
-        updateItem(0, mapsIcon());
-        updateItem(1, timersIcon());
-        updateItem(2, livesIcon());
-        updateItem(3, playersNeededIcon());
-        updateItem(4, allowBuildingIcon());
     }
 
     private GuiItem mapsIcon() {
@@ -240,7 +231,7 @@ public class ConfigureGameGui extends Gui {
         }
 
         int rows = configFiles.size() / 9 + 1;
-        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("&0Select a saved config:")).create();
+        Gui gui = Gui.gui().rows(rows).title(Tools.componentalize("Select a saved config:")).create();
 
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
@@ -287,10 +278,6 @@ public class ConfigureGameGui extends Gui {
         gui.open(player);
     }
 
-    private interface SetTimerValue {
-        void set(int value);
-    }
-
     private GuiItem timerIcon(Gui gui, int record) {
         if (record < 0 || record > 4)
             return null;
@@ -303,7 +290,7 @@ public class ConfigureGameGui extends Gui {
                options.getBorderTime(),
                options.getPostGameTime()
         };
-        SetTimerValue[] updates = {
+        IntConsumer[] updates = {
                 options::setPregameTime,
                 options::setInvincibilityTime,
                 options::setMainPhaseTime,
@@ -326,7 +313,7 @@ public class ConfigureGameGui extends Gui {
             if (e.isRightClick() && value > 10 + change)
                 value -= change;
 
-            updates[record].set(value);
+            updates[record].accept(value);
             gui.updateItem(record, timerIcon(gui, record));
         });
     }

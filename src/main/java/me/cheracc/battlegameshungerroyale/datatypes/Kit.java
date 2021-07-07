@@ -23,14 +23,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Kit implements Cloneable {
-    ConfigurationSection config;
-    String id;
-    String name;
-    String description;
-    String iconItemType;
-    List<Ability> abilities = new ArrayList<>();
-    EquipmentSet equipment;
+public class Kit {
+    private final ConfigurationSection config;
+    private final String id;
+    private final List<Ability> abilities = new ArrayList<>();
+    private String name;
+    private String description;
+    private String iconItemType;
+    private EquipmentSet equipment;
 
     public Kit(String key, ConfigurationSection config) {
         this.id = key;
@@ -96,18 +96,16 @@ public class Kit implements Cloneable {
 
     }
 
-    public void outfitPlayer(Player p, PlayerData data) {
+    public void outfitPlayer(Player p) {
         for (Ability a : abilities) {
             if (a instanceof ActiveAbility) {
                 ItemStack abilityItem = ((ActiveAbility) a).createAbilityItem();
                 p.getInventory().setItem(getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(abilityItem));
-                data.registerAbilityItem(a, abilityItem);
             }
             if (a instanceof PassiveAbility) {
                 if (((PassiveAbility) a).hasToggleItem()) {
                     ItemStack toggleItem = ((PassiveAbility) a).makeToggleItem();
                     p.getInventory().setItem(getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(toggleItem));
-                    data.registerAbilityItem(a, toggleItem);
                 } else {
                     ((PassiveAbility) a).activate(p);
                 }
@@ -128,32 +126,6 @@ public class Kit implements Cloneable {
 
     public List<Ability> getAbilities() {
         return new ArrayList<>(abilities);
-    }
-
-    private int getLastEmptyHotbarSlot(Player p) {
-        for (int i = 8; i >= 0; i--) {
-            ItemStack item = p.getInventory().getItem(i);
-            if (item == null || item.getType() == Material.AIR)
-                return i;
-        }
-        return -1;
-    }
-
-    private void loadAbilities(ConfigurationSection section) {
-        KitManager kits = KitManager.getInstance();
-        Set<String> keys = section.getKeys(false);
-
-        for (String key : keys) {
-            if (key != null) {
-                for (Ability a : kits.getDefaultAbilities()) {
-                    if (key.startsWith(a.getName())) {
-                        Ability ability = a.newWithDefaults();
-                        ability.loadFromConfig(section.getConfigurationSection(key));
-                        addAbility(ability);
-                    }
-                }
-            }
-        }
     }
 
     public String getName() {
@@ -192,5 +164,32 @@ public class Kit implements Cloneable {
             e.printStackTrace();
         }
     }
+
+    private int getLastEmptyHotbarSlot(Player p) {
+        for (int i = 8; i >= 0; i--) {
+            ItemStack item = p.getInventory().getItem(i);
+            if (item == null || item.getType() == Material.AIR)
+                return i;
+        }
+        return -1;
+    }
+
+    private void loadAbilities(ConfigurationSection section) {
+        KitManager kits = KitManager.getInstance();
+        Set<String> keys = section.getKeys(false);
+
+        for (String key : keys) {
+            if (key != null) {
+                for (Ability a : kits.getDefaultAbilities()) {
+                    if (key.startsWith(a.getName())) {
+                        Ability ability = a.newWithDefaults();
+                        ability.loadFromConfig(section.getConfigurationSection(key));
+                        addAbility(ability);
+                    }
+                }
+            }
+        }
+    }
+
 
 }

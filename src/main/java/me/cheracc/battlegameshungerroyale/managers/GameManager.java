@@ -35,6 +35,10 @@ public class GameManager {
         return new ArrayList<>(activeGames);
     }
 
+    public boolean isInAGame(Player player) {
+        return MapManager.getInstance().isThisAGameWorld(player.getWorld());
+    }
+
     public @Nullable Game getPlayersCurrentGame(Player player) {
         for (Game game : activeGames) {
             if (game.isPlaying(player) || game.isSpectating(player))

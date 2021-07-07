@@ -5,7 +5,6 @@ import me.cheracc.battlegameshungerroyale.datatypes.PlayerData;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
@@ -18,7 +17,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
@@ -54,25 +56,28 @@ public class GeneralListeners implements Listener {
             GameMode defaultGameMode = GameMode.valueOf(BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
             p.setGameMode(defaultGameMode);
             pData.resetInventory();
-            if (BGHR.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false)) {
+            if (BGHR.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false) ||
+                    pData.getLastLocation() == null || !pData.getLastLocation().getWorld().equals(event.getTo().getWorld())) {
                 Bukkit.getLogger().info("teleporting to lobby spawn");
                 p.teleport(p.getWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            } else {
+                Bukkit.getLogger().info("returning to previous location");
+                p.teleport(pData.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+                pData.setLastLocation(null);
             }
         }
 
         // here they are going FROM a main world TO a game world
         else if (!MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld()) &&
                   MapManager.getInstance().isThisAGameWorld(event.getTo().getWorld())) {
-            if (GameManager.getInstance().getPlayersCurrentGame(p) != null) {
-                pData.saveInventory();
-                pData.recordLocationAsLast();
-                p.getInventory().clear();
-                for (ItemStack item : p.getInventory().getArmorContents())
-                    if (item != null)
-                        item.setType(Material.AIR);
-                if (pData.getKit() != null)
-                    pData.getKit().outfitPlayer(p, pData);
-            }
+            pData.saveInventory();
+            pData.setLastLocation(p.getLocation());
+            p.getInventory().clear();
+            for (ItemStack item : p.getInventory().getArmorContents())
+                if (item != null)
+                    item.setType(Material.AIR);
+            if (pData.getKit() != null)
+                pData.getKit().outfitPlayer(p);
         }
     }
 
@@ -83,11 +88,13 @@ public class GeneralListeners implements Listener {
         PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
         if (data.getKit() != null) {
-            for (ItemStack item : data.getAbilityItems()) {
-                event.getItemsToKeep().add(item);
-                event.getDrops().remove(item);
-                if (p.hasCooldown(item.getType()))
-                    p.setCooldown(item.getType(), 0);
+            for (ItemStack item : p.getInventory()) {
+                if (Tools.isPluginItem(item)) {
+                    event.getItemsToKeep().add(item);
+                    event.getDrops().remove(item);
+                    if (p.hasCooldown(item.getType()))
+                        p.setCooldown(item.getType(), 0);
+                }
             }
         }
     }
@@ -106,7 +113,7 @@ public class GeneralListeners implements Listener {
                 return;
 
             PlayerData data = PlayerManager.getInstance().getPlayerData(p);
-            Ability ability = data.getAbilityFromItem(activeItem);
+            Ability ability = Ability.getFromItem(activeItem);
             event.setCancelled(true);
 
             if (!data.hasKit(ability.getAssignedKit())) {

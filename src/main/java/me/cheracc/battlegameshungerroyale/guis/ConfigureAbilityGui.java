@@ -7,7 +7,6 @@ import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetAbilityResponse;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
@@ -23,14 +22,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ConfigureAbilityGui extends Gui {
     private final Ability ability;
-    private final GetAbilityResponse callback;
+    private final Consumer<Ability> callback;
     private final Gui sendingGui;
 
-    public ConfigureAbilityGui(HumanEntity p, Ability ability, Gui sendingGui, GetAbilityResponse callback) {
-        super(2, "&0Edit Ability: &1" + ability.getCustomName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+    public ConfigureAbilityGui(HumanEntity p, Ability ability, Gui sendingGui, Consumer<Ability> callback) {
+        super(2, "Edit Ability: &1" + ability.getCustomName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.ability = ability;
         this.callback = callback;
         this.sendingGui = sendingGui;
@@ -195,7 +195,7 @@ public class ConfigureAbilityGui extends Gui {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
                         p.closeInventory();
-                        callback.abilityCallback(ability);
+                        callback.accept(ability);
                     }
                 });
     }

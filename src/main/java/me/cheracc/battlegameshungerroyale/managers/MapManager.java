@@ -12,21 +12,15 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Consumer;
 
 import java.io.*;
 import java.util.*;
 
+// singleton class to handle maps and loaded worlds for the plugin
 public class MapManager implements Listener {
-    private final BGHR plugin;
+    // singleton pattern
     private static MapManager singletonInstance;
-    private final FileConfiguration mainConfig;
-    private final File mapsDirectory;
-    private final File mainWorldFolder;
-    private final File activeMapsDirectory;
-    private final Map<MapData, List<UUID>> maps = new HashMap<>();
-    private final Set<String> lootTableNames = new HashSet<>();
-    private World lobbyWorld;
-    private boolean updatedDatapack = false;
 
     private MapManager() {
         plugin = BGHR.getPlugin();
@@ -50,73 +44,28 @@ public class MapManager implements Listener {
         return singletonInstance;
     }
 
-    private void loadLobby() {
-        String relativePath = mainConfig.getString("lobby world to copy", "BGHR_Maps/islandtower");
-        File lobby = new File(plugin.getDataFolder().getParentFile().getParent(), relativePath);
-        boolean resetLobby = mainConfig.getBoolean("reset lobby on restart", false);
+    // private fields
+    private final BGHR plugin;
+    private final FileConfiguration mainConfig;
+    private final File mapsDirectory;
+    private final File mainWorldFolder;
+    private final File activeMapsDirectory;
+    private final Map<MapData, List<UUID>> maps = new HashMap<>();
+    private final Set<String> lootTableNames = new HashSet<>();
+    private World lobbyWorld;
+    private boolean updatedDatapack = false;
 
-        if (resetLobby && lobby.exists() && lobby.isDirectory()) {
-            copyMap(lobby, mainWorldFolder);
-        }
-
-        installDataPack();
-
-    }
-
-    private void registerMaps() {
-        for (File file : Objects.requireNonNull(mapsDirectory.listFiles())) {
-            if (file.isDirectory()) {
-                File configFile = new File(file, "mapconfig.yml");
-                if (!configFile.exists())
-                        continue;
-                else {
-                    File levelDat = new File(file, "level.dat");
-                    if (levelDat.exists()) {
-                        try {
-                            configFile.createNewFile();
-                            OutputStream out = new FileOutputStream(configFile);
-                            BGHR.getPlugin().getResource("mapconfig.yml").transferTo(out);
-                            out.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-                FileConfiguration config = new YamlConfiguration();
-                try {
-                    config.load(configFile);
-                } catch (IOException | InvalidConfigurationException e) {
-                    e.printStackTrace();
-                }
-
-                MapData mapData = new MapData(config, file);
-                maps.put(mapData, new ArrayList<>());
-            }
-        }
-    }
-
-    private Properties getServerProperties() {
-        Properties properties = new Properties();
-        try {
-            BufferedReader is = new BufferedReader(new FileReader("server.properties"));
-
-            properties.load(is);
-            is.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return properties;
-        }
-        return properties;
-    }
-
-    private File getMainWorldFolder() {
-        String worldName = getServerProperties().getProperty("level-name", "world");
-        return new File(plugin.getDataFolder().getParentFile().getParentFile(), worldName);
-    }
-
+    // public methods
     public boolean wasDatapackUpdated() {
         return updatedDatapack;
+    }
+
+    public boolean isThisAGameWorld(World world) {
+        Set<UUID> worldIds = new HashSet<>();
+        for (Collection<UUID> ids : maps.values())
+            worldIds.addAll(ids);
+
+        return worldIds.contains(world.getUID());
     }
 
     public Set<String> getLootTableNames() {
@@ -141,15 +90,6 @@ public class MapManager implements Listener {
         return null;
     }
 
-    private void deleteCompletedMaps() {
-        if (activeMapsDirectory.exists())
-            try {
-                FileUtils.deleteDirectory(activeMapsDirectory);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-    }
-
     public MapData getMapFromWorld(World world) {
         for (Map.Entry<MapData, List<UUID>> e : maps.entrySet())
             if (e.getValue().contains(world.getUID()))
@@ -164,14 +104,12 @@ public class MapManager implements Listener {
         maps.get(map).remove(world.getUID());
     }
 
-    public interface LoadedWorld {
-        void loadedWorld(World world);
-    }
-
-    public void createNewWorldAsync(MapData mapData, LoadedWorld callback) {
+    public void createNewWorldAsync(MapData mapData, Consumer<World> callback) {
         String uid = UUID.randomUUID().toString().split("-")[0];
         File loadedMap = new File(activeMapsDirectory, mapData.getMapDirectory().getName() + "_" + uid);
-        asyncCopyMap(mapData.getMapDirectory(), loadedMap, () -> {
+        asyncCopyMap(mapData.getMapDirectory(), loadedMap, success -> {
+            if (!success)
+                return;
             World world = Bukkit.createWorld(new WorldCreator(activeMapsDirectory.getName() + "/" + loadedMap.getName()));
             if (world == null) {
                 Bukkit.getLogger().warning("could not load world " + activeMapsDirectory.getName());
@@ -190,18 +128,122 @@ public class MapManager implements Listener {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    callback.loadedWorld(world);
+                    callback.accept(world);
                 }
             }.runTask(plugin);
 
         });
     }
 
-    private interface ImFinished {
-        void done();
+    public void saveMap(MapData mapData, World world) {
+        File oldVersionsDirectory = new File(mapsDirectory, "old_maps");
+        if (!oldVersionsDirectory.exists() && oldVersionsDirectory.mkdirs())
+            Bukkit.getLogger().info("created old_maps directory inside maps directory");
+        String[] unwantedFiles = { "uid.dat", "session.lock", "level.dat_old", "playerdata", "advancements", "stats" };
+
+        world.save();
+
+        File loadedMap = world.getWorldFolder();
+
+        if (loadedMap.exists()) {
+            try {
+                File archiveFolder = new File(oldVersionsDirectory, mapData.getMapDirectory().getName() + "_" + Tools.getTimestamp());
+                FileUtils.moveDirectory(mapData.getMapDirectory(), archiveFolder);
+                Bukkit.getLogger().info("archived " + mapData.getMapDirectory().getPath() + " as " + archiveFolder.getPath());
+                FileUtils.deleteDirectory(mapData.getMapDirectory());
+                Bukkit.getLogger().info("deleted " + mapData.getMapDirectory().getPath());
+                FileUtils.copyDirectory(loadedMap, mapData.getMapDirectory());
+                Bukkit.getLogger().info("copied " + loadedMap.getAbsolutePath() + " to " + mapData.getMapDirectory().getPath());
+                for (String s : unwantedFiles) {
+                    File delete = new File(mapData.getMapDirectory(), s);
+                    FileUtils.deleteQuietly(delete);
+                }
+                mapData.saveConfig();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else
+            Bukkit.getLogger().warning("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
     }
 
-    private void asyncCopyMap(File mapSourceDirectory, File destination, ImFinished callback) {
+    // private methods
+    private Properties getServerProperties() {
+        Properties properties = new Properties();
+        try {
+            BufferedReader is = new BufferedReader(new FileReader("server.properties"));
+
+            properties.load(is);
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return properties;
+        }
+        return properties;
+    }
+
+    private File getMainWorldFolder() {
+        String worldName = getServerProperties().getProperty("level-name", "world");
+        return new File(plugin.getDataFolder().getParentFile().getParentFile(), worldName);
+    }
+
+    private void loadLobby() {
+        String relativePath = mainConfig.getString("lobby world to copy", "BGHR_Maps/islandtower");
+        File lobby = new File(plugin.getDataFolder().getParentFile().getParent(), relativePath);
+        boolean resetLobby = mainConfig.getBoolean("reset lobby on restart", false);
+
+        if (resetLobby && lobby.exists() && lobby.isDirectory()) {
+            copyMap(lobby, mainWorldFolder);
+        }
+
+        installDataPack();
+
+    }
+
+    private void registerMaps() {
+        for (File file : Objects.requireNonNull(mapsDirectory.listFiles())) {
+            if (file.isDirectory() && !file.getAbsolutePath().contains("old_maps")) {
+                File configFile = new File(file, "mapconfig.yml");
+                if (!configFile.exists()) {
+                    File levelDat = new File(file, "level.dat");
+                    if (levelDat.exists()) {
+                        try {
+                            configFile.createNewFile();
+                            OutputStream out = new FileOutputStream(configFile);
+                            BGHR.getPlugin().getResource("mapconfig.yml").transferTo(out);
+                            Bukkit.getLogger().warning("found a new map " + file.getName() + " in maps directory. creating config.");
+                            out.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        Bukkit.getLogger().warning("error creating file " + configFile.getAbsolutePath());
+                    }
+                }
+
+                FileConfiguration config = new YamlConfiguration();
+                try {
+                    config.load(configFile);
+                } catch (IOException | InvalidConfigurationException e) {
+                    e.printStackTrace();
+                }
+
+                MapData mapData = new MapData(config, file);
+                maps.put(mapData, new ArrayList<>());
+            }
+        }
+    }
+
+    private void deleteCompletedMaps() {
+        if (activeMapsDirectory.exists())
+            try {
+                FileUtils.deleteDirectory(activeMapsDirectory);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    }
+
+    private void asyncCopyMap(File mapSourceDirectory, File destination, Consumer<Boolean> callback) {
         List<String> filesToIgnore = new ArrayList<>(Arrays.asList("uid.dat", "session.lock"));
 
         if (destination.exists()) {
@@ -242,7 +284,7 @@ public class MapManager implements Listener {
                     new BukkitRunnable() {
                         @Override
                         public void run() {
-                            callback.done();
+                            callback.accept(true);
                         }
                     }.runTask(plugin);
                 } catch (IOException e) {
@@ -349,45 +391,4 @@ public class MapManager implements Listener {
             e.printStackTrace();
         }
     }
-
-    public void saveMap(MapData mapData, World world) {
-        File oldVersionsDirectory = new File(mapsDirectory, "old_maps");
-        if (!oldVersionsDirectory.exists() && oldVersionsDirectory.mkdirs())
-            Bukkit.getLogger().info("created old_maps directory inside maps directory");
-        String[] unwantedFiles = { "uid.dat", "session.lock", "level.dat_old", "playerdata", "advancements", "stats" };
-
-        world.save();
-
-        File loadedMap = world.getWorldFolder();
-
-        if (loadedMap.exists()) {
-            try {
-                File archiveFolder = new File(oldVersionsDirectory, mapData.getMapDirectory().getName() + "_" + Tools.getTimestamp());
-                FileUtils.moveDirectory(mapData.getMapDirectory(), archiveFolder);
-                Bukkit.getLogger().info("archived " + mapData.getMapDirectory().getPath() + " as " + archiveFolder.getPath());
-                FileUtils.deleteDirectory(mapData.getMapDirectory());
-                Bukkit.getLogger().info("deleted " + mapData.getMapDirectory().getPath());
-                FileUtils.copyDirectory(loadedMap, mapData.getMapDirectory());
-                Bukkit.getLogger().info("copied " + loadedMap.getAbsolutePath() + " to " + mapData.getMapDirectory().getPath());
-                for (String s : unwantedFiles) {
-                    File delete = new File(mapData.getMapDirectory(), s);
-                    FileUtils.deleteQuietly(delete);
-                }
-                mapData.saveConfig();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        else
-            Bukkit.getLogger().warning("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
-    }
-
-    public boolean isThisAGameWorld(World world) {
-        Set<UUID> worldIds = new HashSet<>();
-        for (Collection<UUID> ids : maps.values())
-            worldIds.addAll(ids);
-
-        return worldIds.contains(world.getUID());
-    }
-
 }

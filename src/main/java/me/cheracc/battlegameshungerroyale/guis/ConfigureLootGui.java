@@ -24,7 +24,7 @@ public class ConfigureLootGui extends Gui {
     private final Gui sendingGui;
 
     public ConfigureLootGui(HumanEntity player, Gui sendingGui, GameOptions options) {
-        super(1, "&0Loot Settings", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, "Loot Settings", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.options = options;
         this.sendingGui = sendingGui;
         disableAllInteractions();

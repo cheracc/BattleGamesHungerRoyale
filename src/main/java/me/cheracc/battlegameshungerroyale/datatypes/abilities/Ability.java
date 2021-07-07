@@ -1,17 +1,22 @@
 package me.cheracc.battlegameshungerroyale.datatypes.abilities;
 
+import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.datatypes.Kit;
 import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -25,7 +30,6 @@ public abstract class Ability implements Cloneable {
     String description = "";
     String customName = null;
     SoundEffect sound = null;
-
 
     public Ability() {
         this.section = null;
@@ -170,7 +174,6 @@ public abstract class Ability implements Cloneable {
             return abilityItem;
 
         meta.displayName(Component.text(ChatColor.WHITE + name));
-        Tools.saveUuidToItemMeta(getId(), meta);
 
         lore.add(Component.text(""));
         lore.addAll(Tools.componentalize(Tools.wrapText(description, ChatColor.GRAY)));
@@ -181,6 +184,7 @@ public abstract class Ability implements Cloneable {
         meta.lore(lore);
         abilityItem.setItemMeta(meta);
         abilityItem.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        Tools.tagAsPluginItem(abilityItem);
 
         return abilityItem;
     }
@@ -189,7 +193,7 @@ public abstract class Ability implements Cloneable {
         return section;
     }
 
-    public static String fieldNameToConfigOption(String string) {
+    private String fieldNameToConfigOption(String string) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < string.length(); i++) {
@@ -203,5 +207,28 @@ public abstract class Ability implements Cloneable {
         }
         return sb.toString();
     }
+
+    // static fields and methods
+    private static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_item");
+
+    public static Ability getFromItem(ItemStack item) {
+        if (!isAbilityItem(item))
+            return null;
+        String id = item.getItemMeta().getPersistentDataContainer().get(ABILITY_KEY, PersistentDataType.STRING);
+        for (Ability a : KitManager.getInstance().getAllAbilitiesInUse()) {
+            if (a.getId().toString().equals(id))
+                return a;
+        }
+        Bukkit.getLogger().warning("couldn't find ability with id " + id);
+        return null;
+    }
+
+    public static boolean isAbilityItem(ItemStack item) {
+        if (item == null || item.getItemMeta() == null)
+            return false;
+        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
+        return !pdc.isEmpty() && pdc.has(ABILITY_KEY, PersistentDataType.STRING);
+    }
+
 
 }

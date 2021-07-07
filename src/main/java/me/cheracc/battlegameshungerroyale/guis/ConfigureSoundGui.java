@@ -5,7 +5,6 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetSoundEffect;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -13,12 +12,13 @@ import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.function.Consumer;
 
 public class ConfigureSoundGui extends Gui {
     SoundEffect soundEffect;
-    GetSoundEffect callback;
+    Consumer<SoundEffect> callback;
 
-    public ConfigureSoundGui(HumanEntity player, Gui sendingGui, SoundEffect currentSound, GetSoundEffect callback) {
+    public ConfigureSoundGui(HumanEntity player, Gui sendingGui, SoundEffect currentSound, Consumer<SoundEffect> callback) {
         super(1, "Configuring Sound Effect:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.soundEffect = currentSound;
         if (soundEffect == null)
@@ -118,7 +118,7 @@ public class ConfigureSoundGui extends Gui {
     private GuiItem saveItem() {
         return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("Save this Sound Effect")).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            callback.soundEffectCallback(soundEffect);
+            callback.accept(soundEffect);
         });
     }
 }

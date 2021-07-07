@@ -2,7 +2,6 @@ package me.cheracc.battlegameshungerroyale.guis;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetTextInput;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
@@ -16,11 +15,12 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class TextInputListener implements Listener {
     private static TextInputListener singleton = null;
     private BukkitTask cleanupTask;
-    private final ConcurrentHashMap<UUID, GetTextInput> watchers;
+    private final ConcurrentHashMap<UUID, Consumer<String>> watchers;
     private final ConcurrentHashMap<UUID, List<Component>> missedMessages;
 
     private TextInputListener() {
@@ -35,7 +35,7 @@ public class TextInputListener implements Listener {
         return singleton;
     }
 
-    public void getNextInputFrom(Player p, GetTextInput callback) {
+    public void getNextInputFrom(Player p, Consumer<String> callback) {
         watchers.put(p.getUniqueId(), callback);
         if (cleanupTask == null)
             cleanupTask = startCleanupTask();
@@ -55,7 +55,7 @@ public class TextInputListener implements Listener {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    watchers.get(p.getUniqueId()).textCallback(text);
+                    watchers.get(p.getUniqueId()).accept(text);
                     watchers.remove(p.getUniqueId());
                     sendMissedChatMessages(p);
                 }

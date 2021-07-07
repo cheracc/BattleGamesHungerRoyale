@@ -5,7 +5,6 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetMap;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.ChatColor;
@@ -15,12 +14,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SelectMapGui extends Gui {
-    private final GetMap callback;
+    private final Consumer<MapData> callback;
 
-    public SelectMapGui(HumanEntity player, Gui sendingGui, GetMap callback) {
-        super(1, "&0Select a map:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+    public SelectMapGui(HumanEntity player, Gui sendingGui, Consumer<MapData> callback) {
+        super(1, "Select a map:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.callback = callback;
         disableAllInteractions();
         setOutsideClickAction(e -> {
@@ -51,7 +51,7 @@ public class SelectMapGui extends Gui {
 
         return icon.lore(Tools.componentalize(lore)).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            callback.heresYourMap(map);
+            callback.accept(map);
         });
     }
 }

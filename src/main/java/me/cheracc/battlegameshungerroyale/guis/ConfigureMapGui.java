@@ -24,7 +24,7 @@ public class ConfigureMapGui extends Gui {
     private final HumanEntity player;
 
     public ConfigureMapGui(HumanEntity player, Gui sendingGui, MapData map) {
-        super(1,"&0Configure Map: " + map.getMapName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1,"Configure Map: " + map.getMapName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.map = map;
         this.sendingGui = sendingGui;
         this.player = player;

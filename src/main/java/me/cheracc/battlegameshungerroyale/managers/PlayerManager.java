@@ -11,8 +11,7 @@ public class PlayerManager {
     private static PlayerManager singletonInstance = null;
     private final List<PlayerData> loadedPlayers = new ArrayList<>();
 
-    private PlayerManager() {
-    }
+    private PlayerManager() {}
 
     public @NotNull PlayerData getPlayerData(Player player) {
         for (PlayerData d : loadedPlayers) {

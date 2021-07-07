@@ -5,7 +5,6 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.components.ScrollType;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.ScrollingGui;
-import me.cheracc.battlegameshungerroyale.guis.interfaces.GetMaterialInput;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -14,12 +13,13 @@ import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.function.Consumer;
 
 public class SelectMaterialGui extends ScrollingGui {
     private final Gui sendingGui;
-    private final GetMaterialInput callback;
+    private final Consumer<Material> callback;
 
-    public SelectMaterialGui(HumanEntity p, Gui sendingGui, GetMaterialInput callback) {
+    public SelectMaterialGui(HumanEntity p, Gui sendingGui, Consumer<Material> callback) {
         super(6, 45, "Select a Material Type:", ScrollType.VERTICAL, new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.sendingGui = sendingGui;
         this.callback = callback;
@@ -49,7 +49,7 @@ public class SelectMaterialGui extends ScrollingGui {
                         Player p = (Player) e.getWhoClicked();
                         if (e.getCurrentItem() != null) {
                             p.closeInventory();
-                            callback.materialCallback(m);
+                            callback.accept(m);
                         }
                     }
                 }));
