@@ -32,6 +32,29 @@ import java.util.zip.ZipInputStream;
 public class Tools {
     public static TextComponent BLANK_LINE = Component.text("");
     public static NamespacedKey UUID_KEY = new NamespacedKey(BGHR.getPlugin(), "uuid_key");
+    public static NamespacedKey PLUGIN_KEY = new NamespacedKey(BGHR.getPlugin(), "battlegameshungerroyale");
+
+    public static ItemStack tagAsPluginItem(ItemStack item) {
+        if (item == null)
+            return item;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null)
+            return item;
+
+        meta.getPersistentDataContainer().set(PLUGIN_KEY, PersistentDataType.LONG, System.currentTimeMillis());
+        item.setItemMeta(meta);
+        Bukkit.getLogger().info(String.format("Tagged %s with key %s", item.getI18NDisplayName(), PLUGIN_KEY.asString()));
+        return item;
+    }
+
+    public static boolean isPluginItem(ItemStack item) {
+        if (item == null)
+            return false;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null)
+            return false;
+        return (meta.getPersistentDataContainer().has(PLUGIN_KEY, PersistentDataType.LONG));
+    }
 
     public static String getTimestamp() {
         return Instant.now().toString().replace(":","-").split("\\.")[0];

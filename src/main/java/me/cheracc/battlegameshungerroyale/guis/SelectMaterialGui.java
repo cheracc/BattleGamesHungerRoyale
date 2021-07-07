@@ -1,22 +1,26 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
+import dev.triumphteam.gui.components.ScrollType;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.ScrollingGui;
 import me.cheracc.battlegameshungerroyale.guis.interfaces.GetMaterialInput;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 public class SelectMaterialGui extends ScrollingGui {
     private final Gui sendingGui;
     private final GetMaterialInput callback;
 
     public SelectMaterialGui(HumanEntity p, Gui sendingGui, GetMaterialInput callback) {
-        super(6, 45, Tools.componentalize("Select a Material Type:"));
+        super(6, 45, "Select a Material Type:", ScrollType.VERTICAL, new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.sendingGui = sendingGui;
         this.callback = callback;
         disableAllInteractions();

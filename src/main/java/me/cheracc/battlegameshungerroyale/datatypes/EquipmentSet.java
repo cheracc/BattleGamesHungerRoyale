@@ -100,10 +100,10 @@ public class EquipmentSet {
 
     public void equip(Player p) {
         for (Map.Entry<EquipmentSlot, ItemStack> e : armor.entrySet()) {
-            p.getInventory().setItem(e.getKey(), tagItem(e.getValue()));
+            p.getInventory().setItem(e.getKey(), Tools.tagAsPluginItem(tagItem(e.getValue())));
         }
         for (ItemStack i : getOtherItems()) {
-            p.getInventory().setItem(Tools.getLastEmptyHotbarSlot(p), tagItem(i));
+            p.getInventory().setItem(Tools.getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(tagItem(i)));
         }
     }
 

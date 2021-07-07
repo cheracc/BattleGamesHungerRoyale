@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.GuiAction;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.MapData;
@@ -13,6 +14,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class ConfigureMapGui extends Gui {
@@ -21,7 +24,7 @@ public class ConfigureMapGui extends Gui {
     private final HumanEntity player;
 
     public ConfigureMapGui(HumanEntity player, Gui sendingGui, MapData map) {
-        super(1, Tools.componentalize("&0Configure Map: " + map.getMapName()));
+        super(1,"&0Configure Map: " + map.getMapName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.map = map;
         this.sendingGui = sendingGui;
         this.player = player;

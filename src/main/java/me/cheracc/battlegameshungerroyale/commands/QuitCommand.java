@@ -4,12 +4,12 @@ import me.cheracc.battlegameshungerroyale.datatypes.Game;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class QuitCommand implements CommandExecutor {
@@ -17,7 +17,6 @@ public class QuitCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         if (sender instanceof Player) {
             Player p = (Player) sender;
-            p.setCooldown(Material.AIR, 2);
 
             Game game = GameManager.getInstance().getPlayersCurrentGame(p);
 
@@ -27,8 +26,7 @@ public class QuitCommand implements CommandExecutor {
 
             if (game == null && !p.getWorld().equals(MapManager.getInstance().getLobbyWorld())) {
                 World world = p.getWorld();
-                p.setCooldown(Material.AIR, 2);
-                p.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
+                p.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                 MapManager.getInstance().unloadWorld(world);
                 p.sendMessage(Tools.componentalize("Finished editing, world unloaded."));
             }

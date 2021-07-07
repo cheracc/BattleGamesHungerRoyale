@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
@@ -13,12 +14,14 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class SelectGameGui extends Gui {
 
     public SelectGameGui(HumanEntity player) {
-        super(1, Tools.componentalize("&0Current Games:"));
+        super(1, "&0Current Games:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 

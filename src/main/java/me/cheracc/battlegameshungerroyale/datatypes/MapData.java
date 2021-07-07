@@ -18,7 +18,6 @@ public class MapData {
     private int timesPlayed;
     private double averageLength;
     private Material icon;
-    private final boolean isLobby;
 
     private boolean useBorder;
     private int borderRadius;
@@ -32,7 +31,7 @@ public class MapData {
     private int spawnCenterY;
     private int spawnCenterZ;
 
-    public MapData(FileConfiguration config, File mapDirectory, boolean isLobby) {
+    public MapData(FileConfiguration config, File mapDirectory) {
         this.config = config;
         this.mapDirectory = mapDirectory;
         mapName = config.getString("name",  mapDirectory.getName());
@@ -43,7 +42,6 @@ public class MapData {
         icon = Material.getMaterial(config.getString("icon", "map").toUpperCase());
         if (config.contains("spawn block type"))
             spawnBlockType = Material.getMaterial(config.getString("spawn block type").toUpperCase());
-        this.isLobby = isLobby;
         borderCenterX = config.getInt("border center.x", 0);
         borderCenterY = config.getInt("border center.y", 100);
         borderCenterZ = config.getInt("border center.z", 0);
@@ -124,12 +122,7 @@ public class MapData {
     }
 
     public void saveConfig() {
-        File configFile;
-
-        if (isLobby())
-            configFile = new File(mapDirectory, "lobby.yml");
-        else
-            configFile = new File(mapDirectory, "mapconfig.yml");
+        File configFile = new File(mapDirectory, "mapconfig.yml");
 
         try {
             config.save(configFile);
@@ -172,10 +165,6 @@ public class MapData {
 
     public String getMapCreator() {
         return mapCreator;
-    }
-
-    public boolean isLobby() {
-        return isLobby;
     }
 
     public FileConfiguration getConfig() {

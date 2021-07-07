@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.Kit;
@@ -20,6 +21,8 @@ import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class ConfigureKitGui extends Gui {
@@ -27,7 +30,7 @@ public class ConfigureKitGui extends Gui {
     Gui sendingGui;
 
     public ConfigureKitGui(Kit kit, @Nullable Gui sendingGui, HumanEntity player) {
-        super(1, Tools.componentalize("&0Configuring Kit: &1" + kit.getName()));
+        super(1, "&0Configuring Kit: &1" + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.kit = kit;
         this.sendingGui = sendingGui;
 
@@ -80,7 +83,7 @@ public class ConfigureKitGui extends Gui {
                         p.sendMessage(Tools.formatInstructions("    Enter a new name for this kit:", kit.getName()));
                         TextInputListener.getInstance().getNextInputFrom(p, text -> {
                             kit.setName(text);
-                            updateTitle(Tools.componentalize("&0Configuring Kit: &1" + kit.getName()));
+                            updateTitle("&0Configuring Kit: &1" + kit.getName());
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
                             open(p);
                         });

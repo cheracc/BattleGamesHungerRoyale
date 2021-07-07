@@ -5,6 +5,7 @@ import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -99,13 +100,13 @@ public class Kit implements Cloneable {
         for (Ability a : abilities) {
             if (a instanceof ActiveAbility) {
                 ItemStack abilityItem = ((ActiveAbility) a).createAbilityItem();
-                p.getInventory().setItem(getLastEmptyHotbarSlot(p), abilityItem);
+                p.getInventory().setItem(getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(abilityItem));
                 data.registerAbilityItem(a, abilityItem);
             }
             if (a instanceof PassiveAbility) {
                 if (((PassiveAbility) a).hasToggleItem()) {
                     ItemStack toggleItem = ((PassiveAbility) a).makeToggleItem();
-                    p.getInventory().setItem(getLastEmptyHotbarSlot(p), toggleItem);
+                    p.getInventory().setItem(getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(toggleItem));
                     data.registerAbilityItem(a, toggleItem);
                 } else {
                     ((PassiveAbility) a).activate(p);

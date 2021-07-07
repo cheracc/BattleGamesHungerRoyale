@@ -18,10 +18,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionEffect;
 
 public class GeneralListeners implements Listener {
     private static GeneralListeners singletonInstance = null;
@@ -36,30 +36,36 @@ public class GeneralListeners implements Listener {
     }
 
     @EventHandler
-    public void handlePlayersChangingWorlds(PlayerChangedWorldEvent event) {
+    public void handlePlayersChangingWorlds(PlayerTeleportEvent event) {
+        // don't care if the teleport isn't changing worlds
+        if (event.getFrom().getWorld().equals(event.getTo().getWorld()))
+            return;
+
         Player p = event.getPlayer();
         PlayerData pData = PlayerManager.getInstance().getPlayerData(p);
 
-        // check if player is leaving a game or loaded map and handle it - this should only happen if admins are using /tp commands
-        if (!p.hasCooldown(Material.AIR)) {
+        // check if player is leaving a game or loaded map and handle it - this should only happen if admins are using /tp commands.
+        if (event.getCause() != PlayerTeleportEvent.TeleportCause.PLUGIN && MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld())) {
             Bukkit.dispatchCommand(p, "quit");
         }
 
-        // check if player is transferring TO the main (lobby) world and handle it
-        if (p.getWorld().equals(MapManager.getInstance().getLobbyWorld())) {
+        // check if player is transferring TO a main world FROM a game world
+        if (!MapManager.getInstance().isThisAGameWorld(p.getWorld()) && MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld())) {
             GameMode defaultGameMode = GameMode.valueOf(BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
             p.setGameMode(defaultGameMode);
             pData.resetInventory();
             if (BGHR.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false)) {
                 Bukkit.getLogger().info("teleporting to lobby spawn");
-                p.setCooldown(Material.AIR, 2);
-                p.teleport(p.getWorld().getSpawnLocation());
+                p.teleport(p.getWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
             }
         }
-        // they are going FROM the lobby world this time
-        else if (event.getFrom().equals(MapManager.getInstance().getLobbyWorld())) {
+
+        // here they are going FROM a main world TO a game world
+        else if (!MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld()) &&
+                  MapManager.getInstance().isThisAGameWorld(event.getTo().getWorld())) {
             if (GameManager.getInstance().getPlayersCurrentGame(p) != null) {
                 pData.saveInventory();
+                pData.recordLocationAsLast();
                 p.getInventory().clear();
                 for (ItemStack item : p.getInventory().getArmorContents())
                     if (item != null)
@@ -150,5 +156,24 @@ public class GeneralListeners implements Listener {
             event.setCancelled(true);
             p.sendMessage(Component.text("That's kind of important, you should keep it."));
         }
+    }
+
+    // attempts to catch any stray plugin items and removes them
+    @EventHandler
+    public void clearAnyPluginItemsOnJoin(PlayerJoinEvent event) {
+        PlayerInventory inv = event.getPlayer().getInventory();
+        for (int i = 0; i < inv.getSize() - 1; i++) {
+            if (Tools.isPluginItem(inv.getItem(i))) {
+                inv.setItem(i, null);
+            }
+        }
+        Player p = event.getPlayer();
+        for (PotionEffect e : p.getActivePotionEffects()) {
+            if (e.getDuration() > Integer.MAX_VALUE / 2)
+                p.removePotionEffect(e.getType());
+        }
+        String gm = BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure");
+        GameMode mode = GameMode.valueOf(gm.toUpperCase());
+        p.setGameMode(mode);
     }
 }

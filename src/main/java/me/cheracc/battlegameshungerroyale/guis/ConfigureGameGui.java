@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
@@ -18,6 +19,8 @@ import org.bukkit.inventory.ItemFlag;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class ConfigureGameGui extends Gui {
@@ -25,7 +28,7 @@ public class ConfigureGameGui extends Gui {
     private final Gui sendingGui;
 
     public ConfigureGameGui(HumanEntity player, GameOptions options, Gui sendingGui) {
-        super(1, Tools.componentalize("&0Configure Game"));
+        super(1, "&0Configure Game", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.sendingGui = sendingGui;
         disableAllInteractions();
         setOutsideClickAction(e -> {

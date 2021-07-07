@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
@@ -20,6 +21,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemFlag;
 
 import java.util.*;
@@ -27,7 +29,7 @@ import java.util.*;
 public class AdminGui extends Gui {
 
     public AdminGui(HumanEntity player) {
-        super(1, Tools.componentalize("&0Admin Menu"));
+        super(1, "&0Admin Menu", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 
@@ -232,8 +234,7 @@ public class AdminGui extends Gui {
                         new ConfigureMapGui(player, this, map);
                     else {
                         MapManager.getInstance().createNewWorldAsync(map, world -> {
-                            e.getWhoClicked().setCooldown(Material.AIR, 2);
-                            e.getWhoClicked().teleport(world.getSpawnLocation());
+                            e.getWhoClicked().teleport(world.getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                             e.getWhoClicked().sendMessage(Tools.formatInstructions("&fThis world has been loaded for editing. Any changes to this map can be saved to the map template by typing &e/savemap&f at any time. When you are finished, type &e/quit &fto unload this world and return to the main world.", ""));
                         });
                     }
@@ -281,7 +282,7 @@ public class AdminGui extends Gui {
     private static class BaseAdminGui extends Gui {
         Map<Integer, BaseIcon> guiIcons = new HashMap<>();
         public BaseAdminGui(HumanEntity player, String title, Collection<BaseIcon> icons) {
-            super(1, Tools.componentalize("&0" + title));
+            super(1,"&0" + title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
             disableAllInteractions();
             setOutsideClickAction(e -> {
                 e.getWhoClicked().closeInventory();

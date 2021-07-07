@@ -49,7 +49,8 @@ public class InventorySerializer {
 
             // Save every element in the list
             for (ItemStack item : items) {
-                dataOutput.writeObject(item);
+                if (!Tools.isPluginItem(item))
+                    dataOutput.writeObject(item);
             }
 
             // Serialize that array

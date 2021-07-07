@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
@@ -10,12 +11,15 @@ import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 public class ConfigureSoundGui extends Gui {
     SoundEffect soundEffect;
     GetSoundEffect callback;
 
     public ConfigureSoundGui(HumanEntity player, Gui sendingGui, SoundEffect currentSound, GetSoundEffect callback) {
-        super(1, Tools.componentalize("Configuring Sound Effect:"));
+        super(1, "Configuring Sound Effect:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.soundEffect = currentSound;
         if (soundEffect == null)
             soundEffect = new SoundEffect();

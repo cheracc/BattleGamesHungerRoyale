@@ -5,15 +5,12 @@ import me.cheracc.battlegameshungerroyale.datatypes.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.*;
@@ -26,10 +23,9 @@ public class MapManager implements Listener {
     private final File mapsDirectory;
     private final File mainWorldFolder;
     private final File activeMapsDirectory;
-    private final Map<MapData, List<World>> maps = new HashMap<>();
+    private final Map<MapData, List<UUID>> maps = new HashMap<>();
     private final Set<String> lootTableNames = new HashSet<>();
     private World lobbyWorld;
-    private boolean canFlyInLobby = false;
     private boolean updatedDatapack = false;
 
     private MapManager() {
@@ -42,7 +38,6 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.getParentFile().toPath());
         }
-
         deleteCompletedMaps();
         loadLobby();
         registerMaps();
@@ -66,29 +61,26 @@ public class MapManager implements Listener {
 
         installDataPack();
 
-        File lobbyConfig = new File(lobby, "lobby.yml");
-        if (lobbyConfig.exists()) {
-            try {
-                FileConfiguration config = new YamlConfiguration();
-                config.load(lobbyConfig);
-                loadLobbyConfig(config);
-            } catch (IOException | InvalidConfigurationException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private void registerMaps() {
         for (File file : Objects.requireNonNull(mapsDirectory.listFiles())) {
-            boolean isLobby = false;
             if (file.isDirectory()) {
                 File configFile = new File(file, "mapconfig.yml");
-                if (!configFile.exists()) {
-                    configFile = new File(file, "lobby.yml");
-                    if (!configFile.exists())
+                if (!configFile.exists())
                         continue;
-                    else
-                        isLobby = true;
+                else {
+                    File levelDat = new File(file, "level.dat");
+                    if (levelDat.exists()) {
+                        try {
+                            configFile.createNewFile();
+                            OutputStream out = new FileOutputStream(configFile);
+                            BGHR.getPlugin().getResource("mapconfig.yml").transferTo(out);
+                            out.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
                 FileConfiguration config = new YamlConfiguration();
@@ -98,25 +90,10 @@ public class MapManager implements Listener {
                     e.printStackTrace();
                 }
 
-                if (isLobby) {
-                    for (MapData m : getMaps()) {
-                        if (m.isLobby()) {
-                            Bukkit.getLogger().warning("found multiple lobby.yml files in the maps directory. There can only be one lobby map.");
-                            Bukkit.getLogger().warning("Existing: " + m.getMapDirectory().getPath() + " Tried to add: " + configFile.getParent());
-                            Bukkit.getLogger().warning(configFile.getParent() + " was not loaded. Rename one of the lobby.yml files to mapconfig.yml. You may only have one lobby.yml file.");
-                            return;
-                        }
-                    }
-                }
-
-                MapData mapData = new MapData(config, file, isLobby);
+                MapData mapData = new MapData(config, file);
                 maps.put(mapData, new ArrayList<>());
             }
         }
-    }
-
-    private void loadLobbyConfig(FileConfiguration config) {
-        this.canFlyInLobby = config.getBoolean("players can fly", false);
     }
 
     private Properties getServerProperties() {
@@ -152,15 +129,6 @@ public class MapManager implements Listener {
         return lobbyWorld;
     }
 
-    public MapData getLobbyMap() {
-        for (MapData m : getMaps()) {
-            if (m.isLobby())
-                return m;
-        }
-        Bukkit.getLogger().warning("could not find lobby mapdata");
-        return null;
-    }
-
     public List<MapData> getMaps() {
         return new ArrayList<>(maps.keySet());
     }
@@ -173,22 +141,6 @@ public class MapManager implements Listener {
         return null;
     }
 
-    @EventHandler
-    public void onWorldLoad(WorldLoadEvent event) {
-        if (event.getWorld().getName().equalsIgnoreCase(mainWorldFolder.getName())) {
-            this.lobbyWorld = event.getWorld();
-            maps.get(getLobbyMap()).add(lobbyWorld);
-            lobbyWorld.setAutoSave(false);
-            lobbyWorld.setGameRule(GameRule.DO_MOB_SPAWNING, false);
-            lobbyWorld.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
-            lobbyWorld.setGameRule(GameRule.DO_FIRE_TICK, false);
-            lobbyWorld.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-            lobbyWorld.setGameRule(GameRule.KEEP_INVENTORY, true);
-            lobbyWorld.setGameRule(GameRule.SPAWN_RADIUS, 0);
-            WorldLoadEvent.getHandlerList().unregister(this);
-        }
-    }
-
     private void deleteCompletedMaps() {
         if (activeMapsDirectory.exists())
             try {
@@ -199,8 +151,8 @@ public class MapManager implements Listener {
     }
 
     public MapData getMapFromWorld(World world) {
-        for (Map.Entry<MapData, List<World>> e : maps.entrySet())
-            if (e.getValue().contains(world))
+        for (Map.Entry<MapData, List<UUID>> e : maps.entrySet())
+            if (e.getValue().contains(world.getUID()))
                 return e.getKey();
         return null;
     }
@@ -209,7 +161,7 @@ public class MapManager implements Listener {
         MapData map = getMapFromWorld(world);
         Bukkit.unloadWorld(world, false);
 
-        maps.get(map).remove(world);
+        maps.get(map).remove(world.getUID());
     }
 
     public interface LoadedWorld {
@@ -233,7 +185,7 @@ public class MapManager implements Listener {
                 world.getWorldBorder().setCenter(mapData.getBorderCenter(world));
                 world.getWorldBorder().setSize(mapData.getBorderRadius() * 2);
             }
-            maps.get(mapData).add(world);
+            maps.get(mapData).add(world.getUID());
 
             new BukkitRunnable() {
                 @Override
@@ -428,9 +380,14 @@ public class MapManager implements Listener {
         }
         else
             Bukkit.getLogger().warning("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
-
     }
 
+    public boolean isThisAGameWorld(World world) {
+        Set<UUID> worldIds = new HashSet<>();
+        for (Collection<UUID> ids : maps.values())
+            worldIds.addAll(ids);
 
+        return worldIds.contains(world.getUID());
+    }
 
 }

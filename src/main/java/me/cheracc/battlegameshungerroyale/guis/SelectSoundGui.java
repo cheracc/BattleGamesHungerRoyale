@@ -1,6 +1,8 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
+import dev.triumphteam.gui.components.ScrollType;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.ScrollingGui;
 import me.cheracc.battlegameshungerroyale.BGHR;
@@ -12,10 +14,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SelectSoundGui extends ScrollingGui {
     String category;
@@ -23,7 +22,7 @@ public class SelectSoundGui extends ScrollingGui {
     GetSound callback;
 
     public SelectSoundGui(HumanEntity player, Gui sendingGui, String filter, GetSound callback) {
-        super(6, 45, Tools.componentalize("Select a Sound:"));
+        super(6, 45, "Select a Sound:", ScrollType.VERTICAL, new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.category = filter;
         this.sendingGui = sendingGui;
         this.callback = callback;

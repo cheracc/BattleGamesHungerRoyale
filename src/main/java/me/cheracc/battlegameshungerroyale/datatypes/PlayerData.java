@@ -19,7 +19,6 @@ public class PlayerData {
     private Location lastLocation;
     PlayerStats stats;
 
-    Game currentGame;
     Kit kit;
     Map<Ability, ItemStack> abilityItems = new HashMap<>();
 
@@ -58,6 +57,14 @@ public class PlayerData {
         this.kit = kit;
         kit.outfitPlayer(getPlayer(), this);
         getPlayer().sendMessage(Component.text("You have been given Kit " + kit.getName()));
+    }
+
+    public Location getLastLocation() {
+        return lastLocation.clone();
+    }
+
+    public void recordLocationAsLast() {
+        lastLocation = getPlayer().getLocation();
     }
 
     public void saveInventory() {

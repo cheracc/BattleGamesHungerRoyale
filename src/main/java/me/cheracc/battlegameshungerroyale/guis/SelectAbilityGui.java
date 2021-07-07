@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
@@ -15,14 +16,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.potion.PotionEffect;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SelectAbilityGui extends Gui {
 
     public SelectAbilityGui(HumanEntity player, Gui sendingGui, GetAbilityResponse callback) {
-        super(1, Tools.componentalize("&0Select an Ability:"));
+        super(1, "&0Select an Ability:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
 
         disableAllInteractions();
         setOutsideClickAction(e -> {

@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.GuiAction;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.EquipmentSet;
@@ -19,6 +20,8 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class EquipmentSetGui extends Gui {
@@ -28,7 +31,7 @@ public class EquipmentSetGui extends Gui {
     private final static String[] slotArmorNames = {"a helmet", "a chestplate", "some leggings",  "some boots", "an off hand item"};
 
     public EquipmentSetGui(HumanEntity player, EquipmentSet set, Gui sendingGui, GetEquipmentSet callback) {
-        super(1, Tools.componentalize("&0Current Equipment:"));
+        super(1, "&0Current Equipment:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.setDefaultTopClickAction(e -> e.setCancelled(true));
         this.set = set;
         if (set == null)

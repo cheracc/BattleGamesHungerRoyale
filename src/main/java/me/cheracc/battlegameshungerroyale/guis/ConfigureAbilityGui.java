@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.GuiAction;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
@@ -19,6 +20,8 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class ConfigureAbilityGui extends Gui {
@@ -27,7 +30,7 @@ public class ConfigureAbilityGui extends Gui {
     private final Gui sendingGui;
 
     public ConfigureAbilityGui(HumanEntity p, Ability ability, Gui sendingGui, GetAbilityResponse callback) {
-        super(2, Tools.componentalize("&0Edit Ability: &1" + ability.getCustomName()));
+        super(2, "&0Edit Ability: &1" + ability.getCustomName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.ability = ability;
         this.callback = callback;
         this.sendingGui = sendingGui;

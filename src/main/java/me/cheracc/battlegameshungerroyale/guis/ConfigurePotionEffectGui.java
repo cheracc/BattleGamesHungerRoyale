@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.guis.interfaces.GetPotionEffect;
@@ -12,6 +13,8 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
 
 public class ConfigurePotionEffectGui extends Gui {
@@ -19,7 +22,7 @@ public class ConfigurePotionEffectGui extends Gui {
     GetPotionEffect callback;
 
     public ConfigurePotionEffectGui(HumanEntity player, PotionEffect effect, Gui sendingGui, GetPotionEffect callback) {
-        super(1, Tools.componentalize("&0Customize Potion Effect"));
+        super(1, "&0Customize Potion Effect", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.effect = Objects.requireNonNullElseGet(effect, () -> PotionEffectType.SPEED.createEffect(Integer.MAX_VALUE, 0));
         this.callback = callback;
         disableAllInteractions();

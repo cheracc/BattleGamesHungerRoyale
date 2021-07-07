@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.GuiAction;
+import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
@@ -14,6 +15,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.loot.LootTable;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class ConfigureLootGui extends Gui {
@@ -21,7 +24,7 @@ public class ConfigureLootGui extends Gui {
     private final Gui sendingGui;
 
     public ConfigureLootGui(HumanEntity player, Gui sendingGui, GameOptions options) {
-        super(1, Tools.componentalize("&0Loot Settings"));
+        super(1, "&0Loot Settings", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.options = options;
         this.sendingGui = sendingGui;
         disableAllInteractions();

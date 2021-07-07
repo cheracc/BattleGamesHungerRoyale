@@ -20,6 +20,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -266,16 +267,14 @@ public class Game implements Listener {
 
     public void joinAsSpectator(Player player) {
         player.setGameMode(GameMode.SPECTATOR);
-        player.setCooldown(Material.AIR, 2);
-        player.teleport(map.getSpawnCenter(world));
+        player.teleport(map.getSpawnCenter(world), PlayerTeleportEvent.TeleportCause.PLUGIN);
         bar.addPlayer(player);
     }
 
     public void join(Player player) {
         participants.put(player.getUniqueId(), options.getLivesPerPlayer());
         player.setGameMode(GameMode.ADVENTURE);
-        player.setCooldown(Material.AIR, 2);
-        player.teleport(map.getSpawnCenter(world));
+        player.teleport(map.getSpawnCenter(world), PlayerTeleportEvent.TeleportCause.PLUGIN);
         bar.addPlayer(player);
         if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.INVINCIBILITY)
             player.setInvulnerable(true);
@@ -293,8 +292,7 @@ public class Game implements Listener {
         player.setGameMode(GameMode.ADVENTURE);
         player.setWalkSpeed(0.2F);
         player.setAllowFlight(false);
-        player.setCooldown(Material.AIR, 2);
-        player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
+        player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         bar.removePlayer(player);
     }
 
@@ -493,7 +491,7 @@ public class Game implements Listener {
         PotionEffect noMove = new PotionEffect(PotionEffectType.SLOW, 50, 99999, false, false, false);
         PotionEffect noJump = new PotionEffect(PotionEffectType.JUMP, 50, -99999, false, false, false);
         for (Player p : getActivePlayers()) {
-            p.teleport(spawns.get(count));
+            p.teleport(spawns.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
             p.addPotionEffect(noMove);
             p.addPotionEffect(noJump);
             count++;
@@ -558,7 +556,7 @@ public class Game implements Listener {
         Collections.shuffle(spawns);
         int count = 0;
         for (Player p : getActivePlayers()) {
-            p.teleport(spawns.get(count));
+            p.teleport(spawns.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
             p.setWalkSpeed(0F);
             count++;
         }
