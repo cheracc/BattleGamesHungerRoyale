@@ -127,7 +127,7 @@ public class EquipmentSetGui extends Gui {
             ItemStack itemInSlot = Objects.requireNonNull(getGuiItem(slot)).getItemStack();
 
             if (itemInSlot == null || LegacyComponentSerializer.legacyAmpersand().serialize(itemInSlot.displayName()).contains("Empty")) {
-                if (itemOnCursor.getItemMeta() != null) {
+                if (itemOnCursor.getItemMeta() != null && itemFitsInSlot(itemOnCursor, slot)) {
                     set.setItem(slot, itemOnCursor);
                     event.getWhoClicked().setItemOnCursor(null);
                 }
@@ -136,9 +136,10 @@ public class EquipmentSetGui extends Gui {
                 itemInSlot.lore(new ArrayList<>());
                 set.setItem(slot, null);
 
-                event.getWhoClicked().setItemOnCursor(itemInSlot);
+                if (!itemInSlot.displayName().toString().toLowerCase().contains("empty"))
+                    event.getWhoClicked().setItemOnCursor(itemInSlot);
 
-                if (itemOnCursor.getItemMeta() != null)
+                if (itemOnCursor.getItemMeta() != null && itemFitsInSlot(itemOnCursor, slot))
                     set.setItem(slot, itemOnCursor);
 
                 fillOtherSlots();
@@ -148,18 +149,13 @@ public class EquipmentSetGui extends Gui {
     }
 
 
-    private GuiAction<InventoryClickEvent> itTakesTheItemFromTheSlot(int slot) {
-        return event -> {
-        };
-    }
-
-    private boolean armorFitsInSlot(ItemStack armor, EquipmentSlot slot) {
-        if (slot == EquipmentSlot.OFF_HAND)
+    private boolean itemFitsInSlot(ItemStack armor, int slot) {
+        if (slot >= 5)
             return true;
         for (int i = 0; i < SLOTS.length; i++) {
             String[] words = armor.getType().name().toLowerCase().split("_");
             for (String word : words)
-                if (slot == SLOTS[i] && slotArmorNames[i].contains(word))
+                if (EquipmentSlot.values()[slot] == SLOTS[i] && slotArmorNames[i].contains(word))
                     return true;
         }
         return false;

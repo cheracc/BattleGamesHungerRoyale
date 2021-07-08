@@ -3,4 +3,5 @@
 /test_server/
 /test_pom.xml
 /dependency-reduced-pom.xml
+/*_pom.xml
 /*.iml
