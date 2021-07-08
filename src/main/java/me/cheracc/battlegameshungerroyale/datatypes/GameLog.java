@@ -73,7 +73,7 @@ public class GameLog {
     private void saveLogFile() throws IOException {
         if (!logFile.exists())
             if (logFile.getParentFile().mkdirs())
-                Bukkit.getLogger().info("creating game log directory: " + logFile.getAbsolutePath());
+                Bukkit.getLogger().info("creating game log directory: " + logFile.getParentFile().getAbsolutePath());
 
         FileWriter writer = new FileWriter(logFile);
         PrintWriter printer = new PrintWriter(writer);

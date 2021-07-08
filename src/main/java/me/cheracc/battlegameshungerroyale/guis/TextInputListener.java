@@ -5,6 +5,7 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -47,8 +48,7 @@ public class TextInputListener implements Listener {
         if (watchers.containsKey(event.getPlayer().getUniqueId())) {
 
             Player p = event.getPlayer();
-            String text = PlainComponentSerializer.plain().serialize(event.originalMessage());
-            if (text == null) return;
+            String text = LegacyComponentSerializer.legacyAmpersand().serialize(event.originalMessage());
 
             event.setCancelled(true);
 

@@ -68,8 +68,7 @@ public class SelectAbilityGui extends Gui {
         lore.add(Tools.componentalize("&bClick here to add this ability"));
 
         return ItemBuilder.from(icon).name(name).lore(lore).flags(ItemFlag.HIDE_ATTRIBUTES).asGuiItem(e -> {
-            if (e.getWhoClicked() instanceof Player) {
-                Player p = (Player) e.getWhoClicked();
+            if (e.getWhoClicked() instanceof Player p) {
 
                 p.closeInventory();
                 Ability newAbility = ability.newWithDefaults();
