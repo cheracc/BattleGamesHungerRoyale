@@ -6,7 +6,7 @@
 
     <groupId>me.cheracc</groupId>
     <artifactId>BattleGamesHungerRoyale</artifactId>
-    <version>1.17.1_alpha1</version>
+    <version>1.17_alpha1</version>
     <build>
         <plugins>
             <plugin>
