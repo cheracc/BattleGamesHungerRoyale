@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.cheracc</groupId>
-    <artifactId>bghr_test</artifactId>
-    <version>1.16.5_alpha1</version>
+    <artifactId>BattleGamesHungerRoyale</artifactId>
+    <version>1.16_alpha1</version>
     <build>
         <plugins>
             <plugin>
