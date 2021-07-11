@@ -30,7 +30,7 @@ public class ConfigureKitGui extends Gui {
     Gui sendingGui;
 
     public ConfigureKitGui(Kit kit, @Nullable Gui sendingGui, HumanEntity player) {
-        super(1, "Configuring Kit: &1" + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, "Configuring Kit: " + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.kit = kit;
         this.sendingGui = sendingGui;
 
@@ -125,28 +125,12 @@ public class ConfigureKitGui extends Gui {
 
     private GuiItem equipmentIcon() {
         List<Component> lore = new ArrayList<>();
-        boolean noGear = true;
         lore.add(Tools.BLANK_LINE);
+        lore.addAll(kit.getEquipment().getDescription());
 
+        if (lore.size() <= 1)
+            lore.add(Tools.componentalize("  &7None"));
 
-        if (kit.getEquipment() != null && !kit.getEquipment().getArmor().isEmpty()) {
-            lore.add(Tools.componentalize("&e&nArmor:"));
-            noGear = false;
-            for (ItemStack item : kit.getEquipment().getArmor().values()) {
-                if (item == null) continue;
-                lore.add(Tools.componentalize(item.getI18NDisplayName()));
-            }
-        }
-        if (kit.getEquipment() != null && !kit.getEquipment().getOtherItems().isEmpty()) {
-            lore.add(Tools.componentalize("&e&nOther Starting Items:"));
-            noGear = false;
-            for (ItemStack item : kit.getEquipment().getOtherItems()) {
-                if (item == null) continue;
-                lore.add(Tools.componentalize(item.getI18NDisplayName()));
-            }
-        }
-        if (noGear)
-            lore.add(Tools.componentalize("&7None"));
         lore.add(Tools.BLANK_LINE);
         lore.add(Tools.componentalize("&bClick to modify equipment"));
 
@@ -244,7 +228,7 @@ public class ConfigureKitGui extends Gui {
     private GuiItem newAbilityIcon() {
         String instructions = "&bClick here to customize a new ability for this kit";
 
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eAdd an Ability"))
+        return ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("&eAdd an Ability"))
             .lore(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA))).asGuiItem(e ->
                 new SelectAbilityGui(e.getWhoClicked(), this, ability -> {
                     new ConfigureAbilityGui(e.getWhoClicked(), ability, this, finalAbility -> {

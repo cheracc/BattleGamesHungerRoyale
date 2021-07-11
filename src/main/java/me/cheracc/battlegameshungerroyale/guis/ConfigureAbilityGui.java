@@ -30,7 +30,7 @@ public class ConfigureAbilityGui extends Gui {
     private final Gui sendingGui;
 
     public ConfigureAbilityGui(HumanEntity p, Ability ability, Gui sendingGui, Consumer<Ability> callback) {
-        super(2, "Edit Ability: &1" + ability.getCustomName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(2, "Edit Ability: " + ability.getCustomName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.ability = ability;
         this.callback = callback;
         this.sendingGui = sendingGui;
