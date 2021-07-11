@@ -144,7 +144,7 @@ public class ConfigureAbilityGui extends Gui {
             icon = Material.DRAGON_BREATH;
             event = handlePotionEffect(configOption, (PotionEffect) value);
         }  else {
-            return null;
+            return ItemBuilder.from(Material.BARRIER).asGuiItem();
         }
 
         if (valueString.length() > 0)
