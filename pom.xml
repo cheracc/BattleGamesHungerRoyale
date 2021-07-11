@@ -28,6 +28,7 @@
                                     <excludes>
                                         <exclude>META-INF/*.*</exclude>
                                         <exclude>module-info.class</exclude>
+                                        <exclude>*.txt</exclude>
                                     </excludes>
                                 </filter>
                             </filters>

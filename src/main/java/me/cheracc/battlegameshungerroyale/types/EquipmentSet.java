@@ -23,7 +23,7 @@ import java.util.*;
 
 public class EquipmentSet {
     private final static NamespacedKey EQUIPMENT_KEY = new NamespacedKey(BGHR.getPlugin(), "equipment");
-    private enum EquipmentSetSlot { HEAD, CHEST, LEGS, FEET, OFF_HAND, HOTBAR_1, HOTBAR_2, HOTBAR_3;
+    public enum EquipmentSetSlot { HEAD, CHEST, LEGS, FEET, OFF_HAND, HOTBAR_1, HOTBAR_2, HOTBAR_3;
         boolean isArmor() {
             return ordinal() < 5;
         }}
@@ -117,7 +117,7 @@ public class EquipmentSet {
     public List<ItemStack> getOtherItems() {
         List<ItemStack> otherItems = new ArrayList<>();
         for (EquipmentSetSlot slot : EquipmentSetSlot.values()) {
-            if (!slot.isArmor() && items.get(slot) != null)
+            if (!slot.isArmor())
                 otherItems.add(items.get(slot));
         }
         return otherItems;

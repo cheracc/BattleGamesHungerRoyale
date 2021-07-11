@@ -10,12 +10,18 @@ import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
+import org.bukkit.DyeColor;
 import org.bukkit.Material;
+import org.bukkit.block.Banner;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -51,33 +57,34 @@ public class EquipmentSetGui extends Gui {
         String instructions = "Click here to remove this item, or drop another item here to replace it.";
         String emptyInstructions = "Drop an item here to add it to this kit's hotbar.";
         String hotbarWarning = "Items placed here will be locked to the player's hotbar or off hand slots and cannot be dropped.";
+        GuiItem guiItem;
         int slot = SLOTS.length;
 
         for (ItemStack item : set.getOtherItems()) {
-            ItemStack iconItem = item.clone();
-            Component name = Tools.componentalize("Hotbar Item:");
-            List<Component> lore = new ArrayList<>();
+            if (item == null || !item.getType().isItem() || item.getType() == Material.AIR) {
+                Component name = Tools.componentalize("Empty Hotbar Item Slot");
+                List<Component> lore = Tools.componentalize(Tools.wrapText(emptyInstructions, ChatColor.AQUA));
+                lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
+                lore.add(0, Tools.BLANK_LINE);
+                guiItem = ItemBuilder.from(getIconItem(EquipmentSet.EquipmentSetSlot.values()[slot])).name(name).lore(lore).asGuiItem(handleClicks(slot));
+            }
+            else {
+                ItemStack iconItem = item.clone();
+                List<Component> lore = new ArrayList<>();
 
-            lore.add(0, iconItem.displayName());
-            lore.add(Tools.BLANK_LINE);
-            lore.addAll(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA)));
-            lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
+                lore.add(Tools.BLANK_LINE);
+                lore.addAll(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA)));
+                lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
+                System.out.println(iconItem.getType() + ":" + lore);
 
-            GuiItem guiItem = ItemBuilder.from(iconItem).name(name).lore(lore).asGuiItem();
+                guiItem = ItemBuilder.from(iconItem).lore(lore).asGuiItem();
+            }
             guiItem.setAction(handleClicks(slot));
 
             if (getGuiItem(slot) != null)
                 updateItem(slot, guiItem);
             else
                 setItem(slot, guiItem);
-            slot++;
-        }
-        while (slot < 8) {
-            Component name = Tools.componentalize("Empty Hotbar Item Slot");
-            List<Component> lore = Tools.componentalize(Tools.wrapText(emptyInstructions, ChatColor.AQUA));
-            lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
-            lore.add(0, Tools.BLANK_LINE);
-            addItem(ItemBuilder.from(Material.LIME_STAINED_GLASS_PANE).name(name).lore(lore).asGuiItem(handleClicks(slot)));
             slot++;
         }
     }
@@ -97,7 +104,7 @@ public class EquipmentSetGui extends Gui {
                     lore.addAll(Tools.componentalize(Tools.wrapText(offHandWarning, ChatColor.RED)));
                 }
                 lore.add(0, Tools.BLANK_LINE);
-                GuiItem guiItem = ItemBuilder.from(EMPTY_ARMOR_ICON).name(name).lore(lore).asGuiItem(handleClicks(i));
+                GuiItem guiItem = ItemBuilder.from(getIconItem(EquipmentSet.EquipmentSetSlot.values()[i])).name(name).lore(lore).asGuiItem(handleClicks(i));
 
                 if (getGuiItem(i) != null)
                     updateItem(i, guiItem);
@@ -125,7 +132,7 @@ public class EquipmentSetGui extends Gui {
             ItemStack itemInSlot = Objects.requireNonNull(getGuiItem(slot)).getItemStack();
 
             if (itemInSlot == null || LegacyComponentSerializer.legacyAmpersand().serialize(itemInSlot.displayName()).contains("Empty")) {
-                if (itemOnCursor.getItemMeta() != null && itemFitsInSlot(itemOnCursor, slot)) {
+                if (itemOnCursor.getItemMeta() != null && doesThisFit(itemOnCursor, slot)) {
                     set.setItem(slot, itemOnCursor);
                     event.getWhoClicked().setItemOnCursor(null);
                 }
@@ -133,12 +140,17 @@ public class EquipmentSetGui extends Gui {
             if (getGuiItem(slot) != null && itemInSlot != null) {
                 itemInSlot.lore(new ArrayList<>());
                 set.setItem(slot, null);
+                Component displayName = itemInSlot.getItemMeta().displayName();
+                if (displayName == null)
+                    displayName = Component.space();
 
-                if (!itemInSlot.displayName().toString().toLowerCase().contains("empty"))
+                if (!displayName.toString().toLowerCase().contains("empty"))
                     event.getWhoClicked().setItemOnCursor(itemInSlot);
 
-                if (itemOnCursor.getItemMeta() != null && itemFitsInSlot(itemOnCursor, slot))
+                if (itemOnCursor.getItemMeta() != null && doesThisFit(itemOnCursor, slot)) {
                     set.setItem(slot, itemOnCursor);
+                    event.getWhoClicked().setItemOnCursor(null);
+                }
 
                 fillOtherSlots();
                 fillArmorSlots();
@@ -146,16 +158,81 @@ public class EquipmentSetGui extends Gui {
         };
     }
 
-
-    private boolean itemFitsInSlot(ItemStack armor, int slot) {
-        if (slot >= 5)
-            return true;
-        for (int i = 0; i < SLOTS.length; i++) {
-            String[] words = armor.getType().name().toLowerCase().split("_");
-            for (String word : words)
-                if (EquipmentSlot.values()[slot] == SLOTS[i] && slotArmorNames[i].contains(word))
-                    return true;
+    private ItemStack getIconItem(EquipmentSet.EquipmentSetSlot slot) {
+        ItemStack icon;
+        switch (slot) {
+            case HEAD:
+                icon = new ItemStack(Material.LEATHER_HELMET);
+                break;
+            case CHEST:
+                icon = new ItemStack(Material.LEATHER_CHESTPLATE);
+                break;
+            case LEGS:
+                icon = new ItemStack(Material.LEATHER_LEGGINGS);
+                break;
+            case FEET:
+                icon = new ItemStack(Material.LEATHER_BOOTS);
+                break;
+            case OFF_HAND:
+                icon = new ItemStack(Material.SHIELD);
+                break;
+            default:
+                icon = new ItemStack(Material.GLASS_BOTTLE);
         }
-        return false;
+        if (icon.getType().name().toLowerCase().contains("leather")) {
+            LeatherArmorMeta leatherMeta;
+            leatherMeta = (LeatherArmorMeta) icon.getItemMeta();
+            leatherMeta.setColor(Color.GRAY);
+            icon.setItemMeta(leatherMeta);
+        }
+        if (icon.getType() == Material.SHIELD) {
+            BlockStateMeta meta = (BlockStateMeta) icon.getItemMeta();
+            BlockState state = meta.getBlockState();
+
+            Banner banner = (Banner) state;
+            banner.setBaseColor(DyeColor.GRAY);
+            banner.update();
+            meta.setBlockState(banner);
+            icon.setItemMeta(meta);
+        }
+        return icon;
+    }
+
+    private boolean doesThisFit(ItemStack item, EquipmentSlot slot) {
+        String typeAsString = item.getType().name().toLowerCase().replace("_", " ");
+        String slotDescriptor = "";
+
+        switch (slot) {
+            case HEAD:
+                slotDescriptor = "helmet";
+                break;
+            case CHEST:
+                slotDescriptor = "chestplate";
+                break;
+            case LEGS:
+                slotDescriptor = "leggings";
+                break;
+            case FEET:
+                slotDescriptor = "boots";
+                break;
+        }
+
+        return typeAsString.contains(slotDescriptor);
+    }
+
+    private boolean doesThisFit(ItemStack armor, int slot) {
+        if (slot >= 4)
+            return true;
+        switch (slot) {
+            case 0:
+                return doesThisFit(armor, EquipmentSlot.HEAD);
+            case 1:
+                return doesThisFit(armor, EquipmentSlot.CHEST);
+            case 2:
+                return doesThisFit(armor, EquipmentSlot.LEGS);
+            case 3:
+                return doesThisFit(armor, EquipmentSlot.FEET);
+        }
+        return true;
     }
 }
