@@ -197,11 +197,12 @@ public class AdminGui extends Gui {
                         String abilityString = String.format("%s%s &f- &7%s", color, a.getCustomName() != null ? a.getCustomName() : a.getName(),
                                 a.getDescription());
                         lore.addAll(Tools.componentalize(Tools.wrapText(abilityString, ChatColor.GRAY)));
-                        lore.add(Tools.BLANK_LINE);
                     }
                 }
                 lore.addAll(kit.getEquipment().getDescription());
 
+                lore.add(Tools.BLANK_LINE);
+                lore.add(Tools.componentalize("&bClick here to modify this kit"));
                 icon.lore(lore);
                 return icon.asGuiItem(e -> {
                     e.getWhoClicked().closeInventory();
@@ -209,7 +210,7 @@ public class AdminGui extends Gui {
                 });
             });
         }
-        new BaseAdminGui(player, "Kit Configurations", icons);
+        new BaseAdminGui(player, "Kits", icons);
     }
 
     public void sendMapsAdminGui(HumanEntity player) {
