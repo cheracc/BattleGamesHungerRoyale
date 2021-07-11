@@ -16,7 +16,6 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,7 +159,9 @@ public class ConfigureKitGui extends Gui {
 
         for (String s : ability.getConfig().getKeys(false)) {
             Object o = ability.getConfig().get(s);
-            String value = o.toString();
+            String value = "";
+            if (o != null)
+                value = o.toString();
             if (o instanceof Material)
                 value = ((Material) o).name().toLowerCase();
             if (o instanceof PotionEffect) {
@@ -230,13 +231,11 @@ public class ConfigureKitGui extends Gui {
 
         return ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("&eAdd an Ability"))
             .lore(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA))).asGuiItem(e ->
-                new SelectAbilityGui(e.getWhoClicked(), this, ability -> {
-                    new ConfigureAbilityGui(e.getWhoClicked(), ability, this, finalAbility -> {
-                        kit.addAbility(finalAbility);
-                        repopulateGui();
-                        update();
-                        open(e.getWhoClicked());
-                    });
-                }));
+                new SelectAbilityGui(e.getWhoClicked(), this, ability -> new ConfigureAbilityGui(e.getWhoClicked(), ability, this, finalAbility -> {
+                    kit.addAbility(finalAbility);
+                    repopulateGui();
+                    update();
+                    open(e.getWhoClicked());
+                })));
     }
 }

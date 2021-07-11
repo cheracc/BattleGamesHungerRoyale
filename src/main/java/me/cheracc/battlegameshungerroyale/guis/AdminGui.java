@@ -90,9 +90,7 @@ public class AdminGui extends Gui {
     private GuiItem exitIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.BARRIER).name(Tools.componentalize("Close Menu"));
 
-        return icon.asGuiItem(e -> {
-            e.getWhoClicked().closeInventory();
-        });
+        return icon.asGuiItem(e -> e.getWhoClicked().closeInventory());
     }
 
     public void sendPluginAdminGui(HumanEntity player) {
@@ -162,7 +160,7 @@ public class AdminGui extends Gui {
                         PlayerData data = PlayerManager.getInstance().getPlayerData(p);
                         if (data.getKit() != null && !kitsAllowed)
                             data.getKit().disrobePlayer(data);
-                        else if (data.getKit() != null && kitsAllowed)
+                        else if (data.getKit() != null)
                             data.getKit().outfitPlayer(p);
                     }
                 }
@@ -274,9 +272,7 @@ public class AdminGui extends Gui {
                     if (e.isRightClick()) {
                         new ConfigureGameGui(e.getWhoClicked(), game, this);
                     } else {
-                        Game.createNewGameWithCallback(game.getMap(), game, newGame -> {
-                            new SelectGameGui(e.getWhoClicked());
-                        });
+                        Game.createNewGameWithCallback(game.getMap(), game, newGame -> new SelectGameGui(e.getWhoClicked()));
                     }
                 });
             });
