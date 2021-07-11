@@ -8,10 +8,13 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -70,8 +73,9 @@ public class Tools {
 
     public static @Nullable UUID getUuidFromItem(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
-        if (meta == null || meta.getPersistentDataContainer() == null)
+        if (meta == null) {
             return null;
+        }
 
         String data = meta.getPersistentDataContainer().get(UUID_KEY, PersistentDataType.STRING);
 
@@ -118,6 +122,10 @@ public class Tools {
 
     public static Component componentalize(String text) {
         return LegacyComponentSerializer.legacySection().deserialize(ChatColor.translateAlternateColorCodes('&', ChatColor.WHITE + text)).decoration(TextDecoration.ITALIC, false);
+    }
+
+    public static String keyToDisplayName(String key) {
+        return WordUtils.capitalize(key.replace("_", " "));
     }
 
     public static String secondsToMinutesAndSeconds(int timeInSeconds) {

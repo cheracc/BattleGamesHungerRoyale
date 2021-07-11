@@ -1,10 +1,10 @@
 package me.cheracc.battlegameshungerroyale.listeners;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.PlayerData;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
+import me.cheracc.battlegameshungerroyale.types.PlayerData;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;

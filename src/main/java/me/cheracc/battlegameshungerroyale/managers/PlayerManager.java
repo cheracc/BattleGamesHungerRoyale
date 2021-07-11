@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
-import me.cheracc.battlegameshungerroyale.datatypes.PlayerData;
+import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 

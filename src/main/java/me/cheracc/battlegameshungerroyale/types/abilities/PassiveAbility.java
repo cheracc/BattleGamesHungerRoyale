@@ -1,4 +1,4 @@
-package me.cheracc.battlegameshungerroyale.datatypes.abilities;
+package me.cheracc.battlegameshungerroyale.types.abilities;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

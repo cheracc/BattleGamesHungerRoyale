@@ -1,8 +1,8 @@
-package me.cheracc.battlegameshungerroyale.datatypes.abilities;
+package me.cheracc.battlegameshungerroyale.types.abilities;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.Kit;
-import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
+import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;

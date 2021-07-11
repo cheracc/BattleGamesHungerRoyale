@@ -5,9 +5,9 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.*;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
+import me.cheracc.battlegameshungerroyale.types.*;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
@@ -185,19 +185,22 @@ public class AdminGui extends Gui {
 
         for (Kit kit : KitManager.getInstance().getLoadedKits()) {
             icons.add(slot -> {
-                ItemBuilder icon = ItemBuilder.from(Material.STONE_SWORD).name(Tools.componentalize(kit.getName()));
+                ItemBuilder icon = ItemBuilder.from(kit.getIcon()).name(Tools.componentalize(kit.getName()));
                 icon.flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
                 List<Component> lore = new ArrayList<>(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
                 lore.add(0, Component.text(""));
                 lore.add(Tools.BLANK_LINE);
-                lore.add(Tools.componentalize("&eKit Abilities:"));
-                for (Ability a : kit.getAbilities()) {
-                    String color = (a instanceof ActiveAbility) ? "&a" : "&6";
-                    String abilityString = String.format("%s%s &f- &7%s", color, a.getCustomName() != null ? a.getCustomName() : a.getName(),
-                            a.getDescription());
-                    lore.addAll(Tools.componentalize(Tools.wrapText(abilityString, ChatColor.GRAY)));
-                    lore.add(Tools.BLANK_LINE);
+                if (!kit.getAbilities().isEmpty()) {
+                    lore.add(Tools.componentalize("&eKit Abilities:"));
+                    for (Ability a : kit.getAbilities()) {
+                        String color = (a instanceof ActiveAbility) ? "&a" : "&6";
+                        String abilityString = String.format("%s%s &f- &7%s", color, a.getCustomName() != null ? a.getCustomName() : a.getName(),
+                                a.getDescription());
+                        lore.addAll(Tools.componentalize(Tools.wrapText(abilityString, ChatColor.GRAY)));
+                        lore.add(Tools.BLANK_LINE);
+                    }
                 }
+                lore.addAll(kit.getEquipment().getDescription());
 
                 icon.lore(lore);
                 return icon.asGuiItem(e -> {

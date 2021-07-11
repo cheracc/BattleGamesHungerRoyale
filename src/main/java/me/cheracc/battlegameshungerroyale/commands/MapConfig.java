@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.commands;
 
-import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import me.cheracc.battlegameshungerroyale.guis.ConfigureMapGui;
 import me.cheracc.battlegameshungerroyale.guis.SelectMapGui;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;

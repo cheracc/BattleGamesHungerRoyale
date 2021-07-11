@@ -5,7 +5,7 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.Game;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.milkbowl.vault.permission.Permission;
@@ -37,7 +37,11 @@ public class SelectGameGui extends Gui {
     private GuiItem gameIcon(HumanEntity viewer, Game game) {
         ItemBuilder item = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize("&eMap: &f" + game.getMap().getMapName()));
         List<String> lore = new ArrayList<>();
-        Permission perms = BGHR.getPerms();
+        boolean hasPermission = false;
+        if (BGHR.getPerms() != null)
+            hasPermission = BGHR.getPerms().has(viewer, "bghr.admin.games");
+        else if (viewer.isOp())
+            hasPermission = true;
 
         lore.add("&ePlayers: &7" + game.getActivePlayers().size() + "/" + game.getStartingPlayersSize());
         lore.add("&ePhase: &7" + game.getPhase());
@@ -48,13 +52,14 @@ public class SelectGameGui extends Gui {
             lore.add("    &d&lClick to Join!");
         lore.add("&bRight click to spectate");
 
-        if (perms.has(viewer, "bghr.admin.games")) {
+        if (hasPermission) {
             lore.add("");
             lore.add("&4[&cShift-Click&4]:&f Close this game");
         }
 
-        item = item.lore(Tools.componentalize(lore));
+        item.lore(Tools.componentalize(lore));
 
+        boolean finalHasPermission = hasPermission;
         return item.asGuiItem(e -> {
             Player p = (Player) e.getWhoClicked();
             if (game.isPlaying(p) || game.isSpectating(p)) {
@@ -65,7 +70,7 @@ public class SelectGameGui extends Gui {
             if (current != null)
                 current.quit(p);
 
-            if (e.isShiftClick() && perms.has(e.getWhoClicked(), "bghr.admin.games")) {
+            if (e.isShiftClick() && finalHasPermission) {
                 game.endGame();
                 e.getWhoClicked().closeInventory();
                 new SelectGameGui(e.getWhoClicked());

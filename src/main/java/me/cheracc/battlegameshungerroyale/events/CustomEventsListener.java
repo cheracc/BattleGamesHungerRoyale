@@ -1,7 +1,7 @@
 package me.cheracc.battlegameshungerroyale.events;
 
-import me.cheracc.battlegameshungerroyale.datatypes.DamageSource;
-import me.cheracc.battlegameshungerroyale.datatypes.Game;
+import me.cheracc.battlegameshungerroyale.types.DamageSource;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;

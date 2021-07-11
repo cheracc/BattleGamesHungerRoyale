@@ -21,6 +21,7 @@
                         </goals>
                         <configuration>
                             <minimizeJar>true</minimizeJar>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -90,7 +91,6 @@
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
             <version>1.7</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>

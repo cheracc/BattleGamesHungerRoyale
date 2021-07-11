@@ -2,7 +2,7 @@ package me.cheracc.battlegameshungerroyale.commands;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;

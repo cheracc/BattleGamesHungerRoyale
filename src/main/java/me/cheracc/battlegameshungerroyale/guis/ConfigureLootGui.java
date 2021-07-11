@@ -5,7 +5,7 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
+import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.ChatColor;

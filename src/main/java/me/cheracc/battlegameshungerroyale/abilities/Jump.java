@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

@@ -1,7 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.MapData;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -334,7 +334,7 @@ public class MapManager implements Listener {
                     FileUtils.copyFileToDirectory(file, datapackLootTablesDirectory);
                     updatedDatapack = true;
                 }
-                if (FileUtils.contentEquals(file, datapackFile)) {
+                if (!FileUtils.contentEquals(file, datapackFile)) {
                     FileUtils.deleteQuietly(datapackFile);
                     FileUtils.copyFileToDirectory(file, datapackLootTablesDirectory);
                     updatedDatapack = true;

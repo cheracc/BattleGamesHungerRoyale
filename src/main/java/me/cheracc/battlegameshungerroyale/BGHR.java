@@ -1,7 +1,7 @@
 package me.cheracc.battlegameshungerroyale;
 
 import me.cheracc.battlegameshungerroyale.commands.*;
-import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
+import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
@@ -25,7 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 
 public class BGHR extends JavaPlugin implements Listener {
     private static BGHR plugin;
-    private static Permission perms = null;
 
     @Override
     public void onEnable() {
@@ -54,7 +53,6 @@ public class BGHR extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(this, this);
-        setupPermissions();
     }
 
     @EventHandler
@@ -76,16 +74,14 @@ public class BGHR extends JavaPlugin implements Listener {
         ConfigurationSerialization.unregisterClass(SoundEffect.class);
     }
 
-    private static void setupPermissions() {
+    public static Permission getPerms() {
         RegisteredServiceProvider<Permission> rsp = Bukkit.getServer().getServicesManager().getRegistration(Permission.class);
-        perms = rsp.getProvider();
+        if (rsp != null) {
+            return rsp.getProvider();
+        }
+        return null;
     }
 
-    public static Permission getPerms() {
-        if (perms == null)
-            setupPermissions();
-        return perms;
-    }
 
     public static BGHR getPlugin() {
         return plugin;

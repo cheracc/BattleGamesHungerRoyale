@@ -1,7 +1,7 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;

@@ -4,7 +4,7 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.datatypes.SoundEffect;
+import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;

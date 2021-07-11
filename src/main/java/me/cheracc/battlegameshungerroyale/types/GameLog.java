@@ -1,4 +1,4 @@
-package me.cheracc.battlegameshungerroyale.datatypes;
+package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.GameDamageEvent;

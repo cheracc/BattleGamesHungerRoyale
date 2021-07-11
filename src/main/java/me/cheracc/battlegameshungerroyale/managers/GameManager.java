@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.Game;
-import me.cheracc.battlegameshungerroyale.datatypes.GameOptions;
+import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

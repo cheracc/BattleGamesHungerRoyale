@@ -1,4 +1,4 @@
-package me.cheracc.battlegameshungerroyale.datatypes;
+package me.cheracc.battlegameshungerroyale.types;
 
 import org.bukkit.Location;
 import org.bukkit.Sound;

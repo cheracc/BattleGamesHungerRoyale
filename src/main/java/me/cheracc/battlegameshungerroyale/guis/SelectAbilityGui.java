@@ -4,7 +4,7 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;

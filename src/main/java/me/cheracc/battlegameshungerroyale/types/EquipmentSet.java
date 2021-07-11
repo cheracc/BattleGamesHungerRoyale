@@ -1,11 +1,15 @@
-package me.cheracc.battlegameshungerroyale.datatypes;
+package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
@@ -67,6 +71,24 @@ public class EquipmentSet {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Component> getDescription() {
+        List<Component> desc = new ArrayList<>();
+        Component space = Component.space();
+
+        if (!isEmpty()) {
+            desc.add(Tools.componentalize("&eKit Equipment:"));
+            for (Map.Entry<EquipmentSlot, ItemStack> e : getArmor().entrySet()) {
+                if (e.getValue() != null && e.getValue().getItemMeta() != null && e.getValue().getItemMeta().hasDisplayName()) {
+                    desc.add(space.append(e.getValue().getItemMeta().displayName().color(NamedTextColor.WHITE)).append(Tools.componentalize(" &8(&7" + e.getKey().name().toLowerCase() + "&8)")));
+                    for (Map.Entry<Enchantment, Integer> enchant : e.getValue().getEnchantments().entrySet()) {
+                        desc.add(Tools.componentalize("  &7" + Tools.keyToDisplayName(enchant.getKey().getKey().value()) + " " + Tools.integerToRomanNumeral(enchant.getValue())));
+                    }
+                }
+            }
+        }
+        return desc;
     }
 
     public void setItem(int slot, ItemStack item) {

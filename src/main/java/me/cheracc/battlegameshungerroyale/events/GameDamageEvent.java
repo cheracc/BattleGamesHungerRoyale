@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.events;
 
-import me.cheracc.battlegameshungerroyale.datatypes.Game;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;

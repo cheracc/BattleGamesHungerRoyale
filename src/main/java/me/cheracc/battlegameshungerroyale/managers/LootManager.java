@@ -1,7 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.Game;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;

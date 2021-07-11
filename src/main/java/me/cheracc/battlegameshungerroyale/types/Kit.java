@@ -1,9 +1,9 @@
-package me.cheracc.battlegameshungerroyale.datatypes;
+package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.ActiveAbility;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.PassiveAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Bukkit;
@@ -37,7 +37,7 @@ public class Kit {
         this.config = config;
         this.equipment = EquipmentSet.newEquipmentSet();
         String equipmentBase64 = config.getString("equipment", "");
-        if (equipmentBase64 != null && !equipmentBase64.equals(""))
+        if (!equipmentBase64.equals(""))
             equipment.loadItemsFromBase64(equipmentBase64);
         name = config.getString("name", "Nameless Kit");
         description = config.getString("description", "Give this kit a description");
@@ -152,7 +152,8 @@ public class Kit {
 
         }
 
-        this.config.set("equipment", equipment.serializeAsBase64());
+        if (!equipment.isEmpty())
+            this.config.set("equipment", equipment.serializeAsBase64());
 
         FileConfiguration kitsConfig = new YamlConfiguration();
 

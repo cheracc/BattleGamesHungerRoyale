@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.datatypes.Kit;
-import me.cheracc.battlegameshungerroyale.datatypes.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;

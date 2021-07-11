@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.commands;
 
-import me.cheracc.battlegameshungerroyale.datatypes.Kit;
+import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.guis.ConfigureKitGui;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
