@@ -1,7 +1,7 @@
 # Project exclude paths
 /target/
 /test_server/
-/test_pom.xml
+/test*.xml
 /dependency-reduced-pom.xml
 /*_pom.xml
 /*.iml

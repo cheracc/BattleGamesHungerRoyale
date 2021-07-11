@@ -125,7 +125,8 @@ public class ConfigureMapGui extends Gui {
 
         lore.add("");
 
-        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+        MapData data = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        if (data != null && data.equals(map)) {
             editable = true;
             if (map.isUseBorder())
                 lore.add("&fBorder Radius: &7" + map.getBorderRadius());
@@ -137,10 +138,10 @@ public class ConfigureMapGui extends Gui {
                 lore.add("&bRight click to decrease");
                 lore.add("&7(Set to zero to turn border off)");
             }
+            icon.lore(Tools.componentalize(lore));
         } else {
             icon.lore(Tools.componentalize(Tools.wrapText("&cYou must be on this map to edit this setting. Load this world from the admin menu to change this.", ChatColor.RED)));
         }
-        icon.lore(Tools.componentalize(lore));
 
         boolean finalEditable = editable;
         return icon.asGuiItem(e -> {
@@ -160,7 +161,7 @@ public class ConfigureMapGui extends Gui {
                 }
                 map.setBorderRadius(current);
                 setBorderFromConfig(e.getWhoClicked().getWorld());
-                updateItem(2, borderIcon());
+                updateItem(3, borderIcon());
             }
         });
     }
@@ -168,7 +169,8 @@ public class ConfigureMapGui extends Gui {
     public GuiItem centerIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.CONDUIT).name(Tools.componentalize("&eBorder Center"));
         boolean editable = false;
-        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        if (mapData != null && mapData.equals(this.map)) {
             icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center at your location. You can also stand where you want the center to be and type &f/mapconfig &fbordercenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
             editable = true;
         } else {
@@ -198,7 +200,8 @@ public class ConfigureMapGui extends Gui {
             type = Material.DIRT;
         Bukkit.getLogger().info(type.name());
         ItemBuilder icon = ItemBuilder.from(type).name(Tools.componentalize("&eSpawn Point Block"));
-        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        if (mapData != null && mapData.equals(map)) {
             icon.lore(Tools.componentalize(Tools.wrapText("Games will look for this block type to spawn players on. Click to open a gui and select a new block type. You can also stand on a spawn point and type /mapconfig spawn", ChatColor.GRAY)));
             editable = true;
         } else {
@@ -211,7 +214,7 @@ public class ConfigureMapGui extends Gui {
                 new SelectMaterialGui(e.getWhoClicked(), this, mat -> {
                     map.setSpawnBlockType(mat);
                     e.getWhoClicked().closeInventory();
-                    updateItem(3, spawnBlockIcon());
+                    updateItem(4, spawnBlockIcon());
                     open(e.getWhoClicked());
                 });
             }
@@ -221,7 +224,8 @@ public class ConfigureMapGui extends Gui {
     public GuiItem spawnRadiusIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.ENDER_EYE).name(Tools.componentalize("&eSpawn Radius: &f" + map.getSpawnRadius()));
         boolean editable = false;
-        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        if (mapData != null && mapData.equals(map)) {
             editable = true;
             icon.lore(Tools.componentalize(Tools.wrapText("How far away players will spawn from the center. Click to increase, Right click to decrease", ChatColor.GRAY)));
         } else {
@@ -239,7 +243,7 @@ public class ConfigureMapGui extends Gui {
                     current--;
                 }
                 map.setSpawnRadius(current);
-                updateItem(5, spawnRadiusIcon());
+                updateItem(6, spawnRadiusIcon());
                 visualizeRadius((Player) e.getWhoClicked());
             }
         });
@@ -248,7 +252,8 @@ public class ConfigureMapGui extends Gui {
     public GuiItem spawnCenterIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Tools.componentalize("&eSpawn Center"));
         boolean editable = false;
-        if (MapManager.getInstance().getMapFromWorld(player.getWorld()).equals(map)) {
+        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        if (mapData != null && mapData.equals(map)) {
             editable = true;
             icon.lore(Tools.componentalize(Tools.wrapText("Click here to set the center of spawn at your location. You can also stand where you want the center to be and type &f/mapconfig &fspawncenter&7. Right click to strike the current center with lightning.", ChatColor.GRAY)));
         } else {
