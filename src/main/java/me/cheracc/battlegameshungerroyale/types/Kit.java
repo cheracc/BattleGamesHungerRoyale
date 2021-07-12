@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
@@ -92,11 +93,33 @@ public class Kit {
         return equipment;
     }
 
-    public void disrobePlayer(PlayerData data) {
+    public void disrobePlayer(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item == null || item.getItemMeta() == null)
+                continue;
+            if (Ability.isAbilityItem(item) || Tools.isPluginItem(item))
+                player.getInventory().remove(item);
+        }
+        ItemStack item = player.getInventory().getItemInOffHand();
+        if (item != null && item.getItemMeta() != null) {
+            if (Ability.isAbilityItem(item) || Tools.isPluginItem(item))
+                player.getInventory().setItemInOffHand(null);
+        }
 
+        getEquipment().unequip(player);
+        for (Ability ability : getAbilities()) {
+            if (ability instanceof PassiveAbility) {
+                ((PassiveAbility) ability).deactivate(player);
+            }
+        }
     }
 
     public void outfitPlayer(Player p) {
+        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+        Kit kit = data.getKit();
+
+        if (kit != null)
+            kit.disrobePlayer(p);
         for (Ability a : abilities) {
             if (a instanceof ActiveAbility) {
                 ItemStack abilityItem = ((ActiveAbility) a).createAbilityItem();
@@ -111,9 +134,10 @@ public class Kit {
                 }
             }
         }
-        if (equipment != null) {
+        if (!equipment.isEmpty()) {
             equipment.equip(p);
         }
+        p.sendMessage(Tools.componentalize("You have been given equipment and kit items for kit " + getName()));
     }
 
     public Material getIcon() {

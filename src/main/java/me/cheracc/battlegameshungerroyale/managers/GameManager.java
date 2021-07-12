@@ -48,7 +48,6 @@ public class GameManager {
     }
 
     public void setupGame(Game game) {
-        Bukkit.getLogger().info("added a game");
         activeGames.add(game);
     }
 
@@ -63,15 +62,20 @@ public class GameManager {
         List<GameOptions> configs = new ArrayList<>();
 
         if (!configDir.exists())
-            configDir.mkdirs();
+            if (configDir.mkdirs())
+                Bukkit.getLogger().info("creating gameconfigs directory");
 
         if (configDir.listFiles().length == 0) {
             String[] defaultConfigNames = { "crystal_avalanche.yml", "horizon_city.yml", "island_tower.yml", "king_of_the_ring.yml" };
 
+            boolean sent = false;
             for (String filename : defaultConfigNames) {
                 File defaultConfig = new File(configDir, filename);
                 try {
-                    defaultConfig.createNewFile();
+                    if (defaultConfig.createNewFile() && !sent) {
+                        Bukkit.getLogger().info("creating default game configs");
+                        sent = true;
+                    }
                     InputStream in = BGHR.getPlugin().getResource("default_game_configs/" + filename);
                     FileUtils.copyToFile(in, defaultConfig);
                     in.close();

@@ -147,7 +147,7 @@ public class AdminGui extends Gui {
         icons.add(slot -> {
             boolean value = config.getBoolean("main world.kits useable in main world", false);
             ItemBuilder icon = ItemBuilder.from(Material.STONE_SWORD).name(Tools.componentalize("&eAllow Kits to be used in main world: &f" +
-                    (value ? "no" : "yes")));
+                    (value ? "yes" : "no")));
             icon.flags(ItemFlag.HIDE_ATTRIBUTES);
             icon.lore(Tools.componentalize(Tools.wrapText("  &7Whether kits and kit abilities may be used in the main world. If disabled, players can still select a kit to use, but the kit will not be equipped on them until they join a game.", ChatColor.GRAY)));
 
@@ -160,7 +160,7 @@ public class AdminGui extends Gui {
                     if (!GameManager.getInstance().isInAGame(p)) {
                         PlayerData data = PlayerManager.getInstance().getPlayerData(p);
                         if (data.getKit() != null && !kitsAllowed)
-                            data.getKit().disrobePlayer(data);
+                            data.getKit().disrobePlayer(p);
                         else if (data.getKit() != null)
                             data.getKit().outfitPlayer(p);
                     }

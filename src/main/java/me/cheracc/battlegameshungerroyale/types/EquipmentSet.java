@@ -137,7 +137,6 @@ public class EquipmentSet {
         for (EquipmentSetSlot slot : EquipmentSetSlot.values()) {
             if (!slot.isArmor() && items.get(slot) == null) {
                 items.put(slot, item);
-                Bukkit.getLogger().info("Added " + item.getI18NDisplayName());
                 placed = true;
             }
         }

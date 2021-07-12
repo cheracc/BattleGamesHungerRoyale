@@ -38,10 +38,9 @@ public class MapConfig implements CommandExecutor {
                 if (args[0].equalsIgnoreCase("spawn")) {
                     map = MapManager.getInstance().getMapFromWorld(p.getWorld());
                     Block b = p.getLocation().getBlock().getRelative(BlockFace.DOWN);
-                    if (b != null && b.getType() != null) {
-                        map.setSpawnBlockType(b.getType());
-                        p.sendMessage(Tools.componentalize("Set spawn block to " + b.getType().name().toLowerCase()));
-                    }
+                    b.getType();
+                    map.setSpawnBlockType(b.getType());
+                    p.sendMessage(Tools.componentalize("Set spawn block to " + b.getType().name().toLowerCase()));
                 }
                 if (args[0].equalsIgnoreCase("list")) {
                     new SelectMapGui(p, null, mapData -> new ConfigureMapGui(p, null, mapData));

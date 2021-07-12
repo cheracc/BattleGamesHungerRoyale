@@ -138,6 +138,10 @@ public class Game implements Listener {
         if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.INVINCIBILITY)
             player.setInvulnerable(true);
         gameLog.addLogEntry(String.format("%s joined (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
+
+        if (PlayerManager.getInstance().getPlayerData(player).getKit() == null) {
+            player.sendMessage(Tools.componentalize("&fYou haven't selected a kit! Type &e/kitmenu &for &e/kit <name> &fto select one!"));
+        }
     }
 
     public void quit(Player player) {

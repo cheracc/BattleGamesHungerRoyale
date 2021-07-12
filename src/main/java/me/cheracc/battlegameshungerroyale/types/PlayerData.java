@@ -1,5 +1,7 @@
 package me.cheracc.battlegameshungerroyale.types;
 
+import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -35,6 +37,10 @@ public class PlayerData {
         this.kit = kit;
 
         getPlayer().sendMessage(Component.text("Your chosen Kit has been set to " + kit.getName()));
+
+        if (MapManager.getInstance().isThisAGameWorld(getPlayer().getWorld()) || BGHR.getPlugin().getConfig().getBoolean("main world.kits useable in main world", false)) {
+            kit.outfitPlayer(getPlayer());
+        }
     }
 
     public Location getLastLocation() {
@@ -78,7 +84,7 @@ public class PlayerData {
     }
 
     public void removeKit(Kit kit) {
-        kit.disrobePlayer(this);
+        kit.disrobePlayer(getPlayer());
         this.kit = null;
     }
 

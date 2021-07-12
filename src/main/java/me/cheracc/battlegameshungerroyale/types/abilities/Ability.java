@@ -185,6 +185,7 @@ public abstract class Ability implements Cloneable {
         abilityItem.setItemMeta(meta);
         abilityItem.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         Tools.tagAsPluginItem(abilityItem);
+        tagAbilityItem(abilityItem);
 
         return abilityItem;
     }
@@ -206,6 +207,14 @@ public abstract class Ability implements Cloneable {
                 sb.append(c);
         }
         return sb.toString();
+    }
+
+    public void tagAbilityItem(ItemStack item) {
+        if (item == null || item.getItemMeta() == null)
+            return;
+        ItemMeta meta = item.getItemMeta();
+        meta.getPersistentDataContainer().set(ABILITY_KEY, PersistentDataType.STRING, id.toString());
+        item.setItemMeta(meta);
     }
 
     // static fields and methods

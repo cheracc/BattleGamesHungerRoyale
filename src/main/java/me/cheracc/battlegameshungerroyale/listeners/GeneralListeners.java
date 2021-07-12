@@ -1,6 +1,8 @@
 package me.cheracc.battlegameshungerroyale.listeners;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.GameManager;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -17,24 +19,21 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
 
 public class GeneralListeners implements Listener {
-    private static GeneralListeners singletonInstance = null;
 
-    private GeneralListeners() {
-        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
-    }
-
-    public static void start() {
-        if (singletonInstance == null)
-            singletonInstance = new GeneralListeners();
+    @EventHandler
+    public void handlePlayerQuits(PlayerQuitEvent event) {
+        PlayerData data = PlayerManager.getInstance().getPlayerData(event.getPlayer());
+        if (data.getKit() != null)
+            data.getKit().disrobePlayer(event.getPlayer());
+        Game game = GameManager.getInstance().getPlayersCurrentGame(event.getPlayer());
+        if (game != null)
+            game.quit(event.getPlayer());
     }
 
     @EventHandler
@@ -105,15 +104,21 @@ public class GeneralListeners implements Listener {
         if (event.getAction().name().contains("RIGHT")) {
             Player p = event.getPlayer();
             ItemStack activeItem = p.getActiveItem();
-            if (Tools.getUuidFromItem(activeItem) == null)
+            if (activeItem == null)
+                return;
+            if (!Ability.isAbilityItem(activeItem))
                 activeItem = p.getInventory().getItemInMainHand();
-            if (Tools.getUuidFromItem(activeItem) == null)
+            if (!Ability.isAbilityItem(activeItem))
                 activeItem = p.getInventory().getItemInOffHand();
-            if (Tools.getUuidFromItem(activeItem) == null)
+            if (!Ability.isAbilityItem(activeItem))
                 return;
 
             PlayerData data = PlayerManager.getInstance().getPlayerData(p);
             Ability ability = Ability.getFromItem(activeItem);
+
+            if (ability == null)
+                return;
+
             event.setCancelled(true);
 
             if (!data.hasKit(ability.getAssignedKit())) {
