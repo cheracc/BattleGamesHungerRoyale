@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale;
 
 import me.cheracc.battlegameshungerroyale.commands.*;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
@@ -26,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 public class BGHR extends JavaPlugin implements Listener {
     private static BGHR plugin;
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onEnable() {
         plugin = this;
@@ -69,6 +71,9 @@ public class BGHR extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        for (Game game : GameManager.getInstance().getActiveGames()) {
+            game.endGame();
+        }
         saveConfig();
         HandlerList.unregisterAll((Plugin) this);
         ConfigurationSerialization.unregisterClass(SoundEffect.class);

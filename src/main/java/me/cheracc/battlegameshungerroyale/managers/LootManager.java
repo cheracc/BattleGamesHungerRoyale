@@ -409,6 +409,9 @@ public class LootManager implements Listener {
         if (!event.getPlayer().getWorld().equals(game.getWorld()) || !loadPrePlacedChests)
             return;
 
+        if (game.getPhase().equalsIgnoreCase("pregame") || game.getPhase().equalsIgnoreCase("postgame"))
+            return;
+
         Inventory inv = event.getInventory();
         Location loc = inv.getLocation();
 
@@ -418,8 +421,11 @@ public class LootManager implements Listener {
         Block b = loc.getBlock();
         if (b.getState() instanceof Chest)  {
             Chest chest = (Chest) b.getState();
-            chest.setLootTable(lootTable);
-            chest.update(true);
+            if (!chest.hasBeenFilled() && !chest.hasLootTable()) {
+                chest.setLootTable(lootTable);
+                chest.update(true);
+                usedChestLocations.add(chest.getLocation());
+            }
         }
     }
 

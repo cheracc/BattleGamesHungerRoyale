@@ -7,6 +7,7 @@ import me.cheracc.battlegameshungerroyale.events.GameDeathEvent;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
+import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -29,6 +30,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 public class Game implements Listener {
@@ -49,7 +51,7 @@ public class Game implements Listener {
     private BukkitTask pregameTimer = null;
     private BukkitTask postgameTimer = null;
     private final Map<UUID, Integer> participants = new HashMap<>();
-    private final List<Location> hardSpawnPoints = new ArrayList<>();
+    private final List<Location> spawnPoints = new ArrayList<>();
     private GamePhase currentPhase;
     private long lastChestRespawn;
     enum GamePhase { PREGAME, INVINCIBILITY, MAIN, BORDER, POSTGAME }
@@ -130,7 +132,8 @@ public class Game implements Listener {
     public void join(Player player) {
         participants.put(player.getUniqueId(), options.getLivesPerPlayer());
         player.setGameMode(GameMode.ADVENTURE);
-        player.teleport(map.getSpawnCenter(world), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        Location spawnPoint = spawnPoints.get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
+        player.teleport(spawnPoint, PlayerTeleportEvent.TeleportCause.PLUGIN);
         bar.addPlayer(player);
         if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.INVINCIBILITY)
             player.setInvulnerable(true);
@@ -145,10 +148,13 @@ public class Game implements Listener {
             participants.replace(player.getUniqueId(), 0);
             gameLog.addLogEntry(String.format("%s left (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
         }
-        player.setGameMode(GameMode.ADVENTURE);
-        player.setWalkSpeed(0.2F);
+        PlayerData data = PlayerManager.getInstance().getPlayerData(player);
         player.setAllowFlight(false);
-        player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        if (BGHR.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false))
+            player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        else
+            player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        data.resetInventory();
         bar.removePlayer(player);
     }
 
@@ -209,10 +215,10 @@ public class Game implements Listener {
         for (Map.Entry<UUID, Integer> e : participants.entrySet()) {
             if (e.getValue() > 0) { // these will be players with lives remaining
                 Player p = Bukkit.getPlayer(e.getKey());
-                if (p.isOnline() && isPlaying(p))
+                if (p != null && p.isOnline() && isPlaying(p))
                     players.add(p);
                 else { // where'd they go?
-                    Bukkit.getLogger().info(String.format("%s has %s lives but is not here", p.getName(), participants.get(p.getUniqueId())));
+                    Bukkit.getLogger().info(String.format("%s has %s lives but is not here", e.getKey().toString(), participants.get(e.getKey())));
                     quit(p);
                 }
             }
@@ -227,7 +233,7 @@ public class Game implements Listener {
 
     public void setupGame() {
         openToPlayers = true;
-        hardSpawnPoints.addAll(getSpawnPoints());
+        spawnPoints.addAll(getSpawnPoints(map.getBorderRadius() / 10));
         if (map.isUseBorder() && map.getBorderRadius() > 0) {
             WorldBorder border = world.getWorldBorder();
             border.setCenter(map.getBorderCenter(world));
@@ -274,14 +280,14 @@ public class Game implements Listener {
         }
         for (Player p : getActivePlayers()) {
             p.setInvulnerable(true);
-            p.setBedSpawnLocation(p.getLocation(), true);
+            //p.setBedSpawnLocation(p.getLocation(), true);
         }
     }
 
-    private List<Location> getSpawnPoints() {
+    private List<Location> getSpawnPoints(int number) {
         Location center = map.getSpawnCenter(world);
-        List<Location> spawnPoints = new ArrayList<>(hardSpawnPoints);
         int scanRadius = map.getSpawnRadius() + 1;
+        int startSize = spawnPoints.size();
 
         if (spawnPoints.isEmpty() && map.getSpawnBlockType() != null) {
             for (int x = -scanRadius; x <= scanRadius; x++) {
@@ -290,7 +296,7 @@ public class Game implements Listener {
                         Location l = center.clone().add(x, y, z);
                         Block b = l.getBlock();
 
-                        if (b != null && b.getType() == map.getSpawnBlockType()) {
+                        if (b.getType() == map.getSpawnBlockType()) {
                             l.add(0.5, 1, 0.5);
                             l.setDirection(l.clone().subtract(center).toVector().multiply(-1));
                             spawnPoints.add(l);
@@ -302,9 +308,9 @@ public class Game implements Listener {
                 Bukkit.getLogger().info("found " + spawnPoints.size() + " spawn points on " + map.getSpawnBlockType().name());
         }
 
-        if (spawnPoints.size() < getActivePlayers().size()) {
-            Bukkit.getLogger().info("no spawn points found - adding our own");
-            int spawnPointsNeeded = getActivePlayers().size() - spawnPoints.size();
+
+        int spawnPointsNeeded = Math.max(getActivePlayers().size(), number);
+        if (spawnPoints.size() < spawnPointsNeeded) {
 
             for (int i = 0; i < spawnPointsNeeded; i++) {
                 double angle = (Math.PI * 2 * i) / spawnPointsNeeded;
@@ -314,22 +320,22 @@ public class Game implements Listener {
                 spawnPoints.add(spawnPoint);
             }
         }
+        Bukkit.getLogger().info(String.format("created %s spawn points around defined spawn center", spawnPoints.size() - startSize));
         return spawnPoints;
     }
 
     private void doElytraSpawn(Consumer<Boolean> callback) {
         Vector boost = new Vector(0, 1, 0);
-        List<Location> spawns = getSpawnPoints();
 
-        if (spawns.size() < getActivePlayers().size()) {
+        if (spawnPoints.size() < getActivePlayers().size()) {
             Bukkit.getLogger().warning("not enough spawns");
-            return;
+            getSpawnPoints(getActivePlayers().size());
         }
 
-        Collections.shuffle(spawns);
+        Collections.shuffle(spawnPoints);
         int count = 0;
         for (Player p : getActivePlayers()) {
-            p.teleport(spawns.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            p.teleport(spawnPoints.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
             p.setWalkSpeed(0F);
             count++;
         }
@@ -367,11 +373,11 @@ public class Game implements Listener {
     }
 
     private void doHungergamesSpawn(Consumer<Boolean> callback) {
-        List<Location> spawns = getSpawnPoints();
+        List<Location> spawns = getSpawnPoints(getActivePlayers().size());
 
         if (spawns.size() < getActivePlayers().size()) {
             Bukkit.getLogger().warning("not enough spawns");
-            return;
+            getSpawnPoints(getActivePlayers().size());
         }
 
         Collections.shuffle(spawns);
@@ -424,18 +430,24 @@ public class Game implements Listener {
                 winner = Bukkit.getPlayer(e.getKey());
             }
         }
-        doPostGame();
-        gameLog.addLogEntry(winner.getName() + " won!");
+        if (winner != null) {
+            doPostGame();
+            gameLog.addLogEntry(winner.getName() + " won!");
+        }
         return true;
     }
 
     private void startMainPhase() {
         currentPhase = GamePhase.MAIN;
+        List<UUID> toRemove = new ArrayList<>();
         for (UUID uuid : participants.keySet()) {
             Player p = Bukkit.getPlayer(uuid);
+            if (p == null) {
+                toRemove.add(uuid);
+                continue;
+            }
             if (isPlaying(p)) {
                 p.setInvulnerable(false);
-                p.setWalkSpeed(0.2F);
             }
             if (options.getStartType() == GameOptions.StartType.ELYTRA && p.getInventory().getChestplate() != null &&
                     p.getInventory().getChestplate().getType().equals(Material.ELYTRA)) {
@@ -444,6 +456,8 @@ public class Game implements Listener {
                 p.setAllowFlight(false);
             }
         }
+        for (UUID id : toRemove)
+            participants.remove(id);
         gameLog.addPhaseEntry(currentPhase);
     }
 
@@ -495,7 +509,7 @@ public class Game implements Listener {
         pregameTimer = null;
         postgameTimer = null;
         participants.clear();
-        hardSpawnPoints.clear();
+        spawnPoints.clear();
         MapManager.getInstance().unloadWorld(world);
         GameManager.getInstance().gameOver(this);
         HandlerList.unregisterAll(this);
@@ -632,8 +646,9 @@ public class Game implements Listener {
     @EventHandler
     public void handleDeaths(GameDeathEvent event) {
         Player dead = event.getRecentlyDeceased();
+        Game game = GameManager.getInstance().getPlayersCurrentGame(dead);
 
-        if (GameManager.getInstance().getPlayersCurrentGame(dead).equals(this)) {
+        if (game  != null && game.equals(this)) {
             gameLog.addDeathEntry(dead);
 
             if (participants.containsKey(dead.getUniqueId())) {

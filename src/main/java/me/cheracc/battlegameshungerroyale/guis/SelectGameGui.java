@@ -8,7 +8,6 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -44,6 +43,7 @@ public class SelectGameGui extends Gui {
             hasPermission = true;
 
         lore.add("&ePlayers: &7" + game.getActivePlayers().size() + "/" + game.getStartingPlayersSize());
+        lore.add(String.format(" &8(&7%s required to start&8)", game.getOptions().getPlayersNeededToStart()));
         lore.add("&ePhase: &7" + game.getPhase());
         if (game.getCurrentGameTime() > 0)
             lore.add("&eGame Time: &7" + Tools.secondsToMinutesAndSeconds(game.getCurrentGameTime()));
