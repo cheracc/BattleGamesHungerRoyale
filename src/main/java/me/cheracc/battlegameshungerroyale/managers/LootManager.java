@@ -64,6 +64,9 @@ public class LootManager implements Listener {
         Set<Location> selected = new HashSet<>();
         Random rand = ThreadLocalRandom.current();
 
+        if (!generateChests)
+            return;
+
         if (amount >= unusedChestLocations.size()) {
             selected.addAll(unusedChestLocations);
         }
@@ -89,7 +92,8 @@ public class LootManager implements Listener {
             public void run() {
                 Set<Location> toRemove = new HashSet<>();
                 for (Location l : usedChestLocations) {
-                    if (l.getBlock() == null || l.getBlock().getType() != Material.CHEST) {
+                    l.getBlock();
+                    if (l.getBlock().getType() != Material.CHEST) {
                         toRemove.add(l);
                         continue;
                     }
@@ -138,13 +142,12 @@ public class LootManager implements Listener {
             @Override
             public void run() {
                 Random rand = ThreadLocalRandom.current();
-                long start = System.currentTimeMillis();
 
                 int tries = 0;
                 int count = 0;
                 boolean skipSecondChance = false;
 
-                while (count < maxChestsPerChunk && tries <= 1000) {
+                while (count < maxChestsPerChunk && tries <= 1000 && game.getWorld() != null) {
                     int x = rand.nextInt(15);
                     int z = rand.nextInt(15);
                     int yTop = chunk.getHighestBlockYAt(x, z);
@@ -205,9 +208,6 @@ public class LootManager implements Listener {
                         count++;
                         game.getWorld().getChunkAtAsync(chunk.getX(), chunk.getZ(), addThisLocation);
                     }
-                }
-                if (count > 0) {
-                    long time = System.currentTimeMillis() - start;
                 }
             }
         }.runTaskAsynchronously(BGHR.getPlugin());
@@ -299,6 +299,7 @@ public class LootManager implements Listener {
         }
         return count >= adjacentBlockNeeded;
     }
+
 
     private final Set<Long> loadedChunkKeys = new HashSet<>();
     @EventHandler
