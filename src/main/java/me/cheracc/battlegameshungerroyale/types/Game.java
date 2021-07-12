@@ -183,11 +183,16 @@ public class Game implements Listener {
 
     public List<String> getFullPlayerList() {
         List<String> list = new ArrayList<>();
+        List<UUID> toRemove = new ArrayList<>();
         for (UUID u : participants.keySet()) {
             Player p = Bukkit.getPlayer(u);
             if (p != null && p.isOnline())
                 list.add(p.getName());
+            else
+                toRemove.add(u);
         }
+        for (UUID u : toRemove)
+            participants.replace(u, 0);
         return list;
     }
 
@@ -380,7 +385,7 @@ public class Game implements Listener {
             p.addPotionEffect(noJump);
             count++;
         }
-
+        callback.accept(true);
     }
 
     private void updateBossBar() {
