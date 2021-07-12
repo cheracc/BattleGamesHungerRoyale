@@ -102,7 +102,7 @@ public class AdminGui extends Gui {
         icons.add(slot -> {
             boolean value = config.getBoolean("reset main world on each restart", false);
             ItemBuilder icon = ItemBuilder.from(Material.NETHER_STAR).name(Tools.componentalize("&eReset Main World on Restart: &f" +
-                    (value ? "no" : "yes")));
+                    (value ? "yes" : "no")));
             icon.lore(Tools.componentalize(Tools.wrapText("  &7Whether to reset the main world each restart. If enabled, the main world will be reset to the specified map each time the server restarts. &c&lThis &c&lsetting &c&lwill &c&ldelete &c&lyour &c&lmain &c&lworld &c&levery &c&ltime &c&lthe &c&lserver &c&lrestarts!", ChatColor.GRAY)));
 
             return icon.asGuiItem(e -> {
@@ -112,7 +112,8 @@ public class AdminGui extends Gui {
             });
         });
         icons.add(slot -> {
-            GameMode value = GameMode.valueOf(config.getString("main world.gamemode", "adventure").toUpperCase());
+            String current = Bukkit.getDefaultGameMode().name().toLowerCase();
+            GameMode value = GameMode.valueOf(config.getString("main world.gamemode", current).toUpperCase());
             ItemBuilder icon = ItemBuilder.from(Material.WOODEN_PICKAXE).name(Tools.componentalize("&eDefault Game Mode: &f" +
                     value.name().toLowerCase()));
             icon.flags(ItemFlag.HIDE_ATTRIBUTES);
@@ -132,7 +133,7 @@ public class AdminGui extends Gui {
             });
         });
         icons.add(slot -> {
-            boolean value = config.getBoolean("main world.place players at spawn on join", true);
+            boolean value = config.getBoolean("main world.place players at spawn on join", false);
             ItemBuilder icon = ItemBuilder.from(Material.BEACON).name(Tools.componentalize("&eAlways Spawn Players at Main Spawn: &f" +
                     (value ? "no" : "yes")));
             icon.lore(Tools.componentalize(Tools.wrapText("  &7Whether players will always be sent to the spawn location when joining the server or teleporting back to the main world. If disabled, players will instead return to their last recorded location in the main world.", ChatColor.GRAY)));
@@ -144,7 +145,7 @@ public class AdminGui extends Gui {
             });
         });
         icons.add(slot -> {
-            boolean value = config.getBoolean("main world.kits useable in main world", true);
+            boolean value = config.getBoolean("main world.kits useable in main world", false);
             ItemBuilder icon = ItemBuilder.from(Material.STONE_SWORD).name(Tools.componentalize("&eAllow Kits to be used in main world: &f" +
                     (value ? "no" : "yes")));
             icon.flags(ItemFlag.HIDE_ATTRIBUTES);
