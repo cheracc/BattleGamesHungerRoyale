@@ -10,7 +10,9 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
@@ -29,6 +31,7 @@ public class LootManager implements Listener {
     private final BukkitTask chestRecycler;
 
     private final boolean generateChests;
+    private final boolean loadPrePlacedChests;
     private final int maxChestsPerChunk;
     private final boolean loosenChestSearchRestrictions;
 
@@ -40,6 +43,7 @@ public class LootManager implements Listener {
     public LootManager(Game game) {
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
         this.generateChests = game.getOptions().isGenerateChests();
+        this.loadPrePlacedChests = game.getOptions().isFillAllChests();
         this.maxChestsPerChunk = game.getOptions().getMaxChestsPerChunk();
         this.loosenChestSearchRestrictions = game.getOptions().isLoosenSearchRestrictions();
         this.game = game;
@@ -398,6 +402,25 @@ public class LootManager implements Listener {
                 return lt;
         }
         return null;
+    }
+
+    @EventHandler
+    public void populatePrePlacedChests(InventoryOpenEvent event) {
+        if (!event.getPlayer().getWorld().equals(game.getWorld()) || !loadPrePlacedChests)
+            return;
+
+        Inventory inv = event.getInventory();
+        Location loc = inv.getLocation();
+
+        if (loc == null)
+            return;
+
+        Block b = loc.getBlock();
+        if (b.getState() instanceof Chest)  {
+            Chest chest = (Chest) b.getState();
+            chest.setLootTable(lootTable);
+            chest.update(true);
+        }
     }
 
 }
