@@ -184,7 +184,9 @@ public class Game implements Listener {
     public List<String> getFullPlayerList() {
         List<String> list = new ArrayList<>();
         for (UUID u : participants.keySet()) {
-            list.add(Bukkit.getPlayer(u).getName());
+            Player p = Bukkit.getPlayer(u);
+            if (p != null && p.isOnline())
+                list.add(p.getName());
         }
         return list;
     }
