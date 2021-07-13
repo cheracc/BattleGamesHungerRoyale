@@ -161,11 +161,11 @@ public class GameManager {
                 case "invincibility":
                 case "main":
                 case "border":
-                    line2 = String.format("   &3[&f%s/%s&3] &7(&f%s left&7)", game.getActivePlayers().size(), game.getStartingPlayersSize(),
+                    line2 = String.format("    &3[&f%s/%s&3] &7(&f%s left&7)", game.getActivePlayers().size(), game.getStartingPlayersSize(),
                         Tools.secondsToAbbreviatedMinsSecs(totalGameTime - game.getCurrentGameTime()));
                     break;
                 case "postgame":
-                    line2 = String.format("  &fWinner: &e%s&f! &7[&fCloses in %s&7]", game.getWinner() != null ? game.getWinner().getName() : "&7nobody",
+                    line2 = String.format("    &fWinner: &e%s&f! &7[&fCloses in %s&7]", game.getWinner() != null ? game.getWinner().getName() : "&7nobody",
                             Tools.secondsToAbbreviatedMinsSecs((int) game.getPostgameTime()));
                     break;
                 default:

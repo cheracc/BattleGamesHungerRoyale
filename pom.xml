@@ -227,7 +227,7 @@
                                             <directory>${basedir}/target</directory>
                                             <filtering>false</filtering>
                                             <includes>
-                                                <include>bghr*alpha1.jar</include>
+                                                <include>bghr-test*.jar</include>
                                             </includes>
                                         </resource>
                                     </resources>

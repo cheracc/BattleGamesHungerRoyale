@@ -32,3 +32,6 @@ commands:
     usage: "/bghr"
     description: "opens the BGHR admin menu"
     permission: bghr.admin.menu
+  settings:
+    usage: "/settings"
+    description: "opens player settings menu"
