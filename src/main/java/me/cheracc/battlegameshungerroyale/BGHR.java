@@ -76,6 +76,7 @@ public class BGHR extends JavaPlugin implements Listener {
         saveConfig();
         HandlerList.unregisterAll((Plugin) this);
         ConfigurationSerialization.unregisterClass(SoundEffect.class);
+        GameManager.getInstance().stopUpdater();
     }
 
     public static Permission getPerms() {

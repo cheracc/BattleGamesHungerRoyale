@@ -155,6 +155,23 @@ public class Tools {
 
     }
 
+    public static String secondsToAbbreviatedMinsSecs(int timeInSeconds) {
+        int i = Math.abs(timeInSeconds);
+        int remainder = i % 3600, minutes = remainder / 60, seconds = remainder % 60;
+        if (seconds == 0 && minutes == 0)
+            return "No time at all";
+        if (minutes == 0) {
+            if (seconds == 1)
+                return String.format("%s second", seconds);
+            return String.format("%s seconds", seconds);
+        }
+        else {
+            return String.format("%s:%02d", minutes, seconds);
+        }
+
+    }
+
+
     public static String rebuildString(String[] stringArray, int startingLocation) {
         StringBuilder sb = new StringBuilder();
 

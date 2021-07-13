@@ -17,10 +17,26 @@ public class PlayerData {
     private String[] lastInventory;
     private Location lastLocation;
     private PlayerStats stats;
+    private final PlayerSettings settings;
     private Kit kit;
+    private long joinTime;
 
     public PlayerData(Player p) {
         uuid = p.getUniqueId();
+        settings = new PlayerSettings();
+        joinTime = System.currentTimeMillis();
+    }
+
+    public Player getPlayer() {
+        return Bukkit.getPlayer(uuid);
+    }
+
+    public PlayerSettings getSettings() {
+        return settings;
+    }
+
+    public long getJoinTime() {
+        return joinTime;
     }
 
     public Kit getKit() {
@@ -41,6 +57,15 @@ public class PlayerData {
         if (MapManager.getInstance().isThisAGameWorld(getPlayer().getWorld()) || BGHR.getPlugin().getConfig().getBoolean("main world.kits useable in main world", false)) {
             kit.outfitPlayer(getPlayer());
         }
+    }
+
+    public void removeKit(Kit kit) {
+        kit.disrobePlayer(getPlayer());
+        this.kit = null;
+    }
+
+    public boolean hasKit(Kit kit) {
+        return this.kit != null && this.kit.equals(kit);
     }
 
     public Location getLastLocation() {
@@ -77,18 +102,5 @@ public class PlayerData {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public Player getPlayer() {
-        return Bukkit.getPlayer(uuid);
-    }
-
-    public void removeKit(Kit kit) {
-        kit.disrobePlayer(getPlayer());
-        this.kit = null;
-    }
-
-    public boolean hasKit(Kit kit) {
-        return this.kit != null && this.kit.equals(kit);
     }
 }

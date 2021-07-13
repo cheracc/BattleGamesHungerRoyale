@@ -209,6 +209,15 @@ public class AdminGui extends Gui {
                 });
             });
         }
+        icons.add(slot -> {
+            ItemBuilder icon = ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("Create a New Kit"));
+            icon.lore(Tools.componentalize("&bClick here to create a new kit"));
+            return icon.asGuiItem(e -> {
+                e.getWhoClicked().closeInventory();
+                e.getWhoClicked().sendMessage(Tools.formatInstructions("Enter a kit id for this kit. This id is just used by the plugin as an identifier and cannot be changed later. You can call it anything you want.", ""));
+                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> new ConfigureKitGui(new Kit(text), this, player));
+            });
+        });
         new BaseAdminGui(player, "Kits", icons);
     }
 

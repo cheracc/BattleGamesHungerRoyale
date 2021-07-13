@@ -170,9 +170,13 @@ public class GeneralListeners implements Listener {
         }
     }
 
-    // attempts to catch any stray plugin items and removes them
+    // processes a player when they join
     @EventHandler
-    public void clearAnyPluginItemsOnJoin(PlayerJoinEvent event) {
+    public void loadPlayersOnJoin(PlayerJoinEvent event) {
+        // change the join message to read "server" instead of "game"
+        event.joinMessage(Tools.componentalize("&e" + event.getPlayer().getName() + " has joined the server."));
+
+        // remove any kit/plugin items
         PlayerInventory inv = event.getPlayer().getInventory();
         for (int i = 0; i < inv.getSize() - 1; i++) {
             if (Tools.isPluginItem(inv.getItem(i))) {
@@ -180,12 +184,21 @@ public class GeneralListeners implements Listener {
             }
         }
         Player p = event.getPlayer();
+        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+
+        // remove any lingering "max duration" potion effects
         for (PotionEffect e : p.getActivePotionEffects()) {
             if (e.getDuration() > Integer.MAX_VALUE / 2)
                 p.removePotionEffect(e.getType());
         }
+
+        // set the gamemode based on config
         String gm = BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure");
         GameMode mode = GameMode.valueOf(gm.toUpperCase());
         p.setGameMode(mode);
+
+        // set the scoreboard
+        if (data.getSettings().isAlwaysShowScoreboard())
+            p.setScoreboard(GameManager.getInstance().getMainScoreboard());
     }
 }

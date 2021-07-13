@@ -42,6 +42,7 @@ public class Game implements Listener {
     private LootManager lootManager;
 
     private boolean openToPlayers;
+
     private double postgameTime;
     private double pregameTime;
     private double gameTime;
@@ -75,6 +76,7 @@ public class Game implements Listener {
             Bukkit.getLogger().info("started new game. elapsed time: " + (System.currentTimeMillis() - time));
             gameLog = new GameLog(this);
             gameLog.addPhaseEntry(currentPhase);
+            GameManager.getInstance().updateScoreboard();
         });
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
         if (callback != null)
@@ -82,8 +84,69 @@ public class Game implements Listener {
     }
 
     // public methods
+    public void setupGame() {
+        openToPlayers = true;
+        spawnPoints.addAll(getSpawnPoints(map.getBorderRadius() / 10));
+        if (map.isUseBorder() && map.getBorderRadius() > 0) {
+            WorldBorder border = world.getWorldBorder();
+            border.setCenter(map.getBorderCenter(world));
+            border.setSize(map.getBorderRadius() * 2);
+        }
+        // always
+        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+        world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
+
+        // for pregame only
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        world.setGameRule(GameRule.DO_FIRE_TICK, false);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+
+
+        pregameTimer = startPregameTimer();
+        GameManager.getInstance().setupGame(this);
+    }
+
+    public void startGame() {
+        CustomEventsListener.getInstance();
+        openToPlayers = false;
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        world.setGameRule(GameRule.DO_FIRE_TICK, true);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
+        world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
+        lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
+        lastChestRespawn = startTime = System.currentTimeMillis();
+
+
+        if (options.getStartType() == GameOptions.StartType.ELYTRA)
+            doElytraSpawn(success -> {
+                gameTick = startGameTick();
+                gameLog.addPhaseEntry(currentPhase);
+                currentPhase = GamePhase.INVINCIBILITY;
+            });
+        else if (options.getStartType() == GameOptions.StartType.HUNGERGAMES) {
+            doHungergamesSpawn(success -> {
+                gameTick = startGameTick();
+                gameLog.addPhaseEntry(currentPhase);
+                currentPhase = GamePhase.INVINCIBILITY;
+            });
+        }
+        for (Player p : getActivePlayers()) {
+            p.setInvulnerable(true);
+            //p.setBedSpawnLocation(p.getLocation(), true);
+        }
+    }
+
     public int getCurrentGameTime() {
         return (int) gameTime;
+    }
+
+    public double getPostgameTime() {
+        return postgameTime;
+    }
+
+    public double getPregameTime() {
+        return pregameTime;
     }
 
     public String getPhase() {
@@ -230,62 +293,25 @@ public class Game implements Listener {
         return players;
     }
 
+    public String getTimeLeftInCurrentPhase() {
+        switch (currentPhase) {
+            case PREGAME:
+                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getPregameTime() - (int) pregameTime);
+            case INVINCIBILITY:
+                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getInvincibilityTime() - (int) gameTime);
+            case MAIN:
+                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getMainPhaseTime() + getOptions().getInvincibilityTime() - (int) gameTime);
+            case BORDER:
+                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getBorderTime() + getOptions().getInvincibilityTime() +
+                        getOptions().getMainPhaseTime() - (int) gameTime);
+            default:
+                return "Wrapping Up";
+        }
+    }
+
     // private methods
     private void setGameWorld(World world) {
         this.world = world;
-    }
-
-    public void setupGame() {
-        openToPlayers = true;
-        spawnPoints.addAll(getSpawnPoints(map.getBorderRadius() / 10));
-        if (map.isUseBorder() && map.getBorderRadius() > 0) {
-            WorldBorder border = world.getWorldBorder();
-            border.setCenter(map.getBorderCenter(world));
-            border.setSize(map.getBorderRadius() * 2);
-        }
-        // always
-        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-        world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
-
-        // for pregame only
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        world.setGameRule(GameRule.DO_FIRE_TICK, false);
-        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
-
-
-        pregameTimer = startPregameTimer();
-        GameManager.getInstance().setupGame(this);
-    }
-
-    public void startGame() {
-        CustomEventsListener.getInstance();
-        openToPlayers = false;
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
-        world.setGameRule(GameRule.DO_FIRE_TICK, true);
-        world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
-        lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
-        lastChestRespawn = startTime = System.currentTimeMillis();
-
-
-        if (options.getStartType() == GameOptions.StartType.ELYTRA)
-            doElytraSpawn(success -> {
-                gameTick = startGameTick();
-                gameLog.addPhaseEntry(currentPhase);
-                currentPhase = GamePhase.INVINCIBILITY;
-            });
-        else if (options.getStartType() == GameOptions.StartType.HUNGERGAMES) {
-            doHungergamesSpawn(success -> {
-                gameTick = startGameTick();
-                gameLog.addPhaseEntry(currentPhase);
-                currentPhase = GamePhase.INVINCIBILITY;
-            });
-        }
-        for (Player p : getActivePlayers()) {
-            p.setInvulnerable(true);
-            //p.setBedSpawnLocation(p.getLocation(), true);
-        }
     }
 
     private List<Location> getSpawnPoints(int number) {
@@ -463,11 +489,13 @@ public class Game implements Listener {
         for (UUID id : toRemove)
             participants.remove(id);
         gameLog.addPhaseEntry(currentPhase);
+        GameManager.getInstance().updateScoreboard();
     }
 
     private void startBorderPhase() {
         currentPhase = GamePhase.BORDER;
         world.getWorldBorder().setSize(10, options.getBorderTime());
+        GameManager.getInstance().updateScoreboard();
         gameLog.addPhaseEntry(currentPhase);
     }
 
@@ -476,6 +504,7 @@ public class Game implements Listener {
         gameTick.cancel();
         postgameTimer = startPostGameTimer();
         currentPhase = GamePhase.POSTGAME;
+        GameManager.getInstance().updateScoreboard();
         gameLog.addPhaseEntry(currentPhase);
         world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
     }
@@ -583,9 +612,11 @@ public class Game implements Listener {
 
                 if (currentPhase == GamePhase.INVINCIBILITY && gameTime >= options.getInvincibilityTime()) {
                     startMainPhase();
+                    GameManager.getInstance().updateScoreboard();
                 }
                 if (currentPhase == GamePhase.MAIN && gameTime >= options.getInvincibilityTime() + options.getMainPhaseTime()) {
                     startBorderPhase();
+                    GameManager.getInstance().updateScoreboard();
                 }
 
                 if ((System.currentTimeMillis() - lastChestRespawn)/1000/60 >= options.getChestRespawnTime()) {
