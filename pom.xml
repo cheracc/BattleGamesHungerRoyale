@@ -6,7 +6,7 @@
 
     <groupId>me.cheracc</groupId>
     <artifactId>BattleGamesHungerRoyale</artifactId>
-    <version>_alpha2</version>
+    <version>alpha3</version>
     <build>
         <plugins>
             <plugin>
@@ -20,14 +20,21 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-<!--                            <minimizeJar>true</minimizeJar>-->
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.h2database:h2</include>
+                                    <include>dev.triumphteam:triumph-gui</include>
+                                    <include>commons-io:commons-io</include>
+                                    <include>org.reflections:reflections</include>
+                                    <include>org.javassist:javassist</include>
+                                </includes>
+                            </artifactSet>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
                                         <exclude>META-INF/*.*</exclude>
-                                        <exclude>*.txt</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
@@ -146,7 +153,7 @@
                 </property>
             </activation>
             <build>
-                <finalName>${project.artifactId}-1.16${project.version}</finalName>
+                <finalName>${project.artifactId}-1.16_${project.version}</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -176,7 +183,7 @@
                 </property>
             </activation>
             <build>
-                <finalName>${project.artifactId}-1.17${project.version}</finalName>
+                <finalName>${project.artifactId}-1.17_${project.version}</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -206,7 +213,7 @@
                 </property>
             </activation>
             <build>
-                <finalName>bghr-test-${project.version}</finalName>
+                <finalName>bghr-test_${project.version}</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -226,7 +233,7 @@
                                             <directory>${basedir}/target</directory>
                                             <filtering>false</filtering>
                                             <includes>
-                                                <include>bghr-test*.jar</include>
+                                                <include>bghr*.jar</include>
                                             </includes>
                                         </resource>
                                     </resources>
