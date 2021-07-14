@@ -26,7 +26,6 @@ public class GameManager {
     private static GameManager singletonInstance = null;
     private final List<Game> activeGames = new ArrayList<>();
     private final Scoreboard mainScoreboard;
-    private final Map<Integer, String> sbEntries = new HashMap<>();
     private final BukkitTask scoreboardUpdater;
 
     private GameManager() {
@@ -151,20 +150,20 @@ public class GameManager {
             String line2;
             int totalGameTime = game.getOptions().getInvincibilityTime() + game.getOptions().getMainPhaseTime() + game.getOptions().getBorderTime();
             switch (game.getPhase()) {
-                case "pregame":
+                case "Pregame":
                     int needed = game.getOptions().getPlayersNeededToStart() - game.getStartingPlayersSize();
                     if (needed > 0)
                         line2 = String.format("&7    (Need &f%s &7more to start!&7)", needed);
                     else
                         line2 = String.format("&7    Starting in &f%s", Tools.secondsToAbbreviatedMinsSecs((int) game.getPregameTime()));
                     break;
-                case "invincibility":
-                case "main":
-                case "border":
+                case "Invincibility":
+                case "Main":
+                case "Border":
                     line2 = String.format("    &3[&f%s/%s&3] &7(&f%s left&7)", game.getActivePlayers().size(), game.getStartingPlayersSize(),
                         Tools.secondsToAbbreviatedMinsSecs(totalGameTime - game.getCurrentGameTime()));
                     break;
-                case "postgame":
+                case "Postgame":
                     line2 = String.format("    &fWinner: &e%s&f! &7[&fCloses in %s&7]", game.getWinner() != null ? game.getWinner().getName() : "&7nobody",
                             Tools.secondsToAbbreviatedMinsSecs((int) game.getPostgameTime()));
                     break;
@@ -188,7 +187,6 @@ public class GameManager {
 
         for (int i = 12; i >= 0; i--) {
             String entry = ChatColor.values()[i] + "" + ChatColor.values()[i+1];
-            sbEntries.put(i, entry);
             Team lineText = mainScoreboard.registerNewTeam(String.format("line%s", i));
             lineText.addEntry(entry);
             obj.getScore(entry).setScore(i);

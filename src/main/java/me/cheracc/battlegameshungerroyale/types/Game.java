@@ -9,6 +9,8 @@ import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import net.milkbowl.vault.chat.Chat;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
@@ -27,6 +29,10 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -40,6 +46,7 @@ public class Game implements Listener {
     private final BossBar bar;
     private World world;
     private LootManager lootManager;
+    private final Scoreboard scoreboard;
 
     private boolean openToPlayers;
 
@@ -51,7 +58,9 @@ public class Game implements Listener {
     private BukkitTask gameTick = null;
     private BukkitTask pregameTimer = null;
     private BukkitTask postgameTimer = null;
+    private BukkitTask respawner = null;
     private final Map<UUID, Integer> participants = new HashMap<>();
+    private final Map<Integer, String> scoreboardLines = new HashMap<>();
     private final List<Location> spawnPoints = new ArrayList<>();
     private GamePhase currentPhase;
     private long lastChestRespawn;
@@ -62,6 +71,8 @@ public class Game implements Listener {
         this.map = map;
         this.options = options;
         this.lootManager = new LootManager(this);
+        this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        setupScoreboard();
         bar = Bukkit.createBossBar("Pregame", BarColor.WHITE, BarStyle.SOLID);
         bar.setVisible(true);
         openToPlayers = false;
@@ -150,7 +161,7 @@ public class Game implements Listener {
     }
 
     public String getPhase() {
-        return currentPhase.name().toLowerCase();
+        return StringUtils.capitalize(currentPhase.name().toLowerCase());
     }
 
     public MapData getMap() {
@@ -205,6 +216,7 @@ public class Game implements Listener {
         if (PlayerManager.getInstance().getPlayerData(player).getKit() == null) {
             player.sendMessage(Tools.componentalize("&fYou haven't selected a kit! Type &e/kitmenu &for &e/kit <name> &fto select one!"));
         }
+        player.setScoreboard(scoreboard);
     }
 
     public void quit(Player player) {
@@ -223,6 +235,10 @@ public class Game implements Listener {
             player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         data.resetInventory();
         bar.removePlayer(player);
+        if (PlayerManager.getInstance().getPlayerData(player).getSettings().isAlwaysShowScoreboard())
+            player.setScoreboard(GameManager.getInstance().getMainScoreboard());
+        else
+            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
     }
 
     public Player getWinner() {
@@ -256,16 +272,13 @@ public class Game implements Listener {
 
     public List<String> getFullPlayerList() {
         List<String> list = new ArrayList<>();
-        List<UUID> toRemove = new ArrayList<>();
         for (UUID u : participants.keySet()) {
             Player p = Bukkit.getPlayer(u);
             if (p != null && p.isOnline())
                 list.add(p.getName());
             else
-                toRemove.add(u);
+                list.add(Bukkit.getOfflinePlayer(u).getName());
         }
-        for (UUID u : toRemove)
-            participants.replace(u, 0);
         return list;
     }
 
@@ -293,19 +306,19 @@ public class Game implements Listener {
         return players;
     }
 
-    public String getTimeLeftInCurrentPhase() {
+    public int getTimeLeftInCurrentPhase() {
         switch (currentPhase) {
             case PREGAME:
-                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getPregameTime() - (int) pregameTime);
+                return getOptions().getPregameTime() - (int) pregameTime;
             case INVINCIBILITY:
-                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getInvincibilityTime() - (int) gameTime);
+                return getOptions().getInvincibilityTime() - (int) gameTime;
             case MAIN:
-                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getMainPhaseTime() + getOptions().getInvincibilityTime() - (int) gameTime);
+                return getOptions().getMainPhaseTime() + getOptions().getInvincibilityTime() - (int) gameTime;
             case BORDER:
-                return Tools.secondsToAbbreviatedMinsSecs(getOptions().getBorderTime() + getOptions().getInvincibilityTime() +
-                        getOptions().getMainPhaseTime() - (int) gameTime);
+                return getOptions().getBorderTime() + getOptions().getInvincibilityTime() +
+                        getOptions().getMainPhaseTime() - (int) gameTime;
             default:
-                return "Wrapping Up";
+                return -1;
         }
     }
 
@@ -502,6 +515,7 @@ public class Game implements Listener {
     private void doPostGame() {
         map.addGamePlayed((int) gameTime);
         gameTick.cancel();
+        respawner.cancel();
         postgameTimer = startPostGameTimer();
         currentPhase = GamePhase.POSTGAME;
         GameManager.getInstance().updateScoreboard();
@@ -522,6 +536,11 @@ public class Game implements Listener {
             postgameTimer.cancel();
             postgameTimer = null;
         }
+        if (respawner != null) {
+            respawner.cancel();
+            respawner = null;
+        }
+
         lootManager.close();
         gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
@@ -547,6 +566,58 @@ public class Game implements Listener {
         GameManager.getInstance().gameOver(this);
         HandlerList.unregisterAll(this);
         world = null;
+    }
+
+    private void setupScoreboard() {
+        Objective obj = scoreboard.registerNewObjective("main", "dummy", Tools.componentalize(""));
+        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        for (int i = 15; i >= 0; i--) {
+            String entry = ChatColor.values()[i] + "" + ChatColor.values()[i+1];
+            scoreboardLines.put(i, entry);
+            Team lineText = scoreboard.registerNewTeam(String.format("line%s", i));
+            lineText.addEntry(entry);
+            obj.getScore(entry).setScore(i);
+        }
+    }
+
+    private void updateScoreboard() {
+        Objective obj = scoreboard.getObjective("main");
+        obj.displayName(Tools.componentalize(String.format("&f&l%s", map.getMapName())));
+        setScoreboardLine(15, "&6Phase: &e" + getPhase());
+        setScoreboardLine(14, String.format("&6Border Size: &e%s", (int) getWorld().getWorldBorder().getSize()));
+        if (gameTime > 0)
+            setScoreboardLine(13, String.format("&6Time Elapsed: &e%s", Tools.secondsToAbbreviatedMinsSecs((int) gameTime)));
+        else
+            setScoreboardLine(13, String.format("&6Starts In: &e%s", (int) pregameTime));
+        setScoreboardLine(12, "&nPlayer&f                 &nLives");
+        int line = 11;
+        List<Map.Entry<UUID, Integer>> living = new LinkedList<>(participants.entrySet());
+        living.sort(Map.Entry.comparingByValue());
+        Collections.reverse(living);
+
+        for (Map.Entry<UUID, Integer> entry : living) {
+            Player p = Bukkit.getPlayer(entry.getKey());
+            if (p == null && p.isOnline() && isPlaying(p)) {
+                quit(p);
+                continue;
+            }
+            if (line <= 0)
+                break;
+
+            ChatColor[] colors;
+            if (entry.getValue() > 0)
+                colors = new ChatColor[]{ChatColor.WHITE, ChatColor.GREEN};
+            else
+                colors = new ChatColor[]{ChatColor.GRAY, ChatColor.RED};
+
+            setScoreboardLine(line, String.format("%s%-24s %s%d", colors[0], p.getName(), colors[1], entry.getValue()));
+            line--;
+        }
+
+    }
+
+    private void setScoreboardLine(int line, String text) {
+        scoreboard.getTeam("line" + line).prefix(Tools.componentalize(text));
     }
 
     // game tasks
@@ -594,6 +665,7 @@ public class Game implements Listener {
                     pregameTime -= (System.currentTimeMillis() - last) / 1000D;
 
                 updateBossBar();
+                updateScoreboard();
                 last = System.currentTimeMillis();
             }
         };
@@ -601,6 +673,8 @@ public class Game implements Listener {
     }
 
     private BukkitTask startGameTick() {
+        respawner = respawner();
+
         BukkitRunnable task = new BukkitRunnable() {
             long last = System.currentTimeMillis();
             @Override
@@ -625,10 +699,35 @@ public class Game implements Listener {
                 }
 
                 updateBossBar();
+                updateScoreboard();
                 last = System.currentTimeMillis();
             }
         };
         return task.runTaskTimer(BGHR.getPlugin(), 20L, 4L);
+    }
+
+    private BukkitTask respawner() {
+        Map<UUID, Long> theDeceased = new HashMap<>();
+        BukkitRunnable task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Player p : getActivePlayers()) {
+                    if (p.isDead()) {
+                        if (theDeceased.containsKey(p.getUniqueId())) {
+                            if (System.currentTimeMillis() - theDeceased.get(p.getUniqueId()) > 5000) {
+                                p.spigot().respawn();
+                                theDeceased.remove(p.getUniqueId());
+                            }
+                        }
+                        else {
+                            theDeceased.put(p.getUniqueId(), System.currentTimeMillis());
+                        }
+                    }
+                    else theDeceased.remove(p.getUniqueId());
+                }
+            }
+        };
+        return task.runTaskTimer(BGHR.getPlugin(), getOptions().getInvincibilityTime(), 10L);
     }
 
     // static fields and methods
@@ -691,7 +790,7 @@ public class Game implements Listener {
 
                 participants.replace(dead.getUniqueId(), livesLeft);
                 if (livesLeft > 0)
-                    dead.sendMessage(Tools.componentalize("&cYou died! &fYou may respawn &e" + livesLeft + " &fmore time" + ((livesLeft > 1) ? "s" : "")));
+                    dead.sendMessage(Tools.componentalize("&cYou died! &fYou may respawn &e" + livesLeft + " &fmore time. &eYou will be &aautomatically respawned &ein &a5 &eseconds." + ((livesLeft > 1) ? "s" : "")));
                 else
                     dead.sendMessage(Tools.componentalize("&cYou died! &fYou have no respawns left."));
             }
