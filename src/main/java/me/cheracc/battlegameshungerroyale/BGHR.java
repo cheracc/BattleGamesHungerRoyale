@@ -1,15 +1,12 @@
 package me.cheracc.battlegameshungerroyale;
 
 import me.cheracc.battlegameshungerroyale.commands.*;
+import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
-import me.cheracc.battlegameshungerroyale.managers.LootManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
@@ -59,6 +56,7 @@ public class BGHR extends JavaPlugin implements Listener {
 
     @EventHandler
     public void runDelayedTasks(ServerLoadEvent event) {
+        PlayerManager.getInstance().initialize();
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -78,6 +76,7 @@ public class BGHR extends JavaPlugin implements Listener {
         HandlerList.unregisterAll((Plugin) this);
         ConfigurationSerialization.unregisterClass(SoundEffect.class);
         GameManager.getInstance().stopUpdater();
+        PlayerManager.getInstance().disable();
     }
 
     public static Permission getPerms() {

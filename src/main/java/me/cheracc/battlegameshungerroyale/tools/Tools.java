@@ -8,19 +8,16 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -28,18 +25,12 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Tools {
     public static TextComponent BLANK_LINE = Component.text("");
-    public static NamespacedKey UUID_KEY = new NamespacedKey(BGHR.getPlugin(), "uuid_key");
     public static NamespacedKey PLUGIN_KEY = new NamespacedKey(BGHR.getPlugin(), "battlegameshungerroyale");
-
-    public static String getRandomShortId() {
-        return UUID.randomUUID().toString().split("-")[0];
-    }
 
     public static ItemStack tagAsPluginItem(ItemStack item) {
         if (item == null)
@@ -50,7 +41,6 @@ public class Tools {
 
         meta.getPersistentDataContainer().set(PLUGIN_KEY, PersistentDataType.LONG, System.currentTimeMillis());
         item.setItemMeta(meta);
-        Bukkit.getLogger().info(String.format("Tagged %s with key %s", item.getI18NDisplayName(), PLUGIN_KEY.asString()));
         return item;
     }
 
@@ -65,24 +55,6 @@ public class Tools {
 
     public static String getTimestamp() {
         return Instant.now().toString().replace(":","-").split("\\.")[0];
-    }
-
-    public static void saveUuidToItemMeta(UUID uuid, ItemMeta meta) {
-        meta.getPersistentDataContainer().set(UUID_KEY, PersistentDataType.STRING, uuid.toString());
-    }
-
-    public static @Nullable UUID getUuidFromItem(ItemStack item) {
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return null;
-        }
-
-        String data = meta.getPersistentDataContainer().get(UUID_KEY, PersistentDataType.STRING);
-
-        if (data != null) {
-            return UUID.fromString(data);
-        }
-        return null;
     }
 
     public static List<String> wrapText(String longText, ChatColor color) {
@@ -244,16 +216,13 @@ public class Tools {
      * @param myClass     The class used to find the zipResource.
      * @param zipResource Must end with ".zip".
      * @param destDir     The path of the destination directory, which must exist.
-     * @return The list of created files in the destination directory.
      */
-    public static List<File> extractZipResource(Class myClass, String zipResource, Path destDir)
+    public static void extractZipResource(Class myClass, String zipResource, Path destDir)
     {
         if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir))
         {
             throw new IllegalArgumentException("myClass=" + myClass + " zipResource=" + zipResource + " destDir=" + destDir);
         }
-
-        ArrayList<File> res = new ArrayList<>();
 
         try (InputStream is = myClass.getResourceAsStream(zipResource);
              BufferedInputStream bis = new BufferedInputStream(is);
@@ -285,13 +254,11 @@ public class Tools {
                         bos.write(buffer, 0, len);
                     }
                 }
-                res.add(destFile);
             }
         } catch (IOException ex)
         {
             ex.printStackTrace();
             Bukkit.getLogger().warning("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
-        return res;
     }
 }

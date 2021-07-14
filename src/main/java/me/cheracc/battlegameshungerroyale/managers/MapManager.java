@@ -30,7 +30,8 @@ public class MapManager implements Listener {
         activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();
 
         if (!mapsDirectory.exists()) {
-            mapsDirectory.mkdirs();
+            if (mapsDirectory.mkdirs())
+                Bukkit.getLogger().info("Unpacking sample maps into " + mapsDirectory.getPath());
             Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.toPath());
         }
         deleteCompletedMaps();
@@ -244,7 +245,7 @@ public class MapManager implements Listener {
             }
         }
         if (destination.mkdirs())
-            Bukkit.getLogger().info("copying " + mapSourceDirectory.getAbsolutePath() + " to " + destination.getAbsolutePath());
+            Bukkit.getLogger().info("copying " + mapSourceDirectory.getName() + " to active maps directory");
 
         if (mapSourceDirectory.listFiles() == null)
             return;
@@ -298,7 +299,8 @@ public class MapManager implements Listener {
         File mcmeta = new File(datapackDirectory, "pack.mcmeta");
         if (!mcmeta.exists()) {
             try {
-                mcmeta.createNewFile();
+                if (mcmeta.createNewFile())
+                    Bukkit.getLogger().info("Installing plugin datapack files");
                 OutputStream out = new FileOutputStream(mcmeta);
                 plugin.getResource("datapack_files/pack.mcmeta").transferTo(out);
                 out.close();
@@ -316,7 +318,8 @@ public class MapManager implements Listener {
         File defaultLootTable = new File(pluginLootTablesDir, "default.json");
         if (!defaultLootTable.exists()) {
             try {
-                defaultLootTable.createNewFile();
+                if (defaultLootTable.createNewFile())
+                    Bukkit.getLogger().info("Inserting default loot table");
                 OutputStream out = new FileOutputStream(defaultLootTable);
                 plugin.getResource("datapack_files/default.json").transferTo(out);
                 out.close();
@@ -353,7 +356,7 @@ public class MapManager implements Listener {
                 FileUtils.deleteDirectory(destination);
             }
             if (destination.mkdirs())
-                Bukkit.getLogger().info("copying " + mapSourceDirectory.getAbsolutePath() + " to " + destination.getAbsolutePath());
+                Bukkit.getLogger().info("resetting main (lobby) world from " + mapSourceDirectory.getPath());
 
             if (mapSourceDirectory.listFiles() == null)
                 return;

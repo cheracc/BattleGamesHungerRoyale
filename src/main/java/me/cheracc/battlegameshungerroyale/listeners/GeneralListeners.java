@@ -2,14 +2,16 @@ package me.cheracc.battlegameshungerroyale.listeners;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
+import me.cheracc.battlegameshungerroyale.managers.MapManager;
+import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -23,6 +25,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class GeneralListeners implements Listener {
 
@@ -151,7 +154,7 @@ public class GeneralListeners implements Listener {
             ItemStack clicked = event.getCurrentItem();
 
             if (clicked != null) {
-                if (Tools.getUuidFromItem(clicked) != null) {
+                if (!Ability.isAbilityItem(clicked)) {
                     p.sendMessage(Component.text("Ability items must remain in your hotbar or offhand. You can use the 'swap hands' (default 'F') button to move them around"));
                     event.setCancelled(true);
                 }
@@ -164,10 +167,16 @@ public class GeneralListeners implements Listener {
         Player p = event.getPlayer();
         ItemStack item = event.getItemDrop().getItemStack();
 
-        if (Tools.getUuidFromItem(item) != null) {
+        if (Ability.isAbilityItem(item)) {
             event.setCancelled(true);
             p.sendMessage(Component.text("That's kind of important, you should keep it."));
         }
+    }
+
+    // attempt to grab a player's data before they actually log in
+    @EventHandler
+    public void loadDataAtPreLogin(AsyncPlayerPreLoginEvent event) {
+        PlayerManager.getInstance().getPlayerData(event.getUniqueId());
     }
 
     // processes a player when they join
@@ -184,7 +193,6 @@ public class GeneralListeners implements Listener {
             }
         }
         Player p = event.getPlayer();
-        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
         // remove any lingering "max duration" potion effects
         for (PotionEffect e : p.getActivePotionEffects()) {
@@ -197,8 +205,20 @@ public class GeneralListeners implements Listener {
         GameMode mode = GameMode.valueOf(gm.toUpperCase());
         p.setGameMode(mode);
 
-        // set the scoreboard
-        if (data.getSettings().isAlwaysShowScoreboard())
-            p.setScoreboard(GameManager.getInstance().getMainScoreboard());
+        // set the scoreboard (delay this a few seconds to allow the player's settings to be loaded)
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                if (data.getSettings().isShowMainScoreboard())
+                    p.setScoreboard(GameManager.getInstance().getMainScoreboard());
+                if (data.getSettings().getDefaultKit() != null) {
+                    Kit kit = KitManager.getInstance().getKit(data.getSettings().getDefaultKit());
+                    if (kit != null)
+                        data.registerKit(kit, false);
+                }
+            }
+        }.runTaskLater(BGHR.getPlugin(), 30L);
     }
 }

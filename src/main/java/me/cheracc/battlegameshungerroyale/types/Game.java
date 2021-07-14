@@ -9,7 +9,6 @@ import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import net.milkbowl.vault.chat.Chat;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -148,6 +147,10 @@ public class Game implements Listener {
         }
     }
 
+    public Scoreboard getScoreboard() {
+        return scoreboard;
+    }
+
     public int getCurrentGameTime() {
         return (int) gameTime;
     }
@@ -235,7 +238,7 @@ public class Game implements Listener {
             player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         data.resetInventory();
         bar.removePlayer(player);
-        if (PlayerManager.getInstance().getPlayerData(player).getSettings().isAlwaysShowScoreboard())
+        if (PlayerManager.getInstance().getPlayerData(player).getSettings().isShowMainScoreboard())
             player.setScoreboard(GameManager.getInstance().getMainScoreboard());
         else
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());

@@ -54,7 +54,7 @@ public class LootManager implements Listener {
             this.lootTable = getDefaultLootTable();
         else
             this.lootTable = game.getOptions().getLootTable();
-        Bukkit.getLogger().info("starting chunk scanner");
+        Bukkit.getLogger().info("Loot Manager> scanning for chest locations");
     }
 
     public void close() {
@@ -121,7 +121,7 @@ public class LootManager implements Listener {
             public void run() {
                 if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0)) {
                     cancel();
-                    Bukkit.getLogger().info(String.format("LootManager> found %s viable chest locations in %s chunks (%sms)",
+                    Bukkit.getLogger().info(String.format("LootManager> found %s viable chest locations in %s chunks (took %sms)",
                             unusedChestLocations.size() + usedChestLocations.size(), scanned, System.currentTimeMillis() - last));
                     return;
                 }
