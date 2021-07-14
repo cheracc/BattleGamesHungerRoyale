@@ -1,10 +1,10 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.types.Kit;
-import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -21,6 +21,7 @@ import org.bukkit.persistence.PersistentDataType;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public abstract class Ability implements Cloneable {
@@ -38,9 +39,11 @@ public abstract class Ability implements Cloneable {
             ConfigurationSection section = new YamlConfiguration();
 
             for (Field f : getClass().getDeclaredFields()) {
+                if (Map.class.isAssignableFrom(f.getType()) || List.class.isAssignableFrom(f.getType()))
+                    continue;
                 f.setAccessible(true);
-                    section.addDefault(fieldNameToConfigOption(f.getName()), f.get(this));
-                    section.set(fieldNameToConfigOption(f.getName()), f.get(this));
+                section.addDefault(fieldNameToConfigOption(f.getName()), f.get(this));
+                section.set(fieldNameToConfigOption(f.getName()), f.get(this));
             }
             this.section = section;
         } catch (IllegalAccessException e) {
