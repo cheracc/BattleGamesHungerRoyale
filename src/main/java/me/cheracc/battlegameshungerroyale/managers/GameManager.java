@@ -70,7 +70,7 @@ public class GameManager {
 
     public void gameOver(Game game) {
         activeGames.remove(game);
-        if (activeGames.isEmpty())
+        if (activeGames.isEmpty() && BGHR.getPlugin().isEnabled())
             startWithRandomConfig();
         updateScoreboard();
     }
