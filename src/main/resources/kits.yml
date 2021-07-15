@@ -174,7 +174,7 @@ shaman:
     or weaken his opponents.
   icon: totem_of_undying
   abilities:
-    Totem:
+    EffectTotem:
       cooldown: 30
       duration: 15
       radius: 8
@@ -194,7 +194,7 @@ shaman:
         has-icon: true
       custom name: Strength of Earth Totem
       description: Places a totem that gives the shaman a strength effect
-    Totem_47780077:
+    EffectTotem_47780077:
       cooldown: 25
       duration: 8
       radius: 8
@@ -214,7 +214,7 @@ shaman:
         has-icon: true
       custom name: Earthbind Totem
       description: Places a totem that slows all nearby enemy players
-    Totem_1651453:
+    EffectTotem_1651453:
       cooldown: 30
       duration: 5
       radius: 6

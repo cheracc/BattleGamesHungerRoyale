@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Totem extends Ability implements ActiveAbility, Listener {
+public class EffectTotem extends Ability implements ActiveAbility, Listener {
     private int cooldown;
     private int duration;
     private int radius;
@@ -32,7 +32,7 @@ public class Totem extends Ability implements ActiveAbility, Listener {
     private String itemDescription;
     private PotionEffect effect;
 
-    public Totem() {
+    public EffectTotem() {
         this.cooldown = 15;
         this.totemItemType = "magma_block";
         this.totemName = "Totem";
