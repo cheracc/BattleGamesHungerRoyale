@@ -32,6 +32,7 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
 
     public EffectProjectile() {
         setDescription("provides an item that can be thrown as a projectile (optionally consumable and/or regenerating) that causes a potion effect on the target it hits");
+        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
 
     @Override
@@ -43,7 +44,6 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
         projectile.setGravity(affectedByGravity);
         projectile.setMetadata("effectprojectile", new FixedMetadataValue(BGHR.getPlugin(), getId()));
         projectile.setMetadata("thrower", new FixedMetadataValue(BGHR.getPlugin(), source.getUniqueId()));
-        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
 
         ItemStack kitItem = source.getInventory().getItemInMainHand();
         if (kitItem != null && !infiniteProjectiles) {

@@ -143,7 +143,7 @@ public class ConfigureAbilityGui extends Gui {
             lore.add("&bClick to select a new " + configOption);
             icon = Material.DRAGON_BREATH;
             event = handlePotionEffect(configOption, (PotionEffect) value);
-        }  else {
+        } else {
             return ItemBuilder.from(Material.BARRIER).asGuiItem();
         }
 

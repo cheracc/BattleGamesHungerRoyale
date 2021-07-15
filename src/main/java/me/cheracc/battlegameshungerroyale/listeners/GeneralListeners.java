@@ -147,14 +147,14 @@ public class GeneralListeners implements Listener {
     }
 
     // these listeners are looking for items tied to abilities and ensuring that they stay in the hotbar.
-    @EventHandler
+    @EventHandler (ignoreCancelled = true)
     public void abilityItemsStayInHotbar(InventoryClickEvent event) {
         if (event.getWhoClicked() instanceof Player) {
             Player p = (Player) event.getWhoClicked();
             ItemStack clicked = event.getCurrentItem();
 
             if (clicked != null) {
-                if (!Ability.isAbilityItem(clicked)) {
+                if (Ability.isAbilityItem(clicked)) {
                     p.sendMessage(Component.text("Ability items must remain in your hotbar or offhand. You can use the 'swap hands' (default 'F') button to move them around"));
                     event.setCancelled(true);
                 }
