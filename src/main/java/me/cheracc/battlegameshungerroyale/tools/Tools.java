@@ -1,5 +1,6 @@
 package me.cheracc.battlegameshungerroyale.tools;
 
+import com.destroystokyo.paper.Namespaced;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -14,6 +15,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -24,7 +26,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -63,7 +67,7 @@ public class Tools {
         StringBuilder currentLine = new StringBuilder();
 
         for (int i = 0; i < words.length; i++) {
-            if (ChatColor.stripColor(currentLine.toString()).length() > 28 || currentLine.toString().endsWith(".") || currentLine.toString().endsWith("!")) {
+            if (ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', currentLine.toString())).length() > 28 || currentLine.toString().endsWith(".") || currentLine.toString().endsWith("!")) {
                 wrappedText.add(color + currentLine.toString());
                 if (currentLine.toString().endsWith(".") || currentLine.toString().endsWith("!"))
                     wrappedText.add("");
@@ -73,15 +77,33 @@ public class Tools {
             if (toAdd.contains("\\n")) {
                 toAdd = toAdd.substring(0, toAdd.indexOf("\\n"));
                 words[i] = words[i].substring(toAdd.length() + 2);
-                wrappedText.add(color + currentLine.toString() + (currentLine.length() == 0 ? "" : " ") + toAdd);
+                wrappedText.add(color + currentLine.toString() + (ChatColor.stripColor(currentLine.toString()).length() == 0 ? "" : " ") + toAdd);
                 currentLine = new StringBuilder();
                 i--;
             } else {
-                currentLine.append(currentLine.length() == 0 ? "" : " ").append(toAdd);
+                currentLine.append(ChatColor.stripColor(currentLine.toString()).length() == 0 ? "" : " ").append(toAdd);
             }
         }
         wrappedText.add(color + currentLine.toString());
         return wrappedText;
+    }
+
+    public static String decomponentalize(Component component) {
+        if (component == null)
+            return null;
+        String string = LegacyComponentSerializer.legacyAmpersand().serialize(component);
+        return ChatColor.translateAlternateColorCodes('&', string);
+    }
+
+    public static List<String> decomponentalize(List<Component> componentList) {
+        List<String> strings = new ArrayList<>();
+        if (componentList == null || componentList.isEmpty())
+            return strings;
+        componentList.forEach(c -> {
+            if (c != null)
+                strings.add(decomponentalize(c));
+        });
+        return strings;
     }
 
     public static List<Component> componentalize(List<String> text) {
@@ -206,6 +228,23 @@ public class Tools {
                 return i;
         }
         return -1;
+    }
+
+    public static ItemStack makeItemPlaceable(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        Set<Namespaced> allBlocks = new HashSet<>();
+
+        if (meta == null)
+            return item;
+
+        for (Material m : Material.values()) {
+            if (m.isBlock() && !m.name().contains("LEGACY"))
+                allBlocks.add(m.getKey());
+        }
+        meta.setPlaceableKeys(allBlocks);
+        meta.addItemFlags(ItemFlag.HIDE_PLACED_ON);
+        item.setItemMeta(meta);
+        return item;
     }
 
     /**

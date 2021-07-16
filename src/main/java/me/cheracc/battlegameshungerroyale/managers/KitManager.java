@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class KitManager {
@@ -89,7 +90,8 @@ public class KitManager {
         Set<Class<?>> abilityClasses = new HashSet<>((new Reflections("me.cheracc.battlegameshungerroyale.abilities", new SubTypesScanner(false))).getSubTypesOf(Ability.class));
 
         for (Class<?> c : abilityClasses) {
-            if (c == null) continue;
+            if (c == null || Modifier.isAbstract(c.getModifiers()))
+                continue;
             Constructor<?> con = c.getDeclaredConstructor();
             Object o = con.newInstance();
             if (o instanceof Ability)

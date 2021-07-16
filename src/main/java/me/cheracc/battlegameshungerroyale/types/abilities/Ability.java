@@ -83,7 +83,13 @@ public abstract class Ability implements Cloneable {
                         f.setAccessible(true);
                         f.set(this, value);
                     } catch (NoSuchFieldException | IllegalAccessException ex) {
-                        Bukkit.getLogger().warning("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + key);
+                        try {
+                            Field f = this.getClass().getSuperclass().getSuperclass().getDeclaredField(fieldName);
+                            f.setAccessible(true);
+                            f.set(this, value);
+                        } catch (NoSuchFieldException | IllegalAccessException exc) {
+                            Bukkit.getLogger().warning("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + key);
+                        }
                     }
                 }
             }

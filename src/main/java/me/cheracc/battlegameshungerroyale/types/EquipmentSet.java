@@ -4,13 +4,9 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.Bukkit;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -53,6 +49,7 @@ public class EquipmentSet {
                 item = new ItemStack(Material.AIR);
             orderedList.add(item);
         }
+        orderedList.addAll(getOtherItems());
 
         return InventorySerializer.itemStackArrayToBase64(orderedList.toArray(new ItemStack[0]));
     }
@@ -64,8 +61,8 @@ public class EquipmentSet {
             for (int i = 0; i < items.length - 1; i++) {
                 if (i < slots.length - 1)
                     setItem(EquipmentSetSlot.valueOf(slots[i].name()), items[i]);
-                else
-                    addOtherItem(items[i]);
+                else if (i < 8)
+                    setItem(EquipmentSetSlot.values()[i], items[i]);
             }
 
         } catch (IOException e) {
@@ -74,21 +71,28 @@ public class EquipmentSet {
     }
 
     public List<Component> getDescription() {
-        List<Component> desc = new ArrayList<>();
-        Component space = Component.space();
+        List<String> desc = new ArrayList<>();
+        if (!isCompletelyEmpty()) {
+            desc.add("");
+            desc.add("&eKit Equipment:");
+            for (EquipmentSetSlot slot : EquipmentSetSlot.values()) {
+                ItemStack item = items.get(slot);
 
-        if (!isEmpty()) {
-            desc.add(Tools.componentalize("&eKit Equipment:"));
-            for (Map.Entry<EquipmentSlot, ItemStack> e : getArmor().entrySet()) {
-                if (e.getValue() != null && e.getValue().getItemMeta() != null && e.getValue().getItemMeta().hasDisplayName()) {
-                    desc.add(space.append(e.getValue().getItemMeta().displayName().color(NamedTextColor.WHITE)).append(Tools.componentalize(" &8(&7" + e.getKey().name().toLowerCase() + "&8)")));
-                    for (Map.Entry<Enchantment, Integer> enchant : e.getValue().getEnchantments().entrySet()) {
-                        desc.add(Tools.componentalize("  &7" + Tools.keyToDisplayName(enchant.getKey().getKey().value()) + " " + Tools.integerToRomanNumeral(enchant.getValue())));
-                    }
+                if (item != null && !item.getType().isAir()) {
+                    String prettyName;
+                    if (item.getItemMeta() != null && item.getItemMeta().displayName() != null)
+                        prettyName = Tools.decomponentalize(item.getItemMeta().displayName());
+                    else
+                        prettyName = StringUtils.capitalize(item.getType().name().toLowerCase().replace("_", " "));
+
+                    if (slot.isArmor())
+                        desc.add(String.format("  %s%s &7[&3%s&7]", item.getItemMeta().hasEnchants() ? "&b" : "&f", prettyName, StringUtils.capitalize(slot.name().toLowerCase())));
+                    else
+                        desc.add("  " + (item.getItemMeta().hasEnchants() ? "&b" : "&f") + prettyName);
                 }
             }
         }
-        return desc;
+        return Tools.componentalize(desc);
     }
 
     public void setItem(int slot, ItemStack item) {
@@ -135,7 +139,7 @@ public class EquipmentSet {
     public boolean addOtherItem(@NotNull ItemStack item) {
         boolean placed = false;
         for (EquipmentSetSlot slot : EquipmentSetSlot.values()) {
-            if (!slot.isArmor() && items.get(slot) == null) {
+            if (!slot.isArmor() && items.get(slot) == null || items.get(slot).getType().isAir()) {
                 items.put(slot, item);
                 placed = true;
             }
@@ -218,9 +222,25 @@ public class EquipmentSet {
         return item;
     }
 
-    public boolean isEmpty() {
+    public boolean isCompletelyEmpty() {
         for (ItemStack item : items.values()) {
-            if (item != null)
+            if (item != null && !item.getType().isAir())
+                return false;
+        }
+        return true;
+    }
+
+    public boolean armorIsEmpty() {
+        for (ItemStack item : getArmor().values()) {
+            if (item != null && !item.getType().isAir())
+                return false;
+        }
+        return true;
+    }
+
+    public boolean otherItemsAreEmpty() {
+        for (ItemStack item: getOtherItems()) {
+            if (item != null && !item.getType().isAir())
                 return false;
         }
         return true;

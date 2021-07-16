@@ -35,3 +35,6 @@ commands:
   settings:
     usage: "/settings"
     description: "opens player settings menu"
+  abilityitem:
+    usage: "/abilityitem"
+    description: "updates an ability with the currently held item"

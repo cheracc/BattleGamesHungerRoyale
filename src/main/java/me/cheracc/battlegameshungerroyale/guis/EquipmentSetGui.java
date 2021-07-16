@@ -61,7 +61,7 @@ public class EquipmentSetGui extends Gui {
         int slot = SLOTS.length;
 
         for (ItemStack item : set.getOtherItems()) {
-            if (item == null || !item.getType().isItem() || item.getType() == Material.AIR) {
+            if (item == null || item.getType() == Material.AIR) {
                 Component name = Tools.componentalize("Empty Hotbar Item Slot");
                 List<Component> lore = Tools.componentalize(Tools.wrapText(emptyInstructions, ChatColor.AQUA));
                 lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
@@ -95,7 +95,7 @@ public class EquipmentSetGui extends Gui {
         String replaceInstructions = "&bClick here to remove this item, or drop another item here to replace it.";
 
         for (int i = 0; i < SLOTS.length; i++) {
-            if (set.getArmor().get(SLOTS[i]) == null) {
+            if (set.getArmor().get(SLOTS[i]) == null || set.getArmor().get(SLOTS[i]).getType().isAir()) {
                 Component name = Tools.componentalize("&eEmpty Armor Slot");
                 List<Component> lore = Tools.componentalize(Tools.wrapText(String.format(instructions, slotArmorNames[i]), ChatColor.AQUA));
 

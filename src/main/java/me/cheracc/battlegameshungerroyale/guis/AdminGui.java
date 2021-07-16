@@ -292,7 +292,7 @@ public class AdminGui extends Gui {
     private static class BaseAdminGui extends Gui {
         Map<Integer, BaseIcon> guiIcons = new HashMap<>();
         public BaseAdminGui(HumanEntity player, String title, Collection<BaseIcon> icons) {
-            super(1,"" + title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
+            super(icons.size() / 9 + 1,"" + title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
             disableAllInteractions();
             setOutsideClickAction(e -> {
                 e.getWhoClicked().closeInventory();

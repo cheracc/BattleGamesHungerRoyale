@@ -15,6 +15,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,7 +135,7 @@ public class Kit {
                 }
             }
         }
-        if (!equipment.isEmpty()) {
+        if (!equipment.isCompletelyEmpty()) {
             equipment.equip(p);
         }
         p.sendMessage(Tools.componentalize("You have been given equipment and kit items for kit " + getName()));
@@ -176,7 +177,7 @@ public class Kit {
 
         }
 
-        if (!equipment.isEmpty())
+        if (!equipment.isCompletelyEmpty())
             this.config.set("equipment", equipment.serializeAsBase64());
 
         FileConfiguration kitsConfig = new YamlConfiguration();
@@ -195,6 +196,18 @@ public class Kit {
             ItemStack item = p.getInventory().getItem(i);
             if (item == null || item.getType() == Material.AIR)
                 return i;
+        }
+        for (int i = 8; i >= 0; i--) {
+            ItemStack item = p.getInventory().getItem(i);
+            if (!Tools.isPluginItem(item)) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        p.getInventory().addItem(item);
+                    }
+                }.runTaskLater(BGHR.getPlugin(), 1);
+                return i;
+            }
         }
         return -1;
     }

@@ -59,7 +59,6 @@ public class Game implements Listener {
     private BukkitTask postgameTimer = null;
     private BukkitTask respawner = null;
     private final Map<UUID, Integer> participants = new HashMap<>();
-    private final Map<Integer, String> scoreboardLines = new HashMap<>();
     private final List<Location> spawnPoints = new ArrayList<>();
     private GamePhase currentPhase;
     private long lastChestRespawn;
@@ -87,10 +86,10 @@ public class Game implements Listener {
             gameLog = new GameLog(this);
             gameLog.addPhaseEntry(currentPhase);
             GameManager.getInstance().updateScoreboard();
+            if (callback != null)
+                callback.accept(this);
         });
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
-        if (callback != null)
-            callback.accept(this);
     }
 
     // public methods
@@ -576,7 +575,6 @@ public class Game implements Listener {
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
         for (int i = 15; i >= 0; i--) {
             String entry = ChatColor.values()[i] + "" + ChatColor.values()[i+1];
-            scoreboardLines.put(i, entry);
             Team lineText = scoreboard.registerNewTeam(String.format("line%s", i));
             lineText.addEntry(entry);
             obj.getScore(entry).setScore(i);

@@ -48,6 +48,7 @@ public class BGHR extends JavaPlugin implements Listener {
         getCommand("quit").setExecutor(new QuitCommand());
         getCommand("bghr").setExecutor(new BghrCommand());
         getCommand("settings").setExecutor(new SettingsCommand());
+        getCommand("abilityitem").setExecutor(new AbilityItemCommand());
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(new GeneralListeners(), this);

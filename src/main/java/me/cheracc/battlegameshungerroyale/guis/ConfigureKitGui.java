@@ -4,18 +4,21 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import net.kyori.adventure.text.Component;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +85,7 @@ public class ConfigureKitGui extends Gui {
                         p.sendMessage(Tools.formatInstructions("    Enter a new name for this kit:", kit.getName()));
                         TextInputListener.getInstance().getNextInputFrom(p, text -> {
                             kit.setName(text);
-                            updateTitle("Configuring Kit: &1" + kit.getName());
+                            updateTitle("Configuring Kit: " + kit.getName());
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
                             open(p);
                         });
@@ -146,7 +149,7 @@ public class ConfigureKitGui extends Gui {
 
     private GuiItem existingAbilityIcon(Ability ability) {
         String iconName = "&eAbility: &f" + ability.getName();
-        String abilityType = (ability instanceof ActiveAbility) ? "&aActive" : "&6Passive";
+        String abilityType = (ability instanceof ActiveAbility) ? "&aActive" : (ability instanceof PassiveAbility) ? "&6Passive" : "&bTriggered";
         Material icon = (ability instanceof ActiveAbility) ? Material.LIME_BANNER : Material.YELLOW_BANNER;
         List<String> lore = new ArrayList<>();
         if (ability.getCustomName() != null)
@@ -164,6 +167,8 @@ public class ConfigureKitGui extends Gui {
                 value = o.toString();
             if (o instanceof Material)
                 value = ((Material) o).name().toLowerCase();
+            if (o instanceof ItemStack)
+                value = WordUtils.capitalize(((ItemStack) o).getType().name().toLowerCase().replace("_", " "));
             if (o instanceof PotionEffect) {
                 PotionEffect e = (PotionEffect) o;
                 value = e.getType().getName().toLowerCase() + " " + Tools.integerToRomanNumeral(e.getAmplifier() + 1);
@@ -222,6 +227,8 @@ public class ConfigureKitGui extends Gui {
 
                         kitManager.replaceKit(kit);
                         p.sendMessage(Tools.componentalize("&fYour changes to &e" + kit.getName() + " &fhave been saved and reloaded."));
+                        if (sendingGui != null)
+                            sendingGui.open(p);
                     }
                 });
     }

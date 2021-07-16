@@ -2,13 +2,16 @@ package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.GuiAction;
+import dev.triumphteam.gui.components.GuiType;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
+import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -16,6 +19,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
@@ -143,6 +148,12 @@ public class ConfigureAbilityGui extends Gui {
             lore.add("&bClick to select a new " + configOption);
             icon = Material.DRAGON_BREATH;
             event = handlePotionEffect(configOption, (PotionEffect) value);
+        } else if (value instanceof ItemStack) {
+            ItemStack item = (ItemStack) value;
+            icon = item.getType();
+            valueString = WordUtils.capitalize(item.getType().name().toLowerCase().replace("_", " "));
+            lore.addAll(Tools.decomponentalize(item.lore()));
+            event = handleItemStack(configOption, item);
         } else {
             return ItemBuilder.from(Material.BARRIER).asGuiItem();
         }
@@ -307,5 +318,47 @@ public class ConfigureAbilityGui extends Gui {
                 open(event.getWhoClicked());
             });
         };
+    }
+
+    private GuiAction<InventoryClickEvent> handleItemStack(String configOption, ItemStack item) {
+        return event -> {
+            event.getWhoClicked().closeInventory();
+            inputItem(item, configOption, event.getSlot(), newItem -> {
+                ability.setOption(configOption, newItem);
+                updateItem(event.getSlot(), genericOptionGuiItem(configOption));
+                open(event.getWhoClicked());
+            }).open(event.getWhoClicked());
+        };
+    }
+
+    private Gui inputItem(ItemStack currentItem, String configOption, int slot, Consumer<ItemStack> callback) {
+        Gui gui = Gui.gui().type(GuiType.DISPENSER).title(Tools.componentalize("&0Change Item")).create();
+        gui.disableAllInteractions();
+        gui.setOutsideClickAction(e -> {
+            e.getWhoClicked().closeInventory();
+            open(e.getWhoClicked());
+        });
+        List<String> lore = new ArrayList<>(Tools.wrapText("&bDrop any item or item stack here. You can also click here " +
+                "with an empty cursor to close this and give you time to create one.", ChatColor.AQUA));
+        gui.setItem(4, ItemBuilder.from(currentItem).lore(Tools.componentalize(lore)).asGuiItem(e -> {
+            ItemStack item = e.getWhoClicked().getItemOnCursor();
+            if (item != null && !item.getType().isAir()) {
+                callback.accept(item);
+            } else {
+                e.getWhoClicked().closeInventory();
+                e.getWhoClicked().sendMessage(Tools.formatInstructions("Create/Rename/Enchant the item you want to add to " +
+                        "this kit's loot table. When you are finished, hold the item in your hand and type &e/abilityitem", ""));
+                e.getWhoClicked().setMetadata("ability_config_gui", new FixedMetadataValue(BGHR.getPlugin(), this));
+                e.getWhoClicked().setMetadata("ability_config_option", new FixedMetadataValue(BGHR.getPlugin(), configOption));
+                e.getWhoClicked().setMetadata("ability_config_slot", new FixedMetadataValue(BGHR.getPlugin(), slot));
+            }
+        }));
+
+        return gui;
+    }
+
+    public void updateConfigOptionForSlot(String configOption, int slot, Object o) {
+        ability.setOption(configOption, o);
+        updateItem(slot, genericOptionGuiItem(configOption));
     }
 }

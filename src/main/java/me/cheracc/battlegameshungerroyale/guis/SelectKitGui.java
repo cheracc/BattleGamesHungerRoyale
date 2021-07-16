@@ -11,6 +11,7 @@ import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.HumanEntity;
@@ -49,7 +50,7 @@ public class SelectKitGui extends ScrollingGui {
         if (!kit.getAbilities().isEmpty()) {
             lore.add(Tools.componentalize("&eKit Abilities:"));
             for (Ability a : kit.getAbilities()) {
-                String color = (a instanceof ActiveAbility) ? "&a" : "&6";
+                String color = (a instanceof ActiveAbility) ? "&a" : (a instanceof PassiveAbility) ? "&6" : "&b";
                 String abilityString = String.format("%s%s &f- &7%s", color, a.getCustomName() != null ? a.getCustomName() : a.getName(),
                         a.getDescription());
                 lore.addAll(Tools.componentalize(Tools.wrapText(abilityString, ChatColor.GRAY)));

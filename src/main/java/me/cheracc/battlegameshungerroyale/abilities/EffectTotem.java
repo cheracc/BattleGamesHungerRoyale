@@ -43,6 +43,7 @@ public class EffectTotem extends Ability implements ActiveAbility, Listener {
         this.totemIsDestroyable = true;
         this.placingPlayerIsImmune = false;
         this.affectsOnlyPlacingPlayer = false;
+        setDescription("This will place a totem on the ground that provides a potion effect to nearby players. The range, cooldown, effects are all configurable.");
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
 
