@@ -247,7 +247,7 @@ scavenger:
         v: 2586
         type: CRAFTING_TABLE
       custom name: Workbench+
-      description: find crafting tables
+      description: find crafting tables in loot chests
     AddToChestLootTable_38666373:
       chance: 0.2
       item:
@@ -255,7 +255,7 @@ scavenger:
         v: 2586
         type: GOLD_INGOT
       custom name: Gold+
-      description: find more gold
+      description: find more gold in loot chests
     AddToChestLootTable_48279359:
       chance: 0.2
       item:
@@ -263,7 +263,7 @@ scavenger:
         v: 2586
         type: LEATHER
       custom name: Leather+
-      description: find more leather
+      description: find more leather in loot chests
     AddToChestLootTable_90287404:
       chance: 0.1
       item:
@@ -271,7 +271,7 @@ scavenger:
         v: 2586
         type: IRON_INGOT
       custom name: Iron+
-      description: find more iron
+      description: find more iron in loot chests
 archer:
   name: Archer
   description: The archer starts with a bow, finds more arrows in chests, and his
@@ -435,7 +435,7 @@ forager:
         v: 2586
         type: GOLDEN_APPLE
       custom name: Apple+
-      description: rarely find golden apples
+      description: rarely find golden apples in loot chests
     AddToKillLootTable:
       players only: false
       monsters only: false
