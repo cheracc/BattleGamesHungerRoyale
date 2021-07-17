@@ -217,6 +217,8 @@ public class Game implements Listener {
 
         if (PlayerManager.getInstance().getPlayerData(player).getKit() == null) {
             player.sendMessage(Tools.componentalize("&fYou haven't selected a kit! Type &e/kitmenu &for &e/kit <name> &fto select one!"));
+        } else {
+            PlayerManager.getInstance().getPlayerData(player).getKit().outfitPlayer(player);
         }
         player.setScoreboard(scoreboard);
     }
@@ -235,7 +237,6 @@ public class Game implements Listener {
             player.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         else
             player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-        data.resetInventory();
         bar.removePlayer(player);
         if (PlayerManager.getInstance().getPlayerData(player).getSettings().isShowMainScoreboard())
             player.setScoreboard(GameManager.getInstance().getMainScoreboard());

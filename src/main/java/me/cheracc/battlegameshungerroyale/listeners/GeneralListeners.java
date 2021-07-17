@@ -2,12 +2,10 @@ package me.cheracc.battlegameshungerroyale.listeners;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.Game;
-import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -15,7 +13,7 @@ import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,18 +21,21 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public class GeneralListeners implements Listener {
 
     @EventHandler
     public void handlePlayerQuits(PlayerQuitEvent event) {
-        PlayerData data = PlayerManager.getInstance().getPlayerData(event.getPlayer());
+        Player p = event.getPlayer();
+        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
         if (data.getKit() != null)
-            data.getKit().disrobePlayer(event.getPlayer());
-        Game game = GameManager.getInstance().getPlayersCurrentGame(event.getPlayer());
+            data.getKit().disrobePlayer(p);
+
+        if (!GameManager.getInstance().isInAGame(p))
+            data.saveInventory(false);
+
+        Game game = GameManager.getInstance().getPlayersCurrentGame(p);
         if (game != null)
             game.quit(event.getPlayer());
     }
@@ -57,29 +58,7 @@ public class GeneralListeners implements Listener {
         if (!MapManager.getInstance().isThisAGameWorld(p.getWorld()) && MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld())) {
             GameMode defaultGameMode = GameMode.valueOf(BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
             p.setGameMode(defaultGameMode);
-            pData.resetInventory();
-            if (BGHR.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false) ||
-                    pData.getLastLocation() == null || !pData.getLastLocation().getWorld().equals(event.getTo().getWorld())) {
-                Bukkit.getLogger().info("teleporting to lobby spawn");
-                p.teleport(p.getWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-            } else {
-                Bukkit.getLogger().info("returning to previous location");
-                p.teleport(pData.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-                pData.setLastLocation(null);
-            }
-        }
-
-        // here they are going FROM a main world TO a game world
-        else if (!MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld()) &&
-                  MapManager.getInstance().isThisAGameWorld(event.getTo().getWorld())) {
-            pData.saveInventory();
-            pData.setLastLocation(p.getLocation());
-            p.getInventory().clear();
-            for (ItemStack item : p.getInventory().getArmorContents())
-                if (item != null)
-                    item.setType(Material.AIR);
-            if (pData.getKit() != null)
-                pData.getKit().outfitPlayer(p);
+            pData.setLastLocation(event.getFrom());
         }
     }
 
@@ -182,17 +161,15 @@ public class GeneralListeners implements Listener {
     // processes a player when they join
     @EventHandler
     public void loadPlayersOnJoin(PlayerJoinEvent event) {
-        // change the join message to read "server" instead of "game"
-        event.joinMessage(Tools.componentalize("&e" + event.getPlayer().getName() + " has joined the server."));
-
-        // remove any kit/plugin items
-        PlayerInventory inv = event.getPlayer().getInventory();
-        for (int i = 0; i < inv.getSize() - 1; i++) {
-            if (Tools.isPluginItem(inv.getItem(i))) {
-                inv.setItem(i, null);
-            }
-        }
         Player p = event.getPlayer();
+
+        // change the join message to read "server" instead of "game"
+        event.joinMessage(Tools.componentalize("&e" + event.getPlayer().getName() + " has joined the server"));
+
+        // clear the player's inventory (we will reload it from what was saved)
+        p.getInventory().clear();
+        p.getInventory().setArmorContents(null);
+        p.getEnderChest().clear();
 
         // remove any lingering "max duration" potion effects
         for (PotionEffect e : p.getActivePotionEffects()) {
@@ -205,20 +182,32 @@ public class GeneralListeners implements Listener {
         GameMode mode = GameMode.valueOf(gm.toUpperCase());
         p.setGameMode(mode);
 
-        // set the scoreboard (delay this a few seconds to allow the player's settings to be loaded)
-
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                PlayerData data = PlayerManager.getInstance().getPlayerData(p);
-                if (data.getSettings().isShowMainScoreboard())
-                    p.setScoreboard(GameManager.getInstance().getMainScoreboard());
-                if (data.getSettings().getDefaultKit() != null) {
-                    Kit kit = KitManager.getInstance().getKit(data.getSettings().getDefaultKit());
-                    if (kit != null)
-                        data.registerKit(kit, false);
-                }
-            }
-        }.runTaskLater(BGHR.getPlugin(), 30L);
+        if (PlayerManager.getInstance().isPlayerDataLoaded(p))
+            PlayerManager.getInstance().getPlayerData(p).restorePlayer();
     }
+
+    // Inventory handling listener
+    @EventHandler
+    public void saveOrReloadInventoryWhenChangingWorlds(PlayerChangedWorldEvent event) {
+        final World from = event.getFrom();
+        final World to = event.getPlayer().getWorld();
+
+        final boolean enteringGameFromMainWorlds = MapManager.getInstance().isThisAGameWorld(to) && !MapManager.getInstance().isThisAGameWorld(from);
+        final boolean leavingGameToMainWorlds = MapManager.getInstance().isThisAGameWorld(from) && !MapManager.getInstance().isThisAGameWorld(to);
+
+        if (enteringGameFromMainWorlds) {
+            Player p = event.getPlayer();
+            PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+
+            data.saveInventory(true);
+        }
+
+        if (leavingGameToMainWorlds) {
+            Player p = event.getPlayer();
+            PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+
+            data.restorePlayer();
+        }
+    }
+
 }

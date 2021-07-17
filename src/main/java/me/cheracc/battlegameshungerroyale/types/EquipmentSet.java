@@ -178,7 +178,7 @@ public class EquipmentSet {
             }
         }
         for (ItemStack i : getOtherItems()) {
-            p.getInventory().setItem(Tools.getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(tagItem(i)));
+            p.getInventory().addItem(Tools.tagAsPluginItem(tagItem(i)));
         }
         return true;
     }

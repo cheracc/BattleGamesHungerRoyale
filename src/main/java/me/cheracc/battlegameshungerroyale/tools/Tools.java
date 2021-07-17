@@ -221,15 +221,6 @@ public class Tools {
         p.setMetadata(key, new FixedMetadataValue(BGHR.getPlugin(), object));
     }
 
-    public static int getLastEmptyHotbarSlot(Player p) {
-        for (int i = 8; i >= 0; i--) {
-            ItemStack item = p.getInventory().getItem(i);
-            if (item == null || item.getType() == Material.AIR)
-                return i;
-        }
-        return -1;
-    }
-
     public static ItemStack makeItemPlaceable(ItemStack item) {
         ItemMeta meta = item.getItemMeta();
         Set<Namespaced> allBlocks = new HashSet<>();

@@ -97,7 +97,7 @@ public class AdminGui extends Gui {
         BGHR plugin = BGHR.getPlugin();
         FileConfiguration config = plugin.getConfig();
         List<BaseIcon> icons = new ArrayList<>();
-        BaseAdminGui pluginGui = new BaseAdminGui(player, "Plugin Configuration", null);
+        BaseAdminGui pluginGui = new BaseAdminGui(player, "Plugin Configuration", icons);
 
         icons.add(slot -> {
             boolean value = config.getBoolean("reset main world on each restart", false);
@@ -292,7 +292,7 @@ public class AdminGui extends Gui {
     private static class BaseAdminGui extends Gui {
         Map<Integer, BaseIcon> guiIcons = new HashMap<>();
         public BaseAdminGui(HumanEntity player, String title, Collection<BaseIcon> icons) {
-            super(icons.size() / 9 + 1,"" + title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
+            super(icons.size() / 9 + 1, title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
             disableAllInteractions();
             setOutsideClickAction(e -> {
                 e.getWhoClicked().closeInventory();

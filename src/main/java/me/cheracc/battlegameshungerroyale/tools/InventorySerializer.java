@@ -1,6 +1,8 @@
 package me.cheracc.battlegameshungerroyale.tools;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -17,15 +19,17 @@ public class InventorySerializer {
     /**
      * Converts the player inventory to a String array of Base64 strings. First string is the content and second string is the armor.
      *
-     * @param playerInventory to turn into an array of strings.
-     * @return Array of strings: [ main content, armor content ]
+     * @param player player whose inventory to serialize.
+     * @return Array of strings: [ main content, armor content, ender chest content ]
      */
-    public static String[] playerInventoryToBase64(PlayerInventory playerInventory) throws IllegalStateException {
+    public static String[] playerInventoryToBase64(Player player) throws IllegalStateException {
+        PlayerInventory playerInventory = player.getInventory();
         //get the main content part, this doesn't return the armor
         String content = toBase64(playerInventory);
         String armor = itemStackArrayToBase64(playerInventory.getArmorContents());
+        String enderChest = toBase64(player.getEnderChest());
 
-        return new String[] { content, armor };
+        return new String[] { content, armor, enderChest };
     }
 
     /**
@@ -47,10 +51,12 @@ public class InventorySerializer {
             // Write the size of the inventory
             dataOutput.writeInt(items.length);
 
-            // Save every element in the list
+            // Save every element in the list, ignoring items issued by the plugin itself
             for (ItemStack item : items) {
                 if (!Tools.isPluginItem(item))
                     dataOutput.writeObject(item);
+                else
+                    dataOutput.writeObject(null);
             }
 
             // Serialize that array
@@ -78,13 +84,18 @@ public class InventorySerializer {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
+            int inventorySize = inventory.getSize();
 
             // Write the size of the inventory
-            dataOutput.writeInt(inventory.getSize());
+            dataOutput.writeInt(inventorySize);
 
             // Save every element in the list
-            for (int i = 0; i < inventory.getSize(); i++) {
-                dataOutput.writeObject(inventory.getItem(i));
+            for (int i = 0; i < inventorySize; i++) {
+                ItemStack item = inventory.getItem(i);
+                if (Tools.isPluginItem(item))
+                    item = null;
+
+                dataOutput.writeObject(item);
             }
 
             // Serialize that array
@@ -113,10 +124,16 @@ public class InventorySerializer {
         try {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
             BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
-            Inventory inventory = Bukkit.getServer().createInventory(null, dataInput.readInt());
+            int inventorySize = dataInput.readInt();
+            Inventory inventory;
+
+            if (inventorySize == 41) {
+                inventory = Bukkit.getServer().createInventory(null, InventoryType.PLAYER);
+            } else
+                inventory = Bukkit.getServer().createInventory(null, inventorySize);
 
             // Read the serialized inventory
-            for (int i = 0; i < inventory.getSize(); i++) {
+            for (int i = 0; i < inventorySize; i++) {
                 inventory.setItem(i, (ItemStack) dataInput.readObject());
             }
 
@@ -154,4 +171,25 @@ public class InventorySerializer {
             throw new IOException("Unable to decode class type.", e);
         }
     }
+
+    public static void resetPlayerInventoryFromBase64(Player player, String[] base64EncodedPlayerInventory) throws IOException {
+        Inventory primary = fromBase64(base64EncodedPlayerInventory[0]);
+        ItemStack[] armor = itemStackArrayFromBase64(base64EncodedPlayerInventory[1]);
+
+        if (primary.getContents() != null && primary.getContents().length >= 0)
+            player.getInventory().setContents(primary.getContents());
+
+        player.getInventory().setArmorContents(armor);
+
+        if (base64EncodedPlayerInventory.length >= 3) {
+            Inventory enderChest = fromBase64(base64EncodedPlayerInventory[2]);
+
+            if (enderChest.getContents() != null && enderChest.getContents().length >= 0)
+                player.getEnderChest().setContents(enderChest.getContents());
+
+        }
+
+    }
+
+
 }

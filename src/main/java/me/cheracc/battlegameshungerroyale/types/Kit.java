@@ -138,7 +138,7 @@ public class Kit {
         if (!equipment.isCompletelyEmpty()) {
             equipment.equip(p);
         }
-        p.sendMessage(Tools.componentalize("You have been given equipment and kit items for kit " + getName()));
+        p.sendMessage(Tools.componentalize("You have been equipped with kit &e" + getName()));
     }
 
     public Material getIcon() {

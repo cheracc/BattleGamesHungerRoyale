@@ -57,7 +57,7 @@ public class BGHR extends JavaPlugin implements Listener {
 
     @EventHandler
     public void runDelayedTasks(ServerLoadEvent event) {
-        PlayerManager.getInstance().initialize();
+        PlayerManager.getInstance().initialize(this);
         new BukkitRunnable() {
             @Override
             public void run() {

@@ -1,17 +1,21 @@
 package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.GameManager;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
+import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
 import java.sql.*;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -24,6 +28,7 @@ public class PlayerData {
     private Kit kit;
     private final long joinTime;
     private boolean modified = false;
+    private boolean loaded = false;
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -31,11 +36,26 @@ public class PlayerData {
         joinTime = System.currentTimeMillis();
         stats = new PlayerStats(uuid);
         // load the stats and if new, mark as modified so they can be saved on the next update
-        loadAsynchronously(foundRecords -> modified = !foundRecords);
+        loadAsynchronously(foundRecords -> {
+            if (foundRecords)
+                Bukkit.getLogger().info("finished loading playerdata for " + uuid);
+            else
+                Bukkit.getLogger().info("created new playerdata for " + uuid);
+            modified = !foundRecords;
+            PlayerManager.getInstance().thisPlayerIsLoaded(this);
+            loaded = true;
+
+            if (getPlayer() != null)
+                restorePlayer();
+        });
     }
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    public boolean isLoaded() {
+        return loaded;
     }
 
     public Player getPlayer() {
@@ -67,10 +87,11 @@ public class PlayerData {
 
         this.kit = kit;
 
-        getPlayer().sendMessage(Component.text("Your chosen Kit has been set to " + kit.getName()));
 
         if (MapManager.getInstance().isThisAGameWorld(getPlayer().getWorld()) || BGHR.getPlugin().getConfig().getBoolean("main world.kits useable in main world", false)) {
             kit.outfitPlayer(getPlayer());
+        } else {
+            getPlayer().sendMessage(Component.text("Kit&e " + kit.getName() + " &fwill be equipped when you join a game."));
         }
     }
 
@@ -83,37 +104,56 @@ public class PlayerData {
         return this.kit != null && this.kit.equals(kit);
     }
 
+    public void restorePlayer() {
+        Player p = getPlayer();
+        if (settings.isShowMainScoreboard())
+            p.setScoreboard(GameManager.getInstance().getMainScoreboard());
+
+        writeSavedInventoryToPlayer();
+
+        if (getSettings().getDefaultKit() != null) {
+            Kit kit = KitManager.getInstance().getKit(getSettings().getDefaultKit());
+            if (kit != null)
+                registerKit(kit, false);
+        }
+    }
+
     public Location getLastLocation() {
         return lastLocation.clone();
     }
 
     public void setLastLocation(Location loc) {
-        lastLocation = loc;
+        if (!loc.equals(lastLocation)) {
+            lastLocation = loc;
+            modified = true;
+        }
     }
 
-    public void saveInventory() {
-        lastInventory = InventorySerializer.playerInventoryToBase64(getPlayer().getInventory());
-    }
+    public void saveInventory(boolean clear) {
+        String[] currentInventory = InventorySerializer.playerInventoryToBase64(getPlayer());
 
-    public void resetInventory() {
-        Player p = getPlayer();
-        if (lastInventory == null)
-            return;
-        try {
-            ItemStack[] mainInventory = InventorySerializer.itemStackArrayFromBase64(lastInventory[0]);
-            ItemStack[] armorInventory = InventorySerializer.itemStackArrayFromBase64(lastInventory[1]);
+        if (!Arrays.equals(currentInventory, lastInventory)) {
+            lastInventory = currentInventory;
+            modified = true;
+        }
 
-            p.closeInventory();
+        if (clear) {
+            Player p = getPlayer();
             p.getInventory().clear();
-            p.setItemOnCursor(null);
+            p.getInventory().setArmorContents(null);
+            p.getEnderChest().clear();
+        }
+    }
 
-            for (int i = 0; i < mainInventory.length; i++) {
-                p.getInventory().setItem(i, mainInventory[i]);
+    public String[] getSavedInventory() {
+        return lastInventory;
+    }
+
+    private void writeSavedInventoryToPlayer() {
+        try {
+            if (lastInventory != null) {
+                InventorySerializer.resetPlayerInventoryFromBase64(getPlayer(), lastInventory);
             }
-            for (int i = 0; i < armorInventory.length; i++) {
-                p.getInventory().setArmorContents(armorInventory);
-            }
-            lastInventory = null;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -127,22 +167,33 @@ public class PlayerData {
         modified = value;
     }
 
-    public void loadAsynchronously(Consumer<Boolean> callback) {
+    private void loadAsynchronously(Consumer<Boolean> callback) {
         new BukkitRunnable() {
             @Override
             public void run() {
-                callback.accept(load());
+                boolean success = load();
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        callback.accept(success);
+                    }
+                }.runTask(BGHR.getPlugin());
             }
         }.runTaskAsynchronously(BGHR.getPlugin());
+    }
+
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection("jdbc:h2:" + BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/plugin_data;mode=MySQL;DATABASE_TO_LOWER=TRUE" , "bghr", "bghr");
     }
 
     public boolean load() {
         final BGHR plugin = BGHR.getPlugin();
         boolean found = false;
 
-        try (Connection con = DriverManager.getConnection("jdbc:h2:" + plugin.getDataFolder().getAbsolutePath() + "/plugin_data;mode=MySQL;DATABASE_TO_LOWER=TRUE" , "bghr", "bghr");
+        try ( Connection con = getConnection();
         PreparedStatement loadStatsQuery = con.prepareStatement("SELECT * FROM player_stats WHERE uuid=?");
-        PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?")) {
+        PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?");
+        PreparedStatement loadDataQuery = con.prepareStatement("SELECT * FROM player_data WHERE uuid=?")) {
 
             loadStatsQuery.setObject(1, uuid);
             ResultSet result = loadStatsQuery.executeQuery();
@@ -187,10 +238,114 @@ public class PlayerData {
                 settings.setDefaultKit(result.getString("defaultkit"));
                 result.close();
             }
+
+            loadDataQuery.setObject(1, uuid);
+            result = loadDataQuery.executeQuery();
+            if (result.isBeforeFirst()) {
+                result.next();
+
+                if (!result.isLast()) {
+                    Bukkit.getLogger().warning("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
+                    return false;
+                }
+
+                found = true;
+                World w = Bukkit.getWorld((UUID) result.getObject("lastworld"));
+                if (w == null)
+                    w = Bukkit.getWorlds().get(0);
+                int x = result.getInt("lastx");
+                int y = result.getInt("lasty");
+                int z = result.getInt("lastz");
+                lastLocation = new Location(w, x, y, z);
+
+                String main = result.getString("inventory");
+                String armor = result.getString("armor");
+                String enderChest = result.getString("enderchest");
+                lastInventory = new String[] {main, armor, enderChest};
+                result.close();
+            }
+
             return found;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
+
+    public void save() {
+        try {
+            Connection con = getConnection();
+            PreparedStatement updateSettings = con.prepareStatement(
+                    "INSERT INTO player_settings (uuid,showmain,showhelp,defaultkit) VALUES (?,?,?,?) " +
+                            "ON DUPLICATE KEY UPDATE " +
+                            "showmain=VALUES(showmain)," +
+                            "showhelp=VALUES(showhelp)," +
+                            "defaultkit=VALUES(defaultkit);");
+            updateSettings.setObject(1, getUuid());
+            updateSettings.setBoolean(2, settings.isShowMainScoreboard());
+            updateSettings.setBoolean(3, settings.isShowHelp());
+            updateSettings.setString(4, settings.getDefaultKit());
+            updateSettings.executeUpdate();
+
+            PreparedStatement updateStats = con.prepareStatement(
+                    "INSERT INTO player_stats (uuid,played,kills,killstreak,deaths,wins,secondplaces,totaltime,quits,damagedealt,damagetaken,activeabilities,usedkits,playedmaps) VALUES " +
+                            "(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
+                            "played=VALUES(played)," +
+                            "kills=VALUES(kills)," +
+                            "killstreak=VALUES(killstreak)," +
+                            "deaths=VALUES(deaths)," +
+                            "wins=VALUES(wins)," +
+                            "secondplaces=VALUES(secondplaces)," +
+                            "totaltime=VALUES(totaltime)," +
+                            "quits=VALUES(quits)," +
+                            "damagedealt=VALUES(damagedealt)," +
+                            "damagetaken=VALUES(damagetaken)," +
+                            "usedkits=VALUES(usedkits)," +
+                            "playedmaps=VALUES(playedmaps)," +
+                            "activeabilities=VALUES(activeabilities);");
+            updateStats.setObject(1, getUuid());
+            updateStats.setInt(2, stats.getPlayed());
+            updateStats.setInt(3, stats.getKills());
+            updateStats.setInt(4, stats.getKillStreak());
+            updateStats.setInt(5, stats.getDeaths());
+            updateStats.setInt(6, stats.getWins());
+            updateStats.setInt(7, stats.getSecondPlaceFinishes());
+            updateStats.setLong(8, stats.getTotalTimePlayed());
+            updateStats.setInt(9, stats.getGamesQuit());
+            updateStats.setInt(10, stats.getDamageDealt());
+            updateStats.setInt(11, stats.getDamageTaken());
+            updateStats.setInt(12, stats.getActiveAbilitiesUsed());
+            updateStats.setObject(13, stats.getUsedKits());
+            updateStats.setObject(14, stats.getPlayedMaps());
+            updateStats.execute();
+
+            PreparedStatement updateData = con.prepareStatement(
+                    "INSERT INTO player_data (uuid,lastworld,lastx,lasty,lastz,inventory,armor,enderchest) VALUES (?,?,?,?,?,?,?,?) " +
+                            "ON DUPLICATE KEY UPDATE " +
+                            "lastworld=VALUES(lastworld)," +
+                            "lastx=VALUES(lastx)," +
+                            "lasty=VALUES(lasty)," +
+                            "lastz=VALUES(lastz)," +
+                            "inventory=VALUES(inventory)," +
+                            "armor=VALUES(armor)," +
+                            "enderchest=VALUES(enderchest)");
+            updateData.setObject(1, getUuid());
+            updateData.setObject(2, getLastLocation().getWorld().getUID());
+            updateData.setInt(3, (int) getLastLocation().getX());
+            updateData.setInt(4, (int) getLastLocation().getY());
+            updateData.setInt(5, (int) getLastLocation().getZ());
+            updateData.setString(6, getSavedInventory()[0]);
+            updateData.setString(7, getSavedInventory()[1]);
+            updateData.setString(8, getSavedInventory()[2]);
+            updateData.execute();
+
+            modified = false;
+            con.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

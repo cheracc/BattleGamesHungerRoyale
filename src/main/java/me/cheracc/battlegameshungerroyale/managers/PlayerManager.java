@@ -2,8 +2,6 @@ package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
-import me.cheracc.battlegameshungerroyale.types.PlayerSettings;
-import me.cheracc.battlegameshungerroyale.types.PlayerStats;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -14,19 +12,27 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PlayerManager {
-    private final static int CURRENT_DB_VERSION = 1;
+    private final static int CURRENT_DB_VERSION = 2;
 
     private static PlayerManager singletonInstance = null;
-    private final List<PlayerData> loadedPlayers = new ArrayList<>();
-    private final BukkitTask databaseUpdater;
-    Connection databaseConnection;
+    private BGHR plugin;
+    private final List<PlayerData> loadedPlayers = new CopyOnWriteArrayList<>();
+    private BukkitTask databaseUpdater;
+    private BukkitTask playerDataUpdater;
+    private Connection databaseConnection;
 
     private PlayerManager() {
-        if (!databaseIsCurrent())
-            setupTables();
-        databaseUpdater = databaseUpdater();
+    }
+
+    public boolean isPlayerDataLoaded(Player player) {
+        for (PlayerData data : loadedPlayers) {
+            if (data.getUuid().equals(player.getUniqueId()) && data.isLoaded())
+                return true;
+        }
+        return false;
     }
 
     public @NotNull PlayerData getPlayerData(UUID uuid) {
@@ -34,13 +40,18 @@ public class PlayerManager {
             if (d.getUuid().equals(uuid))
                 return d;
         }
-        PlayerData data = new PlayerData(uuid);
-        loadedPlayers.add(data);
-        return data;
+        return new PlayerData(uuid);
     }
 
     public @NotNull PlayerData getPlayerData(Player player) {
         return getPlayerData(player.getUniqueId());
+    }
+
+    public void thisPlayerIsLoaded(PlayerData data) {
+        if (!isPlayerDataLoaded(data.getPlayer()))
+            loadedPlayers.add(data);
+        else
+            Bukkit.getLogger().warning("data for " + data.getPlayer().getName() + " is already loaded");
     }
 
     public static PlayerManager getInstance() {
@@ -49,12 +60,17 @@ public class PlayerManager {
         return singletonInstance;
     }
 
-    public void initialize() {
-        setupTables();
+    public void initialize(BGHR plugin) {
+        this.plugin = plugin;
+        if (!databaseIsCurrent())
+            setupTables();
+        databaseUpdater = databaseUpdater();
+        playerDataUpdater = playerDataUpdater();
     }
 
     public void disable() {
         databaseUpdater.cancel();
+        playerDataUpdater.cancel();
         try {
             if (databaseConnection != null && !databaseConnection.isClosed())
                 databaseConnection.close();
@@ -63,12 +79,12 @@ public class PlayerManager {
         }
     }
 
+    // TODO move all db stuff into PlayerData
     private void getConnection() {
         try {
             if (databaseConnection != null && databaseConnection.isClosed())
                 databaseConnection = null;
             if (databaseConnection == null) {
-                BGHR plugin = BGHR.getPlugin();
                 Class.forName("org.h2.Driver");
                 databaseConnection = DriverManager.getConnection("jdbc:h2:" + plugin.getDataFolder().getAbsolutePath() + "/plugin_data;mode=MySQL;DATABASE_TO_LOWER=TRUE" , "bghr", "bghr");
             }
@@ -116,10 +132,22 @@ public class PlayerManager {
                 "defaultkit VARCHAR(24)" +
                 ")");
         PreparedStatement createVersionTable = databaseConnection.prepareStatement("CREATE TABLE IF NOT EXISTS db_version (" +
-                "version TINYINT)")) {
+                "version TINYINT)");
+        PreparedStatement createDataTable = databaseConnection.prepareStatement("CREATE TABLE IF NOT EXISTS player_data (" +
+                "uuid UUID PRIMARY KEY," +
+                "lastworld UUID," +
+                "lastx INT," +
+                "lasty INT," +
+                "lastz INT," +
+                "inventory TEXT," +
+                "armor TEXT," +
+                "enderchest TEXT)"))
+
+        {
             createStats.execute();
             createSettings.execute();
             createVersionTable.execute();
+            createDataTable.execute();
 
             PreparedStatement addVersion = databaseConnection.prepareStatement("INSERT INTO db_version (version) VALUES (?)");
             addVersion.setInt(1, CURRENT_DB_VERSION);
@@ -130,79 +158,48 @@ public class PlayerManager {
         }
     }
 
-    private void savePlayer(PlayerData data) {
-        PlayerStats stats = data.getStats();
-        PlayerSettings settings = data.getSettings();
-
-        try {
-            getConnection();
-            PreparedStatement updateSettings = databaseConnection.prepareStatement(
-                    "INSERT INTO player_settings (uuid,showmain,showhelp,defaultkit) VALUES (?,?,?,?) " +
-                    "ON DUPLICATE KEY UPDATE " +
-                    "showmain=VALUES(showmain)," +
-                    "showhelp=VALUES(showhelp)," +
-                    "defaultkit=VALUES(defaultkit);");
-            updateSettings.setObject(1, data.getUuid());
-            updateSettings.setBoolean(2, settings.isShowMainScoreboard());
-            updateSettings.setBoolean(3, settings.isShowHelp());
-            updateSettings.setString(4, settings.getDefaultKit());
-            updateSettings.executeUpdate();
-
-            PreparedStatement updateStats = databaseConnection.prepareStatement(
-                    "INSERT INTO player_stats (uuid,played,kills,killstreak,deaths,wins,secondplaces,totaltime,quits,damagedealt,damagetaken,activeabilities,usedkits,playedmaps) VALUES " +
-                    "(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
-                    "played=VALUES(played)," +
-                    "kills=VALUES(kills)," +
-                    "killstreak=VALUES(killstreak)," +
-                    "deaths=VALUES(deaths)," +
-                    "wins=VALUES(wins)," +
-                    "secondplaces=VALUES(secondplaces)," +
-                    "totaltime=VALUES(totaltime)," +
-                    "quits=VALUES(quits)," +
-                    "damagedealt=VALUES(damagedealt)," +
-                    "damagetaken=VALUES(damagetaken)," +
-                    "usedkits=VALUES(usedkits)," +
-                    "playedmaps=VALUES(playedmaps)," +
-                    "activeabilities=VALUES(activeabilities);");
-            updateStats.setObject(1, data.getUuid());
-            updateStats.setInt(2, stats.getPlayed());
-            updateStats.setInt(3, stats.getKills());
-            updateStats.setInt(4, stats.getKillStreak());
-            updateStats.setInt(5, stats.getDeaths());
-            updateStats.setInt(6, stats.getWins());
-            updateStats.setInt(7, stats.getSecondPlaceFinishes());
-            updateStats.setLong(8, stats.getTotalTimePlayed());
-            updateStats.setInt(9, stats.getGamesQuit());
-            updateStats.setInt(10, stats.getDamageDealt());
-            updateStats.setInt(11, stats.getDamageTaken());
-            updateStats.setInt(12, stats.getActiveAbilitiesUsed());
-            updateStats.setObject(13, stats.getUsedKits());
-            updateStats.setObject(14, stats.getPlayedMaps());
-            updateStats.execute();
-            databaseConnection.close();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     private BukkitTask databaseUpdater() {
         BukkitRunnable task = new BukkitRunnable() {
             @Override
             public void run() {
-            for (PlayerData data : loadedPlayers) {
-                if (data.isModified()) {
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            savePlayer(data);
-                            data.setModified(false);
-                        }
-                    }.runTaskAsynchronously(BGHR.getPlugin());
+                for (PlayerData data : loadedPlayers) {
+                    if (data.isModified()) {
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                data.save();
+                            }
+                        }.runTaskAsynchronously(plugin);
+                    }
                 }
             }
+        };
+        return task.runTaskTimer(plugin, 600L, 200L);
+    }
+
+    private BukkitTask playerDataUpdater() {
+        BukkitRunnable task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                List<PlayerData> toRemove = new ArrayList<>();
+
+                for (PlayerData data : loadedPlayers) {
+                    Player p = data.getPlayer();
+                    if (!data.isModified() && data.isLoaded() && (p == null || !p.isOnline())) {
+                        toRemove.add(data);
+                        continue;
+                    }
+
+                    if (p != null && !MapManager.getInstance().isThisAGameWorld(p.getWorld())) {
+                        data.saveInventory(false);
+                        data.setLastLocation(p.getLocation());
+                    }
+                }
+
+                toRemove.forEach(loadedPlayers::remove);
             }
         };
-        return task.runTaskTimer(BGHR.getPlugin(), 600L, 200L);
+        return task.runTaskTimer(plugin, 600L, 200L);
     }
+
 }

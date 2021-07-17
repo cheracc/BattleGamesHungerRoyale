@@ -40,9 +40,10 @@ public class Teleport extends Ability implements ActiveAbility {
         if (result != null && result.getHitBlock() != null) {
             teleportLocation = result.getHitBlock().getLocation();
             if (!isSafeLocation(teleportLocation))
-                teleportLocation = findNearbySafeLocation(teleportLocation, 3).add(0.5,0,0.5);
+                teleportLocation = findNearbySafeLocation(teleportLocation, 3);
             if (teleportLocation == null)
                 return false;
+            teleportLocation.add(0.5,0,0.5);
         } else if (allowTeleportingIntoMidair) {
             teleportLocation = source.getLocation().add(source.getLocation().getDirection().normalize().multiply(maxDistance));
         }
