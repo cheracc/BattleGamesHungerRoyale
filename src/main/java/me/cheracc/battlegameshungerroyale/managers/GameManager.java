@@ -39,8 +39,9 @@ public class GameManager {
     }
 
     public static GameManager getInstance() {
-        if (singletonInstance == null)
+        if (singletonInstance == null) {
             throw new InstantiationError("must initialize first using initialize(BGHR plugin)");
+        }
 
         return singletonInstance;
     }
