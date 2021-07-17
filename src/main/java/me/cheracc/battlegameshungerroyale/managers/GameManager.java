@@ -27,8 +27,10 @@ public class GameManager {
     private final List<Game> activeGames = new ArrayList<>();
     private final Scoreboard mainScoreboard;
     private final BukkitTask scoreboardUpdater;
+    private final BGHR plugin;
 
-    private GameManager() {
+    private GameManager(BGHR plugin) {
+        this.plugin = plugin;
         ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
         mainScoreboard = scoreboardManager.getNewScoreboard();
         startWithRandomConfig();
@@ -38,9 +40,13 @@ public class GameManager {
 
     public static GameManager getInstance() {
         if (singletonInstance == null)
-            singletonInstance = new GameManager();
+            throw new InstantiationError("must initialize first using initialize(BGHR plugin)");
 
         return singletonInstance;
+    }
+
+    public static void initialize(BGHR plugin) {
+        singletonInstance = new GameManager(plugin);
     }
 
     public Scoreboard getMainScoreboard() {
@@ -78,7 +84,7 @@ public class GameManager {
 
     public void gameOver(Game game) {
         activeGames.remove(game);
-        if (activeGames.isEmpty() && BGHR.getPlugin().isEnabled())
+        if (activeGames.isEmpty() && plugin.isEnabled())
             startWithRandomConfig();
         updateScoreboard();
     }
@@ -88,7 +94,7 @@ public class GameManager {
     }
 
     public List<GameOptions> getAllConfigs() {
-        File configDir = new File(BGHR.getPlugin().getDataFolder(), "gameconfigs/");
+        File configDir = new File(plugin.getDataFolder(), "gameconfigs/");
         List<GameOptions> configs = new ArrayList<>();
 
         if (!configDir.exists())
@@ -106,7 +112,7 @@ public class GameManager {
                         Bukkit.getLogger().info("creating default game configs");
                         sent = true;
                     }
-                    InputStream in = BGHR.getPlugin().getResource("default_game_configs/" + filename);
+                    InputStream in = plugin.getResource("default_game_configs/" + filename);
                     FileUtils.copyToFile(in, defaultConfig);
                     in.close();
                 } catch (IOException e) {
@@ -208,7 +214,7 @@ public class GameManager {
                 updateScoreboard();
             }
         };
-        return updater.runTaskTimer(BGHR.getPlugin(), 100L, 100L);
+        return updater.runTaskTimer(plugin, 100L, 100L);
     }
 
 

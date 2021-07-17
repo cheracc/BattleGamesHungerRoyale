@@ -24,6 +24,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
 public class GeneralListeners implements Listener {
+    private final BGHR plugin;
+    public GeneralListeners(BGHR plugin) {
+        this.plugin = plugin;
+    }
 
     @EventHandler
     public void handlePlayerQuits(PlayerQuitEvent event) {
@@ -56,7 +60,7 @@ public class GeneralListeners implements Listener {
 
         // check if player is transferring TO a main world FROM a game world
         if (!MapManager.getInstance().isThisAGameWorld(p.getWorld()) && MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld())) {
-            GameMode defaultGameMode = GameMode.valueOf(BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
+            GameMode defaultGameMode = GameMode.valueOf(plugin.getConfig().getString("main world.gamemode", "adventure").toUpperCase());
             p.setGameMode(defaultGameMode);
             pData.setLastLocation(event.getFrom());
         }
@@ -178,12 +182,15 @@ public class GeneralListeners implements Listener {
         }
 
         // set the gamemode based on config
-        String gm = BGHR.getPlugin().getConfig().getString("main world.gamemode", "adventure");
+        String gm = plugin.getConfig().getString("main world.gamemode", "adventure");
         GameMode mode = GameMode.valueOf(gm.toUpperCase());
         p.setGameMode(mode);
 
         if (PlayerManager.getInstance().isPlayerDataLoaded(p))
             PlayerManager.getInstance().getPlayerData(p).restorePlayer();
+
+        if (plugin.getConfig().getBoolean("main world.place players at spawn on join", false))
+            p.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
     }
 
     // Inventory handling listener

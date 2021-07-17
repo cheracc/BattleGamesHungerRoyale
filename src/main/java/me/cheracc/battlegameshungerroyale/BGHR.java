@@ -1,12 +1,12 @@
 package me.cheracc.battlegameshungerroyale;
 
 import me.cheracc.battlegameshungerroyale.commands.*;
-import me.cheracc.battlegameshungerroyale.managers.*;
-import me.cheracc.battlegameshungerroyale.types.Game;
-import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
+import me.cheracc.battlegameshungerroyale.managers.*;
+import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
@@ -17,7 +17,6 @@ import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -51,21 +50,16 @@ public class BGHR extends JavaPlugin implements Listener {
         getCommand("abilityitem").setExecutor(new AbilityItemCommand());
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
-        Bukkit.getPluginManager().registerEvents(new GeneralListeners(), this);
+        Bukkit.getPluginManager().registerEvents(new GeneralListeners(this), this);
         Bukkit.getPluginManager().registerEvents(this, this);
     }
 
     @EventHandler
     public void runDelayedTasks(ServerLoadEvent event) {
         PlayerManager.getInstance().initialize(this);
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                GameManager.getInstance();
-            }
-        }.runTaskLater(this, 10L);
         if (MapManager.getInstance().wasDatapackUpdated())
             Bukkit.reloadData();
+        GameManager.initialize(this);
     }
 
     @Override
