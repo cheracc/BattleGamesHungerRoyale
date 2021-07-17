@@ -1,5 +1,6 @@
 package me.cheracc.battlegameshungerroyale.commands;
 
+import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
@@ -28,6 +29,11 @@ public class KitCommand implements CommandExecutor {
 
                     if (data.getKit() != null && data.getKit().equals(kit)) {
                         p.sendMessage(Component.text("You are already using kit " + kit.getName()));
+                        return true;
+                    }
+
+                    if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+                        p.sendMessage(Tools.componentalize("You cannot change your kit while playing a game"));
                         return true;
                     }
 

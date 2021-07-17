@@ -169,13 +169,6 @@ public class EquipmentSet {
                 }
                 p.getInventory().setItem(EquipmentSlot.valueOf(e.getKey().name()), Tools.tagAsPluginItem(tagItem(e.getValue())));
             }
-            else {
-                if (p.getInventory().firstEmpty() > 8) {
-                    p.sendMessage(Tools.componentalize("This kit cannot be equipped because you do not have enough empty hotbar slots."));
-                    unequip(p);
-                    return false;
-                }
-            }
         }
         for (ItemStack i : getOtherItems()) {
             p.getInventory().addItem(Tools.tagAsPluginItem(tagItem(i)));
@@ -184,10 +177,9 @@ public class EquipmentSet {
     }
 
     public void unequip(Player p) {
-        for (int i = 0; i <= 8; i++) {
-            ItemStack item = p.getInventory().getItem(i);
+        for (ItemStack item : p.getInventory().getContents()) {
             if (hasTag(item))
-                p.getInventory().setItem(i, null);
+                p.getInventory().remove(item);
         }
             if (hasTag(p.getInventory().getHelmet()))
                 p.getInventory().setHelmet(null);

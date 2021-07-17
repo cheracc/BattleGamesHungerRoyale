@@ -63,7 +63,10 @@ public class Teleport extends Ability implements ActiveAbility {
                 getSound().play(source.getLocation());
                 getSound().play(teleportLocation);
             }
+            boolean flight = source.getAllowFlight();
+            source.setAllowFlight(true);
             source.teleport(teleportLocation, PlayerTeleportEvent.TeleportCause.PLUGIN);
+            source.setAllowFlight(flight);
             source.setFallDistance(0);
         }
 

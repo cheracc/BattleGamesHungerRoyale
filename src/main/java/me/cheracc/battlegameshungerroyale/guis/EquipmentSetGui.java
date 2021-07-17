@@ -56,7 +56,7 @@ public class EquipmentSetGui extends Gui {
     private void fillOtherSlots() {
         String instructions = "Click here to remove this item, or drop another item here to replace it.";
         String emptyInstructions = "Drop an item here to add it to this kit's hotbar.";
-        String hotbarWarning = "Items placed here will be locked to the player's hotbar or off hand slots and cannot be dropped.";
+        String hotbarWarning = "These items will simply be given to the player wherever they have room.";
         GuiItem guiItem;
         int slot = SLOTS.length;
 
