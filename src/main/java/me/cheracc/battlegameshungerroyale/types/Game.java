@@ -382,7 +382,6 @@ public class Game implements Listener {
         int count = 0;
         for (Player p : getActivePlayers()) {
             p.teleport(spawnPoints.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
-            p.setWalkSpeed(0F);
             count++;
         }
 
@@ -395,7 +394,7 @@ public class Game implements Listener {
                         return;
 
                     if (count == 0) {
-                        p.setWalkSpeed(0.2F);
+                        p.setAllowFlight(true);
                         p.setVelocity(boost);
                     } else {
                         p.setVelocity(p.getVelocity().add(boost));
@@ -745,7 +744,6 @@ public class Game implements Listener {
     @EventHandler
     public void handleQuits(PlayerQuitEvent event) {
         Player p = event.getPlayer();
-        p.setWalkSpeed(0.2F);
         p.setAllowFlight(false);
         if (isSpectating(p) || isPlaying(p))
             quit(p);

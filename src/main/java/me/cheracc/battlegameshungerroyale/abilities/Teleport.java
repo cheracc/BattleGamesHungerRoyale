@@ -1,5 +1,6 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import org.bukkit.Location;
@@ -8,7 +9,6 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.RayTraceResult;
 
@@ -63,10 +63,7 @@ public class Teleport extends Ability implements ActiveAbility {
                 getSound().play(source.getLocation());
                 getSound().play(teleportLocation);
             }
-            boolean flight = source.getAllowFlight();
-            source.setAllowFlight(true);
-            source.teleport(teleportLocation, PlayerTeleportEvent.TeleportCause.PLUGIN);
-            source.setAllowFlight(flight);
+            Tools.uncheckedTeleport(source, teleportLocation);
             source.setFallDistance(0);
         }
 

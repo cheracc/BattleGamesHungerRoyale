@@ -10,10 +10,7 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.commons.lang.WordUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -86,6 +83,14 @@ public class Tools {
         }
         wrappedText.add(color + currentLine.toString());
         return wrappedText;
+    }
+
+    public static void uncheckedTeleport(Player player, Location location) {
+        double value = Bukkit.getServer().spigot().getSpigotConfig().getDouble("moved-too-quickly-multiplier", 10);
+
+        Bukkit.getServer().spigot().getSpigotConfig().set("moved-too-quickly-multiplier", Double.MAX_VALUE);
+        player.teleport(location);
+        Bukkit.getServer().spigot().getSpigotConfig().set("moved-too-quickly-multiplier", value);
     }
 
     public static String decomponentalize(Component component) {
