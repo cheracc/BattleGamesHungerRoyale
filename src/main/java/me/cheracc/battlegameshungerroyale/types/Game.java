@@ -1,9 +1,7 @@
 package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
-import me.cheracc.battlegameshungerroyale.events.GameDamageEvent;
-import me.cheracc.battlegameshungerroyale.events.GameDeathEvent;
+import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
@@ -117,6 +115,7 @@ public class Game implements Listener {
 
         pregameTimer = startPregameTimer();
         GameManager.getInstance().setupGame(this);
+        new GameLoadedEvent(this).callEvent();
     }
 
     public void startGame() {
@@ -135,18 +134,20 @@ public class Game implements Listener {
                 gameTick = startGameTick();
                 gameLog.addPhaseEntry(currentPhase);
                 currentPhase = GamePhase.INVINCIBILITY;
+                new GameChangedPhaseEvent(this, "invincibility");
             });
         else if (options.getStartType() == GameOptions.StartType.HUNGERGAMES) {
             doHungergamesSpawn(success -> {
                 gameTick = startGameTick();
                 gameLog.addPhaseEntry(currentPhase);
                 currentPhase = GamePhase.INVINCIBILITY;
+                new GameChangedPhaseEvent(this, "invincibility");
             });
         }
         for (Player p : getActivePlayers()) {
             p.setInvulnerable(true);
-            //p.setBedSpawnLocation(p.getLocation(), true);
         }
+        new GameStartEvent(this).callEvent();
     }
 
     public Scoreboard getScoreboard() {
@@ -490,6 +491,7 @@ public class Game implements Listener {
 
     private void startMainPhase() {
         currentPhase = GamePhase.MAIN;
+        new GameChangedPhaseEvent(this, "main");
         List<UUID> toRemove = new ArrayList<>();
         for (UUID uuid : participants.keySet()) {
             Player p = Bukkit.getPlayer(uuid);
@@ -519,6 +521,7 @@ public class Game implements Listener {
 
     private void startBorderPhase() {
         currentPhase = GamePhase.BORDER;
+        new GameChangedPhaseEvent(this, "border");
         world.getWorldBorder().setSize(10, options.getBorderTime());
         GameManager.getInstance().updateScoreboard();
         gameLog.addPhaseEntry(currentPhase);
@@ -530,9 +533,11 @@ public class Game implements Listener {
         respawner.cancel();
         postgameTimer = startPostGameTimer();
         currentPhase = GamePhase.POSTGAME;
+        new GameChangedPhaseEvent(this, "postgame");
         GameManager.getInstance().updateScoreboard();
         gameLog.addPhaseEntry(currentPhase);
         world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
+        new GameFinishedEvent(this, getWinner());
     }
 
     public void endGame() {

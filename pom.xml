@@ -29,6 +29,8 @@
                                     <include>org.reflections:reflections</include>
                                     <include>org.javassist:javassist</include>
                                     <include>com.github.MilkBowl:VaultAPI</include>
+                                    <include>org.bstats:bstats-base</include>
+                                    <include>org.bstats:bstats-bukkit</include>
                                 </includes>
                             </artifactSet>
                             <filters>
@@ -39,7 +41,13 @@
                                     </excludes>
                                 </filter>
                             </filters>
-                        </configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.bstats</pattern>
+                                    <!-- Replace this with your package! -->
+                                    <shadedPattern>me.cheracc.battlegameshungerroyale</shadedPattern>
+                                </relocation>
+                            </relocations></configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -74,6 +82,12 @@
             <artifactId>paper-api</artifactId>
             <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bstats</groupId>
+            <artifactId>bstats-bukkit</artifactId>
+            <version>2.2.1</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains</groupId>

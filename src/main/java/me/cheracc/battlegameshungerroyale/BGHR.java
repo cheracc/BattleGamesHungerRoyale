@@ -8,6 +8,7 @@ import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import net.milkbowl.vault.permission.Permission;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.event.EventHandler;
@@ -26,6 +27,7 @@ public class BGHR extends JavaPlugin implements Listener {
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onEnable() {
+        Metrics metrics = new Metrics(this, 12102);
         plugin = this;
         saveDefaultConfig();
         MapManager.getInstance();

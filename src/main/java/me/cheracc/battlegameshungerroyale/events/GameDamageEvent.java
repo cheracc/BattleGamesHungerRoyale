@@ -8,7 +8,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class GameDamageEvent extends Event implements Cancellable {
+public class GameDamageEvent extends Event implements Cancellable,GameEvent {
     private static final HandlerList handlerList = new HandlerList();
     private final Player aggressor;
     private final Player victim;
@@ -38,6 +38,7 @@ public class GameDamageEvent extends Event implements Cancellable {
         return victim;
     }
 
+    @Override
     public Game getGame() {
         return game;
     }

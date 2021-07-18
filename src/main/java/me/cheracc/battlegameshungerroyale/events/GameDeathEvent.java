@@ -7,7 +7,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class GameDeathEvent extends Event {
+public class GameDeathEvent extends Event implements GameEvent {
     private static final HandlerList handlerList = new HandlerList();
     private final Game game;
     private final Player recentlyDeceased;
@@ -22,6 +22,10 @@ public class GameDeathEvent extends Event {
         this.killingBlowCause = type;
         this.game = game;
 
+    }
+    @Override
+    public Game getGame() {
+        return game;
     }
 
     public Player getRecentlyDeceased() {
