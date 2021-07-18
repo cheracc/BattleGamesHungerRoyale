@@ -109,21 +109,23 @@ public class CustomEventsListener implements Listener {
             }
     }
 
-        // this damage wasn't caused by a block or an entity so must have been done by a damage tick
+        // this damage wasn't caused by a block or an entity so must have been done by something even more indirect - hopefully if from a player it was tagged properly...
         else {
             switch (event.getCause()) {
                 case FIRE_TICK:
                 case POISON:
                 case WITHER:
+                case MAGIC:
+                case FALL:
                     if (DamageSource.getFrom(victim) != null) {
                         DamageSource ds = DamageSource.getFrom(victim);
                         if (ds.getType() == event.getCause()) {
-                            if (System.currentTimeMillis() - ds.getTimeApplied() > ds.getDuration())
+                            if (System.currentTimeMillis() - ds.getTimeApplied() > ds.getDuration()) {
                                 ds.remove(victim);
-                            else {
-                                aggressor = ds.getSource();
-                                directDamage = false;
+                                break;
                             }
+                            aggressor = ds.getSource();
+                            directDamage = false;
                         }
                     }
                     break;

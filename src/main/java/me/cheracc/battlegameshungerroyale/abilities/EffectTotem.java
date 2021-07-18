@@ -1,12 +1,14 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -78,6 +80,7 @@ public class EffectTotem extends Ability implements ActiveAbility, Listener {
             totem.setMetadata("immune", new FixedMetadataValue(plugin, player.getUniqueId()));
         if (!totemIsDestroyable)
             totem.setMetadata("invulnerable", new FixedMetadataValue(plugin, true));
+        totem.setMetadata("owner", new FixedMetadataValue(plugin, player.getUniqueId()));
 
         startTotemWatcher(totem);
     }
@@ -115,8 +118,28 @@ public class EffectTotem extends Ability implements ActiveAbility, Listener {
                             targets.removeIf(e -> e.getUniqueId().equals(totem.getMetadata("immune").get(0).value()));
 
                         targets.forEach(e -> {
-                            if (e instanceof LivingEntity)
+                            if (e instanceof LivingEntity) {
                                 ((LivingEntity) e).addPotionEffect(effect);
+                                if (e instanceof Player) {
+                                    Player source = Bukkit.getPlayer((UUID) totem.getMetadata("owner").get(0).value());
+                                    EntityDamageEvent.DamageCause cause;
+
+                                    PotionEffectType type = effect.getType();
+                                    if (PotionEffectType.LEVITATION.equals(type)) {
+                                        cause = EntityDamageEvent.DamageCause.FALL;
+                                    } else if (PotionEffectType.HARM.equals(type)) {
+                                        cause = EntityDamageEvent.DamageCause.MAGIC;
+                                    } else if (PotionEffectType.POISON.equals(type)) {
+                                        cause = EntityDamageEvent.DamageCause.POISON;
+                                    } else if (PotionEffectType.WITHER.equals(type)) {
+                                        cause = EntityDamageEvent.DamageCause.WITHER;
+                                    } else {
+                                        cause = null;
+                                    }
+
+                                    if (source != null && cause != null)
+                                        new DamageSource(source, cause, effect.getDuration() + 20).apply((Player) e);
+                                }                            }
                         });
                     }
                 }
