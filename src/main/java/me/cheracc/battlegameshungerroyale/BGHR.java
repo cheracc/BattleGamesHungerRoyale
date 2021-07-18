@@ -5,6 +5,7 @@ import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
 import me.cheracc.battlegameshungerroyale.managers.*;
+import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import net.milkbowl.vault.permission.Permission;
@@ -23,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public class BGHR extends JavaPlugin implements Listener {
     private static BGHR plugin;
+    private PluginUpdater updater;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -62,6 +64,7 @@ public class BGHR extends JavaPlugin implements Listener {
         if (MapManager.getInstance().wasDatapackUpdated())
             Bukkit.reloadData();
         GameManager.initialize(this);
+        updater = new PluginUpdater(this);
     }
 
     @Override
@@ -74,6 +77,8 @@ public class BGHR extends JavaPlugin implements Listener {
         ConfigurationSerialization.unregisterClass(SoundEffect.class);
         GameManager.getInstance().stopUpdater();
         PlayerManager.getInstance().disable();
+        if (updater != null)
+            updater.disable();
     }
 
     public static Permission getPerms() {
@@ -84,6 +89,9 @@ public class BGHR extends JavaPlugin implements Listener {
         return null;
     }
 
+    public String getJarFilename() {
+        return super.getFile().getName();
+    }
 
     public static BGHR getPlugin() {
         return plugin;

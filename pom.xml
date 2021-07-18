@@ -178,7 +178,7 @@
                 </property>
             </activation>
             <build>
-                <finalName>${project.artifactId}-1.16_${project.version}</finalName>
+                <finalName>${project.artifactId}-1.16</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -208,7 +208,7 @@
                 </property>
             </activation>
             <build>
-                <finalName>${project.artifactId}-1.17_${project.version}</finalName>
+                <finalName>${project.artifactId}-1.17</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
