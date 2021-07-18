@@ -5,6 +5,7 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import me.cheracc.battlegameshungerroyale.types.MapData;
@@ -191,7 +192,7 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            Game.createNewGameWithCallback(options.getMap(), options, game -> new SelectGameGui(e.getWhoClicked()));
+            Game.createNewGameWithCallback(options.getMap(), options, GameManager.getInstance().getPlugin(), game -> new SelectGameGui(e.getWhoClicked()));
         });
 
     }

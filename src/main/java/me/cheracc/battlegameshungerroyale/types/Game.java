@@ -24,6 +24,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -39,6 +40,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 public class Game implements Listener {
+    private final BGHR plugin;
     private final MapData map;
     private GameLog gameLog;
     private final GameOptions options;
@@ -64,8 +66,9 @@ public class Game implements Listener {
     private long lastChestRespawn;
     enum GamePhase { PREGAME, INVINCIBILITY, MAIN, BORDER, POSTGAME }
 
-    private Game(MapData map, GameOptions options, Consumer<Game> callback) {
+    private Game(MapData map, GameOptions options, BGHR plugin, Consumer<Game> callback) {
         currentPhase = GamePhase.PREGAME;
+        this.plugin = plugin;
         this.map = map;
         this.options = options;
         this.lootManager = new LootManager(this);
@@ -404,6 +407,9 @@ public class Game implements Listener {
                     if (count == 2) {
                         ItemStack elytra = new ItemStack(Material.ELYTRA);
                         elytra.addEnchantment(Enchantment.BINDING_CURSE, 1);
+                        ItemStack current = p.getInventory().getChestplate();
+                        if (current != null && !current.getType().isAir())
+                            p.setMetadata("pre-elytra", new FixedMetadataValue(BGHR.getPlugin(), current));
                         p.getInventory().setChestplate(elytra);
                         p.setGliding(true);
                     }
@@ -496,7 +502,11 @@ public class Game implements Listener {
             }
             if (options.getStartType() == GameOptions.StartType.ELYTRA && p.getInventory().getChestplate() != null &&
                     p.getInventory().getChestplate().getType().equals(Material.ELYTRA)) {
-                p.getInventory().setChestplate(null);
+                if (p.hasMetadata("pre-elytra") && p.getMetadata("pre-elytra").get(0).value() instanceof ItemStack) {
+                    p.getInventory().setChestplate((ItemStack) p.getMetadata("pre-elytra").get(0).value());
+                    p.removeMetadata("pre-elytra", BGHR.getPlugin());
+                } else
+                    p.getInventory().setChestplate(null);
                 p.setGliding(false);
                 p.setAllowFlight(false);
             }
@@ -732,12 +742,12 @@ public class Game implements Listener {
     }
 
     // static fields and methods
-    public static void createNewGameWithCallback(MapData map, GameOptions options, Consumer<Game> callback) {
-        new Game(map, options, callback);
+    public static void createNewGameWithCallback(MapData map, GameOptions options, BGHR plugin, Consumer<Game> callback) {
+        new Game(map, options, plugin, callback);
     }
 
-    public static void createNewGame(MapData map, GameOptions options) {
-        new Game(map, options, null);
+    public static void createNewGame(MapData map, GameOptions options, BGHR plugin) {
+        new Game(map, options, plugin,null);
     }
 
     // listeners

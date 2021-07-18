@@ -62,6 +62,10 @@ public class GameManager {
         return MapManager.getInstance().isThisAGameWorld(player.getWorld());
     }
 
+    public BGHR getPlugin() {
+        return plugin;
+    }
+
     public boolean isActivelyPlayingAGame(Player player) {
         if (isInAGame(player)) {
             Game game = getPlayersCurrentGame(player);
@@ -139,7 +143,7 @@ public class GameManager {
         int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
         GameOptions options = configs.get(index);
-        Game.createNewGame(options.getMap(), options);
+        Game.createNewGame(options.getMap(), options, plugin);
     }
 
     public void updateScoreboard() {
