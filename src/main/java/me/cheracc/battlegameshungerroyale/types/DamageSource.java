@@ -6,6 +6,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.UUID;
 
@@ -54,5 +56,25 @@ public class DamageSource {
             }
         }
         return null;
+    }
+
+    public static DamageSource fromPotionEffect(PotionEffect effect, Player source) {
+            EntityDamageEvent.DamageCause cause;
+
+            PotionEffectType type = effect.getType();
+            if (PotionEffectType.LEVITATION.equals(type)) {
+                cause = EntityDamageEvent.DamageCause.FALL;
+            } else if (PotionEffectType.HARM.equals(type)) {
+                cause = EntityDamageEvent.DamageCause.MAGIC;
+            } else if (PotionEffectType.POISON.equals(type)) {
+                cause = EntityDamageEvent.DamageCause.POISON;
+            } else if (PotionEffectType.WITHER.equals(type)) {
+                cause = EntityDamageEvent.DamageCause.WITHER;
+            } else {
+                cause = EntityDamageEvent.DamageCause.CUSTOM;
+            }
+
+            return new DamageSource(source, cause, effect.getDuration() + 20);
+
     }
 }

@@ -1,5 +1,6 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
+import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -39,8 +40,12 @@ public class AddEffectOnHit extends TriggeredAbility {
             EntityDamageByEntityEvent e = (EntityDamageByEntityEvent) event;
 
             if (ThreadLocalRandom.current().nextDouble() <= chance) {
-                if (e.getEntity() instanceof LivingEntity)
+                if (e.getEntity() instanceof LivingEntity) {
                     ((LivingEntity) e.getEntity()).addPotionEffect(effect);
+                    if (e.getEntity() instanceof Player) {
+                        DamageSource.fromPotionEffect(effect, player).apply((Player) e.getEntity());
+                    }
+                }
             }
         }
     }
