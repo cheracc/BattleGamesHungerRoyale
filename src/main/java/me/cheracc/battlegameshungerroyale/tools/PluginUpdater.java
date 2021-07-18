@@ -25,6 +25,7 @@ public class PluginUpdater {
     private String apiVersion = null;
     private BukkitTask updateChecker = null;
     private CompletableFuture<Boolean> downloadStatus = null;
+    private boolean useSnapshotBuilds = true;
 
     public PluginUpdater(BGHR plugin) {
         this.plugin = plugin;
@@ -53,9 +54,7 @@ public class PluginUpdater {
     }
 
     private int currentBuildNumber() {
-        if (currentBuildNumber > 0)
-            return currentBuildNumber;
-        else {
+        if (currentBuildNumber <= 0) {
             YamlConfiguration pluginYml = new YamlConfiguration();
             InputStream input = plugin.getResource("plugin.yml");
 
@@ -68,13 +67,14 @@ public class PluginUpdater {
 
             apiVersion = pluginYml.getString("api-version");
             currentBuildNumber = pluginYml.getInt("build-number", 0);
-            return currentBuildNumber;
         }
+        return currentBuildNumber;
     }
 
     private void getLatestVersionInfo() {
         try {
-            URL url = new URL("http://jenkins.cheracc.me/job/BattleGamesHungerRoyale/api/json?tree=lastStableBuild[number,url]");
+            String projectName = useSnapshotBuilds ? "BGHR-SNAPSHOT" : "BattleGamesHungerRoyale";
+            URL url = new URL("http://jenkins.cheracc.me/job/" + projectName + "/api/json?tree=lastStableBuild[number,url]");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setDefaultUseCaches(false);
 
@@ -97,8 +97,6 @@ public class PluginUpdater {
 
             if (buildInfo.has("url"))
                 urlToMostRecentBuild = buildInfo.get("url").getAsString();
-
-            Bukkit.getLogger().info(String.format("this build:%s, latest available:%s (%s)", currentBuildNumber, mostRecentBuildAvailable, urlToMostRecentBuild));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -120,13 +118,15 @@ public class PluginUpdater {
         new BukkitRunnable() {
             @Override
             public void run() {
-                String urlString = "https://jenkins.cheracc.me/job/BattleGamesHungerRoyale" + mostRecentBuildAvailable +
-                        "/artifact/target/BattleGamesHungerRoyale-" + apiVersion + ".jar";
+                String projectName = useSnapshotBuilds ? "BGHR-SNAPSHOT" : "BattleGamesHungerRoyale";
+                String urlString = String.format("https://jenkins.cheracc.me/job/%s/%s/artifact/target/BattleGamesHungerRoyale-%s.jar",
+                        projectName, mostRecentBuildAvailable, apiVersion);
                 File toSave = new File(Bukkit.getUpdateFolderFile(), plugin.getJarFilename());
 
-                if ((toSave.exists() && toSave.delete()) || toSave.getParentFile().mkdirs()) {
-                    Bukkit.getLogger().info(String.format("update found (build #%s): preparing to download", mostRecentBuildAvailable));
-                }
+                if (toSave.exists())
+                    toSave.delete();
+
+                Bukkit.getLogger().info(String.format("update found (build #%s): preparing to download", mostRecentBuildAvailable));
 
                 try {
                     URL url = new URL(urlString);
@@ -136,8 +136,11 @@ public class PluginUpdater {
 
                     InputStream input = con.getInputStream();
                     input.transferTo(out);
+                    input.close();
+                    out.close();
                     future.complete(true);
                 } catch (IOException e) {
+                    toSave.delete();
                     future.complete(false);
                     e.printStackTrace();
                 }
@@ -148,18 +151,21 @@ public class PluginUpdater {
 
     private BukkitTask runUpdateChecker() {
         BukkitRunnable task = new BukkitRunnable() {
-            long last = System.currentTimeMillis();
+            long last = 0;
             @Override
             public void run() {
                 if (downloadStatus != null && downloadStatus.isDone()) {
-                    Bukkit.getLogger().info("finished downloading plugin update. it will be installed on next restart");
+                    if (downloadStatus.getNow(false))
+                        Bukkit.getLogger().info("finished downloading plugin update. it will be installed on next restart");
+                    else
+                        Bukkit.getLogger().info("failed to download update");
                     cancel();
                     return;
                 }
                 if (System.currentTimeMillis() - last > 1000*60*30 && !isLatestVersion()) {
                     downloadStatus = downloadLatest();
+                    last = System.currentTimeMillis();
                 }
-                last = System.currentTimeMillis();
             }
         };
         return task.runTaskTimer(plugin, 20*60, 20*30);
