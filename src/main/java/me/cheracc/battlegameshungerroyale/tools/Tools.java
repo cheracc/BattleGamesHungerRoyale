@@ -17,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -86,11 +87,23 @@ public class Tools {
     }
 
     public static void uncheckedTeleport(Player player, Location location) {
-        double value = Bukkit.getServer().spigot().getSpigotConfig().getDouble("moved-too-quickly-multiplier", 10);
+        boolean flight = player.getAllowFlight();
+        boolean gliding = player.isGliding();
+        boolean elytraCheck = player.getWorld().getGameRuleValue(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK);
+        player.setAllowFlight(true);
+        player.setGliding(true);
+        player.getWorld().setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
 
-        Bukkit.getServer().spigot().getSpigotConfig().set("moved-too-quickly-multiplier", Double.MAX_VALUE);
         player.teleport(location);
-        Bukkit.getServer().spigot().getSpigotConfig().set("moved-too-quickly-multiplier", value);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                player.setAllowFlight(flight);
+                player.setGliding(gliding);
+                player.getWorld().setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, elytraCheck);
+            }
+        }.runTaskLater(BGHR.getPlugin(), 1);
     }
 
     public static String decomponentalize(Component component) {
