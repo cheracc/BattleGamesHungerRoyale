@@ -76,7 +76,7 @@ public class PluginUpdater {
             return;
         try {
             String projectName = useSnapshotBuilds ? "BGHR-SNAPSHOT" : "BattleGamesHungerRoyale";
-            URL url = new URL("http://jenkins.cheracc.me/job/" + projectName + "/api/json?tree=lastStableBuild[number,url]");
+            URL url = new URL("https://jenkins.cheracc.me/job/" + projectName + "/api/json?tree=lastStableBuild[number,url]");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setDefaultUseCaches(false);
 
