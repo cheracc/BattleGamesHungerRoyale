@@ -289,7 +289,7 @@ public class MapManager implements Listener {
                 if (mcmeta.createNewFile())
                     Logr.info("Installing plugin datapack files");
                 OutputStream out = new FileOutputStream(mcmeta);
-                plugin.getResource("datapack_files/pack.mcmeta").transferTo(out);
+                Tools.copyStreams(plugin.getResource("datapack_files/pack.mcmeta"), out);
                 out.close();
                 updatedDatapack = true;
             } catch (IOException e) {
@@ -308,9 +308,8 @@ public class MapManager implements Listener {
                 if (defaultLootTable.createNewFile())
                     Logr.info("Inserting default loot table");
                 OutputStream out = new FileOutputStream(defaultLootTable);
-                plugin.getResource("datapack_files/default.json").transferTo(out);
+                Tools.copyStreams(plugin.getResource("datapack_files/default.json"), out);
                 out.close();
-                Logr.info("Creating file " + defaultLootTable.getAbsolutePath());
             } catch (IOException e) {
                 e.printStackTrace();
             }

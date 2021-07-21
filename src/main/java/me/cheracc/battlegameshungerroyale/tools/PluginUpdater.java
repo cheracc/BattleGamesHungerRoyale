@@ -23,9 +23,9 @@ public class PluginUpdater {
     private int mostRecentBuildAvailable = 0;
     private String urlToMostRecentBuild = null;
     private String apiVersion = null;
-    private BukkitTask updateChecker = null;
+    private final BukkitTask updateChecker;
     private CompletableFuture<Boolean> downloadStatus = null;
-    private boolean useSnapshotBuilds = true;
+    private final boolean useSnapshotBuilds = true;
 
     public PluginUpdater(BGHR plugin) {
         this.plugin = plugin;
@@ -137,7 +137,7 @@ public class PluginUpdater {
                     con.setDefaultUseCaches(false);
 
                     InputStream input = con.getInputStream();
-                    input.transferTo(out);
+                    Tools.copyStreams(input, out);
                     input.close();
                     out.close();
                     future.complete(true);

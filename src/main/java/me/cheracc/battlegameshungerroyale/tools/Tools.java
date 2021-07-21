@@ -309,4 +309,16 @@ public class Tools {
             Bukkit.getLogger().warning("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
     }
+
+    public static void copyStreams(InputStream source, OutputStream target) {
+        byte[] buf = new byte[8192];
+        int length;
+        try {
+            while ((length = source.read(buf)) > 0) {
+                target.write(buf, 0, length);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
