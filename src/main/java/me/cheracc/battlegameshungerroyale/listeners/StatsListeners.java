@@ -1,22 +1,28 @@
 package me.cheracc.battlegameshungerroyale.listeners;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
+import org.bukkit.entity.Animals;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.inventory.PlayerInventory;
 
 public class StatsListeners implements Listener {
-    private final BGHR plugin;
     private final PlayerManager pm;
 
-    public StatsListeners(BGHR plugin) {
-        this.plugin = plugin;
+    public StatsListeners() {
         this.pm = PlayerManager.getInstance();
     }
 
@@ -94,4 +100,63 @@ public class StatsListeners implements Listener {
         data.setModified(true);
     }
 
+    @EventHandler
+    public void monsterAndAnimalKills(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof Player && event.getEntity() instanceof Monster || event.getEntity() instanceof Animals) {
+            Player p = (Player) event.getDamager();
+            LivingEntity e = (LivingEntity) event.getEntity();
+
+            if (event.getFinalDamage() < e.getHealth())
+                return;
+
+            if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+                if (event.getEntity() instanceof Monster) {
+                    PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                    data.getStats().addMonstersKilled();
+                    data.setModified(true);
+                }
+                else if (event.getEntity() instanceof Animals) {
+                    PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                    data.getStats().addAnimalsKilled();
+                    data.setModified(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler (priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void countFood(PlayerItemConsumeEvent event) {
+        if (GameManager.getInstance().isActivelyPlayingAGame(event.getPlayer())) {
+            PlayerData data = PlayerManager.getInstance().getPlayerData(event.getPlayer());
+            data.getStats().addFoodEaten();
+            data.setModified(true);
+        }
+    }
+
+    @EventHandler
+    public void countArrowsShot(ProjectileLaunchEvent event) {
+        if (event.getEntity().getShooter() instanceof Player) {
+            Player p = (Player) event.getEntity().getShooter();
+            if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+                PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                data.getStats().addArrowsShot();
+                data.setModified(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void countLootedItems(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof Player) {
+            Player p = (Player) event.getWhoClicked();
+            if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+                if (!(event.getClickedInventory() instanceof PlayerInventory) &&
+                        (event.getAction().name().contains("PICKUP") || event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY)) {
+                    PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                    data.getStats().addItemsLooted();
+                    data.setModified(true);
+                }
+            }
+        }
+    }
 }

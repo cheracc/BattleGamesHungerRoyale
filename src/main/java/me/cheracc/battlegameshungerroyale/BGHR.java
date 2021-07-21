@@ -70,7 +70,7 @@ public class BGHR extends JavaPlugin implements Listener {
         GameManager.initialize(this);
         if (getConfig().getBoolean("auto-update", true))
             updater = new PluginUpdater(this);
-        Bukkit.getPluginManager().registerEvents(new StatsListeners(this), this);
+        Bukkit.getPluginManager().registerEvents(new StatsListeners(), this);
     }
 
     @Override

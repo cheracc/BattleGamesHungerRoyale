@@ -19,6 +19,9 @@ public class PlayerStats {
     int currentKillStreak;
     int itemsLooted;
     int arrowsShot;
+    int foodEaten;
+    int monstersKilled;
+    int animalsKilled;
 
     public PlayerStats(UUID id) {
         this.uuid = id;
@@ -81,6 +84,66 @@ public class PlayerStats {
 
     public int getChestsOpened() {
         return chestsOpened;
+    }
+
+    public int getItemsLooted() {
+        return itemsLooted;
+    }
+
+    public int getArrowsShot() {
+        return arrowsShot;
+    }
+
+    public int getFoodEaten() {
+        return foodEaten;
+    }
+
+    public int getMonstersKilled() {
+        return monstersKilled;
+    }
+
+    public int getAnimalsKilled() {
+        return animalsKilled;
+    }
+
+    public void addItemsLooted() {
+        itemsLooted++;
+    }
+
+    public void addArrowsShot() {
+        arrowsShot++;
+    }
+
+    public void addFoodEaten() {
+        foodEaten++;
+    }
+
+    public void addMonstersKilled() {
+        monstersKilled++;
+    }
+
+    public void addAnimalsKilled() {
+        animalsKilled++;
+    }
+
+    public void setItemsLooted(int itemsLooted) {
+        this.itemsLooted = itemsLooted;
+    }
+
+    public void setArrowsShot(int arrowsShot) {
+        this.arrowsShot = arrowsShot;
+    }
+
+    public void setFoodEaten(int foodEaten) {
+        this.foodEaten = foodEaten;
+    }
+
+    public void setMonstersKilled(int monstersKilled) {
+        this.monstersKilled = monstersKilled;
+    }
+
+    public void setAnimalsKilled(int animalsKilled) {
+        this.animalsKilled = animalsKilled;
     }
 
     public void setChestsOpened(int value) {

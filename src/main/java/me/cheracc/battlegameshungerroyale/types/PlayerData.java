@@ -228,6 +228,11 @@ public class PlayerData {
                 stats.setDamageReceived(result.getInt("damagetaken"));
                 stats.setActiveAbilitiesUsed(result.getInt("activeabilities"));
                 stats.setChestsOpened(result.getInt("chests"));
+                stats.setItemsLooted(result.getInt("itemslooted"));
+                stats.setArrowsShot(result.getInt("arrowsshot"));
+                stats.setMonstersKilled(result.getInt("monsterskilled"));
+                stats.setAnimalsKilled(result.getInt("animalskilled"));
+                stats.setFoodEaten(result.getInt("foodeaten"));
                 result.close();
             }
 
@@ -290,8 +295,8 @@ public class PlayerData {
                              "showhelp=VALUES(showhelp)," +
                              "defaultkit=VALUES(defaultkit);");
              PreparedStatement updateStats = con.prepareStatement(
-                     "INSERT INTO player_stats (uuid,played,kills,killstreak,deaths,wins,secondplaces,totaltime,quits,damagedealt,damagetaken,activeabilities,chests) VALUES " +
-                             "(?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
+                     "INSERT INTO player_stats (uuid,played,kills,killstreak,deaths,wins,secondplaces,totaltime,quits,damagedealt,damagetaken,activeabilities,chests,itemslooted,arrowsshot,monsterskilled,animalskilled,foodeaten) VALUES " +
+                             "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
                              "played=VALUES(played)," +
                              "kills=VALUES(kills)," +
                              "killstreak=VALUES(killstreak)," +
@@ -303,7 +308,12 @@ public class PlayerData {
                              "damagedealt=VALUES(damagedealt)," +
                              "damagetaken=VALUES(damagetaken)," +
                              "activeabilities=VALUES(activeabilities)," +
-                             "chests=VALUES(chests)");
+                             "chests=VALUES(chests)," +
+                             "itemslooted=VALUES(itemslooted)," +
+                             "arrowsshot=VALUES(arrowsshot)," +
+                             "monsterskilled=VALUES(monsterskilled)," +
+                             "animalskilled=VALUES(animalskilled)," +
+                             "foodeaten=VALUES(foodeaten)");
              PreparedStatement updateData = con.prepareStatement(
                      "INSERT INTO player_data (uuid,lastworld,lastx,lasty,lastz,inventory,armor,enderchest) VALUES (?,?,?,?,?,?,?,?) " +
                              "ON DUPLICATE KEY UPDATE " +
@@ -334,6 +344,11 @@ public class PlayerData {
             updateStats.setInt(11, stats.getDamageTaken());
             updateStats.setInt(12, stats.getActiveAbilitiesUsed());
             updateStats.setInt(13, stats.getChestsOpened());
+            updateStats.setInt(14, stats.getItemsLooted());
+            updateStats.setInt(15, stats.getArrowsShot());
+            updateStats.setInt(16, stats.getMonstersKilled());
+            updateStats.setInt(17, stats.getAnimalsKilled());
+            updateStats.setInt(18, stats.getFoodEaten());
             updateStats.execute();
 
             updateData.setString(1, getUuid().toString());
