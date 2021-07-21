@@ -72,7 +72,7 @@ public class EquipmentSet {
 
     public List<Component> getDescription() {
         List<String> desc = new ArrayList<>();
-        if (!isCompletelyEmpty()) {
+        if (isNotEmpty()) {
             desc.add("");
             desc.add("&eKit Equipment:");
             for (EquipmentSetSlot slot : EquipmentSetSlot.values()) {
@@ -171,6 +171,8 @@ public class EquipmentSet {
             }
         }
         for (ItemStack i : getOtherItems()) {
+            if (i == null || i.getType().isAir())
+                continue;
             p.getInventory().addItem(Tools.makeItemPlaceable(Tools.tagAsPluginItem(tagItem(i))));
         }
         return true;
@@ -214,12 +216,12 @@ public class EquipmentSet {
         return item;
     }
 
-    public boolean isCompletelyEmpty() {
+    public boolean isNotEmpty() {
         for (ItemStack item : items.values()) {
             if (item != null && !item.getType().isAir())
-                return false;
+                return true;
         }
-        return true;
+        return false;
     }
 
     public boolean armorIsEmpty() {

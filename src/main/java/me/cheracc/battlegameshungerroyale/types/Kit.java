@@ -152,7 +152,7 @@ public class Kit {
                 }
             }
         }
-        if (!equipment.isCompletelyEmpty()) {
+        if (equipment.isNotEmpty()) {
             equipment.equip(p);
         }
         p.sendMessage(Tools.componentalize("You have been equipped with kit &e" + getName()));
@@ -194,7 +194,7 @@ public class Kit {
 
         }
 
-        if (!equipment.isCompletelyEmpty())
+        if (equipment.isNotEmpty())
             this.config.set("equipment", equipment.serializeAsBase64());
 
         FileConfiguration kitsConfig = new YamlConfiguration();

@@ -240,6 +240,8 @@ public class Tools {
     }
 
     public static ItemStack makeItemPlaceable(ItemStack item) {
+        if (item == null || item.getType().isAir())
+            return item;
         ItemMeta meta = item.getItemMeta();
         Set<Namespaced> allBlocks = new HashSet<>();
 

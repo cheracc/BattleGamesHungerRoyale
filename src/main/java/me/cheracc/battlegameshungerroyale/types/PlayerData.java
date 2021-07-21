@@ -369,4 +369,7 @@ public class PlayerData {
     }
 
 
+    public String getName() {
+        return Bukkit.getOfflinePlayer(uuid).getName();
+    }
 }

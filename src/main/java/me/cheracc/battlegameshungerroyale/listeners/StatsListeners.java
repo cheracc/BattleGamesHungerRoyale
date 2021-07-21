@@ -49,15 +49,15 @@ public class StatsListeners implements Listener {
 
     @EventHandler (priority = EventPriority.MONITOR)
     public void recordDamage(GameDamageEvent event) {
-        if (event.getAggressor() != null) {
+        if (event.getAggressor() instanceof Player && event.getVictim() instanceof Player) {
             PlayerData aggressor = pm.getPlayerData(event.getAggressor());
             aggressor.getStats().addDamageDealt(event.getDamage());
             aggressor.setModified(true);
-        }
-        if (event.getVictim() != null && !event.getVictim().isDead()) {
-            PlayerData victim = pm.getPlayerData(event.getVictim());
-            victim.getStats().addDamageReceived(Math.min(event.getDamage(), 20));
-            victim.setModified(true);
+            if (!event.getVictim().isDead()) {
+                PlayerData victim = pm.getPlayerData(event.getVictim());
+                victim.getStats().addDamageReceived(Math.min(event.getDamage(), 20));
+                victim.setModified(true);
+            }
         }
     }
 
@@ -102,7 +102,7 @@ public class StatsListeners implements Listener {
 
     @EventHandler
     public void monsterAndAnimalKills(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player && event.getEntity() instanceof Monster || event.getEntity() instanceof Animals) {
+        if (event.getDamager() instanceof Player && (event.getEntity() instanceof Monster || event.getEntity() instanceof Animals)) {
             Player p = (Player) event.getDamager();
             LivingEntity e = (LivingEntity) event.getEntity();
 

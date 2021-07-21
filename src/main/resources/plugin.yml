@@ -39,3 +39,6 @@ commands:
   abilityitem:
     usage: "/abilityitem"
     description: "updates an ability with the currently held item"
+  stats:
+    usage: "/stats"
+    description: "shows player stats"
