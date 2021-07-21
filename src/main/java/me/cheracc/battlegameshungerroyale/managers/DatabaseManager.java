@@ -15,7 +15,6 @@ public class DatabaseManager {
     private Connection con = null;
     private boolean useMySql;
     private String connectString;
-    private Server h2Server = null;
     private String user;
     private String pass;
 
@@ -42,6 +41,7 @@ public class DatabaseManager {
             }
         }
         if (!useMySql) {
+            Server h2Server = null;
             try {
                 h2Server = Server.createTcpServer("-ifNotExists").start();
             } catch (SQLException e) {
@@ -102,6 +102,8 @@ public class DatabaseManager {
                 "chests INT," +
                 "itemslooted INT," +
                 "arrowsshot INT," +
+                "monsterskilled INT," +
+                "animalskilled INT," +
                 "foodeaten INT)");
              PreparedStatement createSettings = con.prepareStatement("CREATE TABLE IF NOT EXISTS player_settings (" +
                  "uuid CHAR(36) PRIMARY KEY," +
@@ -111,7 +113,7 @@ public class DatabaseManager {
                  ")");
              PreparedStatement createVersionTable = con.prepareStatement("CREATE TABLE IF NOT EXISTS db_version (" +
                  "lockcol CHAR(1) PRIMARY KEY," +
-                 "version TINYINT)");
+                 "version TINYINT NOT NULL)");
              PreparedStatement createDataTable = con.prepareStatement("CREATE TABLE IF NOT EXISTS player_data (" +
                  "uuid CHAR(36) PRIMARY KEY," +
                  "lastworld CHAR(36)," +
@@ -128,9 +130,9 @@ public class DatabaseManager {
             createDataTable.execute();
 
             if (!databaseIsCurrent())
-                updateV3();
+                updateDb();
 
-            Logr.info("Connected to " + (useMySql ? "MySQL" : "H2" + " database."));
+            Logr.info("Successfully connected to " + (useMySql ? "MySQL" : "H2" + " database."));
             con.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -138,7 +140,7 @@ public class DatabaseManager {
     }
 
     private boolean databaseIsCurrent() throws SQLException {
-        int foundVersion = 0;
+        int foundVersion;
 
         getConnection();
         try (PreparedStatement stmt = con.prepareStatement("SELECT * FROM db_version WHERE lockcol='v'")) {
@@ -171,25 +173,21 @@ public class DatabaseManager {
         }
     }
 
-    private void updateV3() {
+    private void updateDb() {
         try {
-            Logr.info("Updating database to v3...");
+            Logr.info("Updating database...");
             getConnection();
             PreparedStatement s = con.prepareStatement("ALTER TABLE player_stats ADD chests INT");
             s.execute();
             s.close();
 
-            s = con.prepareStatement("DELETE FROM db_version");
-            s.execute();
-            s.close();;
-
-            s = con.prepareStatement("ALTER TABLE db_version ADD lock CHAR(1) NOT NULL");
-            s.execute();
-            s.close();;
-
             s = con.prepareStatement("ALTER TABLE db_version MODIFY version TINYINT NOT NULL");
             s.execute();
-            s.close();;
+            s.close();
+
+            s = con.prepareStatement("DELETE FROM db_version");
+            s.execute();
+            s.close();
 
             s = con.prepareStatement("INSERT INTO db_version (version, lock) VALUES (?,?)");
             s.setInt(1, CURRENT_DB_VERSION);
