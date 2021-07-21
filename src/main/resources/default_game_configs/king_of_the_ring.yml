@@ -1,5 +1,5 @@
 map: ak6
-lives per player: 5
+lives per player: 3
 players needed to start: 2
 allow regular building: false
 timers:
@@ -14,5 +14,5 @@ loot:
   loosen search restrictions: true
   max chests per chunk: 50
   loot table: default
-  chest respawn time: 2
+  chest respawn time: 1
   fill all chests: true

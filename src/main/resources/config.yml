@@ -1,9 +1,16 @@
 auto-update: true
 maps directory: BGHR_Maps/
-reset main world on each restart: false
-lobby world to copy: this/is/where/the/plugin/will/copy/your/lobby/map/from
 loaded maps directory: loaded_maps/
+show main scoreboard: true
 main world:
   place players at spawn on join: false
   kits useable in main world: true
   gamemode: adventure
+use mysql instead of h2: false
+mysql:
+  hostname: localhost
+  port: 3306
+  database: bghr
+  user: minecraft
+  pass: hunter2
+  arguments: ''

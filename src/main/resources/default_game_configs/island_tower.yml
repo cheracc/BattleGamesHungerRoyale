@@ -4,7 +4,7 @@ players needed to start: 3
 allow regular building: false
 timers:
   pregame: 60
-  invincibility: 90
+  invincibility: 60
   main: 300
   border: 300
   postgame: 60
