@@ -129,6 +129,7 @@ public class PluginUpdater {
 
                 if (toSave.exists())
                     toSave.delete();
+                toSave.getParentFile().mkdirs();
 
                 Logr.info(String.format("(Updater) Found a new update (build #%s): preparing to download", mostRecentBuildAvailable));
 
