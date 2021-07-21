@@ -78,7 +78,6 @@ public class PluginUpdater {
             String projectName = useSnapshotBuilds ? "BGHR-SNAPSHOT" : "BattleGamesHungerRoyale";
             URL url = new URL("https://jenkins.cheracc.me/job/" + projectName + "/api/json?tree=lastStableBuild[number,url]");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setDefaultUseCaches(false);
 
             InputStream input = con.getInputStream();
             String json = new BufferedReader(new InputStreamReader(input)).lines().collect(Collectors.joining("\n"));
