@@ -24,7 +24,7 @@ public class KitCommand implements CommandExecutor {
                 String kitName = Tools.rebuildString(args, 0);
                 Kit kit = KitManager.getInstance().getKit(kitName);
 
-                if (kit != null) {
+                if (kit != null && (kit.isEnabled() || p.hasPermission("bghr.admin.kits.disabled"))) {
                     PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
                     if (data.getKit() != null && data.getKit().equals(kit)) {

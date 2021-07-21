@@ -29,6 +29,7 @@ public class Kit {
     private final ConfigurationSection config;
     private final String id;
     private final List<Ability> abilities = new ArrayList<>();
+    private boolean enabled;
     private String name;
     private String description;
     private String iconItemType;
@@ -46,6 +47,7 @@ public class Kit {
         iconItemType = config.getString("icon", "chest").toUpperCase();
         if (config.contains("abilities"))
             loadAbilities(Objects.requireNonNull(config.getConfigurationSection("abilities")));
+        enabled = config.getBoolean("enabled", true);
     }
 
     public Kit(String id) {
@@ -55,6 +57,7 @@ public class Kit {
         setDescription("Can't be sure what it does because nobody ever changed the default description!");
         this.equipment = EquipmentSet.newEquipmentSet();
         setIcon(Material.STONE);
+        enabled = false;
     }
 
     public String getId() {
@@ -79,6 +82,15 @@ public class Kit {
     public void addAbility(Ability ability) {
         ability.setAssignedKit(this);
         abilities.add(ability);
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean value) {
+        enabled = value;
+        config.set("enabled", value);
     }
 
     public void removeAbility(Ability ability) {
@@ -118,9 +130,14 @@ public class Kit {
     public void outfitPlayer(Player p) {
         PlayerData data = PlayerManager.getInstance().getPlayerData(p);
         Kit kit = data.getKit();
+        if (!this.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
+            p.sendMessage(Tools.componentalize("That kit is disabled"));
+            return;
+        }
 
         if (kit != null)
             kit.disrobePlayer(p);
+
         for (Ability a : abilities) {
             if (a instanceof ActiveAbility) {
                 ItemStack abilityItem = ((ActiveAbility) a).createAbilityItem();

@@ -97,7 +97,7 @@ public class AdminGui extends Gui {
         BGHR plugin = BGHR.getPlugin();
         FileConfiguration config = plugin.getConfig();
         List<BaseIcon> icons = new ArrayList<>();
-        BaseAdminGui pluginGui = new BaseAdminGui(player, "Plugin Configuration", icons);
+        BaseAdminGui pluginGui = new BaseAdminGui(player, "Plugin Configuration", 1);
 
         icons.add(slot -> {
             boolean value = config.getBoolean("use mysql instead of h2", false);
@@ -116,6 +116,10 @@ public class AdminGui extends Gui {
             icon.lore(Tools.componentalize(lore));
 
             return icon.asGuiItem(e -> {
+                if (e.isRightClick()) {
+                    giveMysqlSettingsBook(e.getWhoClicked());
+                    return;
+                }
                     config.set("use mysql instead of h2", !value);
                     plugin.saveConfig();
                     pluginGui.updateIcon(slot);
@@ -209,10 +213,12 @@ public class AdminGui extends Gui {
 
     public void sendKitsAdminGui(HumanEntity player) {
         List<BaseIcon> icons = new ArrayList<>();
+        List<Kit> kits = KitManager.getInstance().getLoadedKits(true);
+        BaseAdminGui kitsAdminGui = new BaseAdminGui(player, "Kits", kits.size() / 9 + 1);
 
-        for (Kit kit : KitManager.getInstance().getLoadedKits()) {
+        for (Kit kit : kits) {
             icons.add(slot -> {
-                ItemBuilder icon = ItemBuilder.from(kit.getIcon()).name(Tools.componentalize(kit.getName()));
+                ItemBuilder icon = ItemBuilder.from(kit.getIcon()).name(Tools.componentalize(kit.getName() + (kit.isEnabled() ? "" : " &4[&6DISABLED&4]")));
                 icon.flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
                 List<Component> lore = new ArrayList<>(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
                 lore.add(0, Component.text(""));
@@ -230,10 +236,20 @@ public class AdminGui extends Gui {
 
                 lore.add(Tools.BLANK_LINE);
                 lore.add(Tools.componentalize("&bClick here to modify this kit"));
+                if (kit.isEnabled())
+                    lore.add(Tools.componentalize("&cShift+Click to disable this kit"));
+                else
+                    lore.add(Tools.componentalize("&aShift+Click to enable this kit"));
                 icon.lore(lore);
                 return icon.asGuiItem(e -> {
-                    e.getWhoClicked().closeInventory();
-                    new ConfigureKitGui(kit, this, player);
+                    if (!e.isShiftClick()) {
+                        e.getWhoClicked().closeInventory();
+                        new ConfigureKitGui(kit, this, player);
+                    } else {
+                        kit.setEnabled(!kit.isEnabled());
+                        kit.saveConfig();
+                        kitsAdminGui.updateIcon(slot);
+                    }
                 });
             });
         }
@@ -246,7 +262,10 @@ public class AdminGui extends Gui {
                 TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> new ConfigureKitGui(new Kit(text), this, player));
             });
         });
-        new BaseAdminGui(player, "Kits", icons);
+
+        kitsAdminGui.setIcons(icons);
+        player.closeInventory();
+        kitsAdminGui.open(player);
     }
 
     public void sendMapsAdminGui(HumanEntity player) {
@@ -281,7 +300,7 @@ public class AdminGui extends Gui {
                 });
             });
         }
-        new BaseAdminGui(player, "Map Configurations", icons);
+        new BaseAdminGui(player, "Map Configurations", icons.size() / 9 + 1);
     }
 
     public void sendGameAdminGui(HumanEntity player) {
@@ -314,13 +333,13 @@ public class AdminGui extends Gui {
                     }
                 });
             });
-        new BaseAdminGui(player, "Game Configurations", icons);
+        new BaseAdminGui(player, "Game Configurations", icons.size() / 9 + 1);
     }
 
     private static class BaseAdminGui extends Gui {
         Map<Integer, BaseIcon> guiIcons = new HashMap<>();
-        public BaseAdminGui(HumanEntity player, String title, Collection<BaseIcon> icons) {
-            super(icons.size() / 9 + 1, title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        public BaseAdminGui(HumanEntity player, String title, int rows) {
+            super(rows, title, new HashSet<>(Arrays.asList(InteractionModifier.values())));
             disableAllInteractions();
             setOutsideClickAction(e -> {
                 e.getWhoClicked().closeInventory();
@@ -328,13 +347,6 @@ public class AdminGui extends Gui {
             });
 
             int slot = 0;
-            if (icons != null) {
-                for (BaseIcon icon : icons) {
-                    this.setItem(slot, icon.createIcon(slot));
-                    guiIcons.put(slot, icon);
-                    slot++;
-                }
-            }
             if (slot > 0)
                 this.open(player);
         }
@@ -357,21 +369,22 @@ public class AdminGui extends Gui {
         GuiItem createIcon(int slot);
     }
 
-    private void openMysqlSettingsBook(HumanEntity player) {
+    private void giveMysqlSettingsBook(HumanEntity player) {
         ItemStack book = new ItemStack(Material.WRITABLE_BOOK);
         BookMeta meta = (BookMeta) book.getItemMeta();
         List<String> page = new ArrayList<>();
 
 
-        page.add("   &1&lMySQL Settings");
+        page.add("&1&lInstructions:");
         page.add("");
-        page.add("&0adr: 127.0.0.1");
-        page.add("&0prt: 3306");
-        page.add("&0db:  BGHR");
-        page.add("&0usr: minecraft");
-        page.add("&0pwd: hunter2");
+        page.add("&0On Page 2, put the following information on the first five lines:");
+        page.add("&5hostname");
+        page.add("&5port");
+        page.add("&5database");
+        page.add("&5user");
+        page.add("&5password");
         page.add("");
-        page.add("&8Enter your MySQL server info above. (&5adr&8=address, &5prt&8=port, &5db&8=database, &5usr&8=user, &5pwd&8=password)");
+        page.add("&8When finished, sign the book with any title.");
 
         Component pageComponent = Component.empty();
         for (String s : page) {

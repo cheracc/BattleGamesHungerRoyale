@@ -4,6 +4,7 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -83,19 +84,28 @@ public class PlayerData {
     }
 
     public void registerKit(Kit kit, boolean clearInventory) {
+        Player p = getPlayer();
+        if (p == null) return;
+
+        if (!kit.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
+            p.sendMessage(Tools.componentalize("That kit is disabled"));
+            return;
+        }
+
+
         if (this.kit != null)
             removeKit(this.kit);
 
         if (clearInventory)
-            getPlayer().getInventory().clear();
+            p.getInventory().clear();
 
         this.kit = kit;
 
 
-        if (MapManager.getInstance().isThisAGameWorld(getPlayer().getWorld()) || BGHR.getPlugin().getConfig().getBoolean("main world.kits useable in main world", false)) {
-            kit.outfitPlayer(getPlayer());
+        if (MapManager.getInstance().isThisAGameWorld(p.getWorld()) || BGHR.getPlugin().getConfig().getBoolean("main world.kits useable in main world", false)) {
+            kit.outfitPlayer(p);
         } else {
-            getPlayer().sendMessage(Component.text("Kit&e " + kit.getName() + " &fwill be equipped when you join a game."));
+            p.sendMessage(Component.text("Kit&e " + kit.getName() + " &fwill be equipped when you join a game."));
         }
     }
 

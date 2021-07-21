@@ -35,14 +35,14 @@ public class SelectKitGui extends ScrollingGui {
                 sendingGui.open(player);
         });
 
-        for (Kit kit : KitManager.getInstance().getLoadedKits()) {
+        for (Kit kit : KitManager.getInstance().getLoadedKits(player.hasPermission("bghr.admin.kits.disabled"))) {
             addItem(createKitIcon(kit));
         }
         open(player);
     }
 
     private GuiItem createKitIcon(Kit kit) {
-        ItemBuilder icon = ItemBuilder.from(kit.getIcon()).name(Tools.componentalize(kit.getName()));
+        ItemBuilder icon = ItemBuilder.from(kit.getIcon()).name(Tools.componentalize(kit.getName() + (kit.isEnabled() ? "" : " &4[&6DISABLED&4]")));
         icon.flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
         List<Component> lore = new ArrayList<>(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
         lore.add(0, Component.text(""));

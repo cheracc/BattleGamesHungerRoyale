@@ -35,7 +35,15 @@ public class KitManager {
     }
 
     public List<Kit> getLoadedKits() {
-        return new ArrayList<>(loadedKits);
+        return getLoadedKits(false);
+    }
+
+    public List<Kit> getLoadedKits(boolean includeDisabled) {
+        if (includeDisabled)
+            return new ArrayList<>(loadedKits);
+        List<Kit> enabledKits = new ArrayList<>(loadedKits);
+        enabledKits.removeIf(kit -> !kit.isEnabled());
+        return enabledKits;
     }
 
     public Kit getKit(String name) {

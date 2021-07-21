@@ -14,7 +14,6 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ConfigurePotionEffectGui extends Gui {
@@ -23,7 +22,10 @@ public class ConfigurePotionEffectGui extends Gui {
 
     public ConfigurePotionEffectGui(HumanEntity player, PotionEffect effect, Gui sendingGui, Consumer<PotionEffect> callback) {
         super(1, "Customize Potion Effect", new HashSet<>(Arrays.asList(InteractionModifier.values())));
-        this.effect = Objects.requireNonNullElseGet(effect, () -> PotionEffectType.SPEED.createEffect(Integer.MAX_VALUE, 0));
+        if (effect != null)
+            this.effect = effect;
+        else
+            this.effect = PotionEffectType.SPEED.createEffect(Integer.MAX_VALUE, 0);
         this.callback = callback;
         disableAllInteractions();
         setOutsideClickAction(e -> {
