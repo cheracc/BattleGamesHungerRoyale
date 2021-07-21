@@ -26,6 +26,7 @@ public class PluginUpdater {
     private final BukkitTask updateChecker;
     private CompletableFuture<Boolean> downloadStatus = null;
     private final boolean useSnapshotBuilds;
+    private boolean notified = false;
 
     public PluginUpdater(BGHR plugin) {
         this.plugin = plugin;
@@ -107,7 +108,9 @@ public class PluginUpdater {
 
     private boolean isLatestVersion() {
         if (mostRecentBuildAvailable > 0 && urlToMostRecentBuild != null && urlToMostRecentBuild.length() > 0) {
-            Logr.info("Updater found no new version.");
+            if (notified = false)
+                Logr.info("Updater found no new version.");
+            notified = true;
             return mostRecentBuildAvailable <= currentBuildNumber();
         }
         return true;
@@ -173,8 +176,8 @@ public class PluginUpdater {
                 }
                 if (System.currentTimeMillis() - last > 1000*60*15 && !isLatestVersion()) {
                     downloadStatus = downloadLatest();
-                    last = System.currentTimeMillis();
                 }
+                last = System.currentTimeMillis();
             }
         };
         return task.runTaskTimer(plugin, 20*60, 20*30);
