@@ -5,9 +5,10 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.types.MapData;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import org.bukkit.*;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -198,7 +199,7 @@ public class ConfigureMapGui extends Gui {
             type = map.getSpawnBlockType();
         if (type == null || type.isAir() || !type.isItem())
             type = Material.DIRT;
-        Bukkit.getLogger().info(type.name());
+        Logr.info(type.name());
         ItemBuilder icon = ItemBuilder.from(type).name(Tools.componentalize("&eSpawn Point Block"));
         MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(map)) {

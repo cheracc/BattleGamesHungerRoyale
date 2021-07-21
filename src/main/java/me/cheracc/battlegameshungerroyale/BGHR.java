@@ -4,7 +4,9 @@ import me.cheracc.battlegameshungerroyale.commands.*;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
+import me.cheracc.battlegameshungerroyale.listeners.StatsListeners;
 import me.cheracc.battlegameshungerroyale.managers.*;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
@@ -29,6 +31,7 @@ public class BGHR extends JavaPlugin implements Listener {
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onEnable() {
+        Logr.initialize(this);
         Metrics metrics = new Metrics(this, 12102);
         plugin = this;
         saveDefaultConfig();
@@ -38,10 +41,11 @@ public class BGHR extends JavaPlugin implements Listener {
             KitManager.getInstance().findAndLoadDefaultAbilities();
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
-            System.out.println(e.getCause().toString());
+            Logr.info(e.getCause().toString());
         }
         KitManager.getInstance().loadKits();
         LootManager.getLootTables();
+        DatabaseManager.initialize(this);
 
         getCommand("savemap").setExecutor(new SaveMap());
         getCommand("mapconfig").setExecutor(new MapConfig());
@@ -64,7 +68,9 @@ public class BGHR extends JavaPlugin implements Listener {
         if (MapManager.getInstance().wasDatapackUpdated())
             Bukkit.reloadData();
         GameManager.initialize(this);
-        updater = new PluginUpdater(this);
+        if (getConfig().getBoolean("auto-update", true))
+            updater = new PluginUpdater(this);
+        Bukkit.getPluginManager().registerEvents(new StatsListeners(this), this);
     }
 
     @Override

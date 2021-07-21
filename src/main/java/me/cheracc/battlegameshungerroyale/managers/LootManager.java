@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -54,7 +55,7 @@ public class LootManager implements Listener {
             this.lootTable = getDefaultLootTable();
         else
             this.lootTable = game.getOptions().getLootTable();
-        Bukkit.getLogger().info("Loot Manager> scanning for chest locations");
+        Logr.info("Searching for loot chest locations...");
     }
 
     public void close() {
@@ -121,7 +122,7 @@ public class LootManager implements Listener {
             public void run() {
                 if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0)) {
                     cancel();
-                    Bukkit.getLogger().info(String.format("LootManager> found %s viable chest locations in %s chunks (took %sms)",
+                    Logr.info(String.format("Finished searching, found %s loot chest locations.",
                             unusedChestLocations.size() + usedChestLocations.size(), scanned, System.currentTimeMillis() - last));
                     return;
                 }
@@ -349,9 +350,6 @@ public class LootManager implements Listener {
         }
     }
 
-
-
-
     private final static Collection<LootTable> LOOT_TABLES = new HashSet<>();
 
     private static void loadLootTables() {
@@ -369,7 +367,7 @@ public class LootManager implements Listener {
                 names.append(t.getKey().getKey());
                 names.append(" ");
             }
-            Bukkit.getLogger().info(String.format("loaded custom loot tables: [%s]", names));
+            Logr.info(String.format("Loaded custom loot tables: [%s]", names));
         }
         else {
             // default loot tables

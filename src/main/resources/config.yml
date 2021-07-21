@@ -1,9 +1,9 @@
+auto-update: true
 maps directory: BGHR_Maps/
 reset main world on each restart: false
 lobby world to copy: this/is/where/the/plugin/will/copy/your/lobby/map/from
 loaded maps directory: loaded_maps/
 main world:
-  players can build normally: false
   place players at spawn on join: false
   kits useable in main world: true
   gamemode: adventure

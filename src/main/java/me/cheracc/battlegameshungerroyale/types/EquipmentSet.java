@@ -171,7 +171,7 @@ public class EquipmentSet {
             }
         }
         for (ItemStack i : getOtherItems()) {
-            p.getInventory().addItem(Tools.tagAsPluginItem(tagItem(i)));
+            p.getInventory().addItem(Tools.makeItemPlaceable(Tools.tagAsPluginItem(tagItem(i))));
         }
         return true;
     }

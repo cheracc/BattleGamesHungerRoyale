@@ -7,6 +7,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GameDamageEvent extends Event implements Cancellable,GameEvent {
     private static final HandlerList handlerList = new HandlerList();
@@ -30,7 +31,7 @@ public class GameDamageEvent extends Event implements Cancellable,GameEvent {
         this.bestGuess = null;
     }
 
-    public Player getAggressor() {
+    public @Nullable Player getAggressor() {
         return aggressor;
     }
 

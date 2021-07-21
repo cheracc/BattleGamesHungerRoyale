@@ -75,7 +75,6 @@ public class EquipmentSetGui extends Gui {
                 lore.add(Tools.BLANK_LINE);
                 lore.addAll(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA)));
                 lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
-                System.out.println(iconItem.getType() + ":" + lore);
 
                 guiItem = ItemBuilder.from(iconItem).lore(lore).asGuiItem();
             }

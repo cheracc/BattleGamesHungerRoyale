@@ -32,6 +32,18 @@ public class DamageSource {
         return duration;
     }
 
+    public boolean isApplicable(Player source, EntityDamageEvent.DamageCause type) {
+        if ((System.currentTimeMillis() - timeApplied)/1000 > duration)
+            return false;
+        if (type != null && this.type != type)
+            return false;
+        if (source == null)
+            return true;
+        if (!source.getUniqueId().equals(this.source))
+            return false;
+        return true;
+    }
+
     public Player getSource() {
         return Bukkit.getPlayer(source);
     }
@@ -51,8 +63,12 @@ public class DamageSource {
     public static DamageSource getFrom(Player target) {
         if (target.hasMetadata("DamageSource")) {
             for (MetadataValue v : target.getMetadata("DamageSource")) {
-                if (v.value() instanceof DamageSource)
-                    return (DamageSource) v.value();
+                if (v.value() instanceof DamageSource) {
+                    DamageSource ds = (DamageSource) v.value();
+                    if (ds.isApplicable(null, null))
+                        return (DamageSource) v.value();
+                    target.removeMetadata("DamageSource", v.getOwningPlugin());
+                }
             }
         }
         return null;

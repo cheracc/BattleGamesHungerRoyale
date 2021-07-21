@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.GameDamageEvent;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -73,7 +74,7 @@ public class GameLog {
     private void saveLogFile() throws IOException {
         if (!logFile.exists())
             if (logFile.getParentFile().mkdirs())
-                Bukkit.getLogger().info("creating game log directory: " + logFile.getParentFile().getAbsolutePath());
+                Logr.info("Creating directory for game log files: " + logFile.getParentFile().getAbsolutePath());
 
         FileWriter writer = new FileWriter(logFile);
         PrintWriter printer = new PrintWriter(writer);
@@ -100,7 +101,7 @@ public class GameLog {
         printer.println();
         printer.printf("Participants(%s): %s", players.size(), playerString);
         printer.println();
-        printer.printf("Winner: %s", game.getWinner() == null ? "" : game.getWinner().getName());
+        printer.printf("Winner: %s", game.checkForWinner() ? game.getWinner().getName() : "");
         printer.println();
 
         for (Long l : entryTimes) {

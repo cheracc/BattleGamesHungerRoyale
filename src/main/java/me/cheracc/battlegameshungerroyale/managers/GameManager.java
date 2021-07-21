@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.GameOptions;
@@ -19,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class GameManager {
@@ -69,7 +72,7 @@ public class GameManager {
     public boolean isActivelyPlayingAGame(Player player) {
         if (isInAGame(player)) {
             Game game = getPlayersCurrentGame(player);
-            return game.isPlaying(player);
+            return game.isPlaying(player) && !game.getPhase().toLowerCase().contains("game");
         }
         return false;
     }
@@ -104,7 +107,7 @@ public class GameManager {
 
         if (!configDir.exists())
             if (configDir.mkdirs())
-                Bukkit.getLogger().info("creating gameconfigs directory");
+                Logr.info("Creating new directory for game config files...");
 
         if (configDir.listFiles().length == 0) {
             String[] defaultConfigNames = { "crystal_avalanche.yml", "horizon_city.yml", "island_tower.yml", "king_of_the_ring.yml" };
@@ -114,7 +117,7 @@ public class GameManager {
                 File defaultConfig = new File(configDir, filename);
                 try {
                     if (defaultConfig.createNewFile() && !sent) {
-                        Bukkit.getLogger().info("creating default game configs");
+                        Logr.info("Placing the default game config files...");
                         sent = true;
                     }
                     InputStream in = plugin.getResource("default_game_configs/" + filename);
