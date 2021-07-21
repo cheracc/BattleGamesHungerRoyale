@@ -25,10 +25,11 @@ public class PluginUpdater {
     private String apiVersion = null;
     private final BukkitTask updateChecker;
     private CompletableFuture<Boolean> downloadStatus = null;
-    private final boolean useSnapshotBuilds = false;
+    private final boolean useSnapshotBuilds;
 
     public PluginUpdater(BGHR plugin) {
         this.plugin = plugin;
+        useSnapshotBuilds = plugin.getConfig().getBoolean("use snapshot builds", false);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -134,7 +135,7 @@ public class PluginUpdater {
                     URL url = new URL(urlString);
                     HttpURLConnection con = (HttpURLConnection) url.openConnection();
                     OutputStream out = new FileOutputStream(toSave);
-                    con.setDefaultUseCaches(false);
+                    con.setRequestProperty("User-Agent", "Mozilla/5.0");
 
                     InputStream input = con.getInputStream();
                     Tools.copyStreams(input, out);
