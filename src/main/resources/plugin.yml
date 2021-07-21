@@ -42,3 +42,6 @@ commands:
   stats:
     usage: "/stats"
     description: "shows player stats"
+  topstats:
+    usage: "/topstats"
+    description: "shows the top 10 players in each tracked statistic"

@@ -3,6 +3,7 @@ package me.cheracc.battlegameshungerroyale;
 import me.cheracc.battlegameshungerroyale.commands.*;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.guis.TextInputListener;
+import me.cheracc.battlegameshungerroyale.guis.TopStatsGui;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
 import me.cheracc.battlegameshungerroyale.listeners.StatsListeners;
 import me.cheracc.battlegameshungerroyale.managers.*;
@@ -57,6 +58,7 @@ public class BGHR extends JavaPlugin implements Listener {
         getCommand("settings").setExecutor(new SettingsCommand());
         getCommand("abilityitem").setExecutor(new AbilityItemCommand());
         getCommand("stats").setExecutor(new StatsCommand());
+        getCommand("topstats").setExecutor(new TopStatsCommand());
         Bukkit.getPluginManager().registerEvents(TextInputListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(CustomEventsListener.getInstance(), this);
         Bukkit.getPluginManager().registerEvents(new GeneralListeners(this), this);
@@ -66,6 +68,7 @@ public class BGHR extends JavaPlugin implements Listener {
     @EventHandler
     public void runDelayedTasks(ServerLoadEvent event) {
         PlayerManager.getInstance().initialize(this);
+        TopStatsGui.initialize(this);
         if (MapManager.getInstance().wasDatapackUpdated())
             Bukkit.reloadData();
         GameManager.initialize(this);
