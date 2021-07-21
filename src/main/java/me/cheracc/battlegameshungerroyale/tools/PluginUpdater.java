@@ -134,6 +134,7 @@ public class PluginUpdater {
                 Logr.info(String.format("(Updater) Found a new update (build #%s): preparing to download", mostRecentBuildAvailable));
 
                 try {
+                    toSave.createNewFile();
                     URL url = new URL(urlString);
                     HttpURLConnection con = (HttpURLConnection) url.openConnection();
                     OutputStream out = new FileOutputStream(toSave);
