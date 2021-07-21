@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public class PlayerManager {
 
@@ -32,12 +33,21 @@ public class PlayerManager {
         return false;
     }
 
+    public PlayerData getPlayerDataCallbackIfAsync(UUID uuid, Consumer<PlayerData> callback) {
+        if (isPlayerDataLoaded(uuid)) {
+            PlayerData d = getPlayerData(uuid);
+            callback.accept(d);
+            return d;
+        }
+        return new PlayerData(uuid, callback);
+    }
+
     public @NotNull PlayerData getPlayerData(UUID uuid) {
         for (PlayerData d : loadedPlayers) {
             if (d.getUuid().equals(uuid))
                 return d;
         }
-        return new PlayerData(uuid);
+        return new PlayerData(uuid, null);
     }
 
     public @NotNull PlayerData getPlayerData(Player player) {

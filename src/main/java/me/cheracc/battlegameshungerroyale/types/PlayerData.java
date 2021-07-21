@@ -32,7 +32,7 @@ public class PlayerData {
     private boolean modified = false;
     private boolean loaded = false;
 
-    public PlayerData(UUID uuid) {
+    public PlayerData(UUID uuid, Consumer<PlayerData> callback) {
         this.uuid = uuid;
         settings = new PlayerSettings();
         stats = new PlayerStats(uuid);
@@ -40,14 +40,19 @@ public class PlayerData {
         loadAsynchronously(foundRecords -> {
             if (foundRecords)
                 Logr.info("Finished loading playerdata for " + uuid);
-            else
-                Logr.info("Created new playerdata for " + uuid);
+            else {
+                Logr.info("Creating new playerdata for " + uuid);
+                lastLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
+                lastInventory = new String[0];
+            }
             modified = !foundRecords;
             PlayerManager.getInstance().thisPlayerIsLoaded(this);
             loaded = true;
 
             if (getPlayer() != null)
                 restorePlayer();
+            if (callback != null)
+                callback.accept(this);
         });
     }
 
