@@ -107,6 +107,7 @@ public class PluginUpdater {
 
     private boolean isLatestVersion() {
         if (mostRecentBuildAvailable > 0 && urlToMostRecentBuild != null && urlToMostRecentBuild.length() > 0) {
+            Logr.info("Updater found no new version.");
             return mostRecentBuildAvailable <= currentBuildNumber();
         }
         return true;
