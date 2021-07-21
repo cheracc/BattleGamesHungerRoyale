@@ -40,6 +40,12 @@ public class CustomEventsListener implements Listener {
     }
 
     @EventHandler
+    public void callPlayerEliminatedEvent(GameDeathEvent event) {
+        if (event.getGame().getLivesLeft(event.getRecentlyDeceased().getUniqueId()) <= 1)
+            new PlayerEliminatedEvent(event.getRecentlyDeceased(), event.getGame()).callEvent();
+    }
+
+    @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void callGameDamageEvent(EntityDamageEvent event) {
         Player aggressor = null;
         Player victim;
@@ -77,13 +83,11 @@ public class CustomEventsListener implements Listener {
                 }
             }
 
-            else if (damager.hasMetadata("player")) {
-                for (MetadataValue v : damager.getMetadata("player")) {
-                    Object o = v.value();
-                    if (o instanceof UUID) {
-                        aggressor = Bukkit.getPlayer((UUID) o);
-                        directDamage = true;
-                    }
+            else if (DamageSource.getFrom(victim) != null) {
+                DamageSource ds = DamageSource.getFrom(victim);
+                if (ds.isApplicable(null, event.getCause())) {
+                    aggressor = ds.getSource();
+                    directDamage = true;
                 }
             }
 
@@ -119,11 +123,7 @@ public class CustomEventsListener implements Listener {
                 case FALL:
                     if (DamageSource.getFrom(victim) != null) {
                         DamageSource ds = DamageSource.getFrom(victim);
-                        if (ds.getType() == event.getCause()) {
-                            if (System.currentTimeMillis() - ds.getTimeApplied() > ds.getDuration()) {
-                                ds.remove(victim);
-                                break;
-                            }
+                        if (ds != null && ds.isApplicable(null, event.getCause())) {
                             aggressor = ds.getSource();
                             directDamage = false;
                         }
@@ -132,16 +132,16 @@ public class CustomEventsListener implements Listener {
             }
         }
 
-        if (victim != null && event.getDamage() > 0) {
+        if (event.getDamage() > 0) {
             game = GameManager.getInstance().getPlayersCurrentGame(victim);
+
+            if (victim.isDead())
+                return;
 
             if (game == null) // not playing a game
                 return;
 
-            if (aggressor != null && !game.equals(GameManager.getInstance().getPlayersCurrentGame(aggressor))) // aggressor and victim in different worlds (idk)
-                return;
-
-            GameDamageEvent gameDamageEvent = new GameDamageEvent(aggressor, victim, game, event.getDamage(), directDamage, event.getCause());
+            GameDamageEvent gameDamageEvent = new GameDamageEvent(aggressor, victim, game, event.getFinalDamage(), directDamage, event.getCause());
             if (bestGuess != null)
                 gameDamageEvent.setBestGuess(bestGuess);
             gameDamageEvent.callEvent();
