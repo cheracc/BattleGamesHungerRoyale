@@ -25,7 +25,7 @@ public class PluginUpdater {
     private String apiVersion = null;
     private final BukkitTask updateChecker;
     private CompletableFuture<Boolean> downloadStatus = null;
-    private final boolean useSnapshotBuilds = true;
+    private final boolean useSnapshotBuilds = false;
 
     public PluginUpdater(BGHR plugin) {
         this.plugin = plugin;
