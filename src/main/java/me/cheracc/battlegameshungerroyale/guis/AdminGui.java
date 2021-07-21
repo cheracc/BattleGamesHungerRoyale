@@ -5,14 +5,11 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.*;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.*;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -23,6 +20,9 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
 
@@ -100,15 +100,25 @@ public class AdminGui extends Gui {
         BaseAdminGui pluginGui = new BaseAdminGui(player, "Plugin Configuration", icons);
 
         icons.add(slot -> {
-            boolean value = config.getBoolean("reset main world on each restart", false);
-            ItemBuilder icon = ItemBuilder.from(Material.NETHER_STAR).name(Tools.componentalize("&eReset Main World on Restart: &f" +
-                    (value ? "yes" : "no")));
-            icon.lore(Tools.componentalize(Tools.wrapText("  &7Whether to reset the main world each restart. If enabled, the main world will be reset to the specified map each time the server restarts. &c&lThis &c&lsetting &c&lwill &c&ldelete &c&lyour &c&lmain &c&lworld &c&levery &c&ltime &c&lthe &c&lserver &c&lrestarts!", ChatColor.GRAY)));
+            boolean value = config.getBoolean("use mysql instead of h2", false);
+            ItemBuilder icon = ItemBuilder.from(Material.NETHER_STAR).name(Tools.componentalize("&eUse Database: &f" +
+                    (value ? "MySQL" : "Disk (H2)")));
+            List<String> lore = new ArrayList<>(Tools.wrapText("  &7Which database to use for plugin and player data.", ChatColor.GRAY));
+            lore.add("");
+            if (value) {
+                lore.add("");
+                if (DatabaseManager.get().isUsingMySql())
+                    lore.add("&aMySQL is currently configured and connected");
+                else
+                    lore.add("&cMySQL must be configured in config.yml.");
+            }
+
+            icon.lore(Tools.componentalize(lore));
 
             return icon.asGuiItem(e -> {
-                config.set("reset main world on each restart", !value);
-                plugin.saveConfig();
-                pluginGui.updateIcon(slot);
+                    config.set("use mysql instead of h2", !value);
+                    plugin.saveConfig();
+                    pluginGui.updateIcon(slot);
             });
         });
         icons.add(slot -> {
@@ -168,14 +178,32 @@ public class AdminGui extends Gui {
             });
         });
         icons.add(slot -> {
-            ItemBuilder icon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eReturn to Admin Gui"));
+            boolean current = config.getBoolean("auto-update", true);
+            ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize("&eAuto-Update Plugin: &f" +
+                    (current ? "yes" : "no")));
+            icon.lore(Tools.componentalize(Tools.wrapText("  &7Turns the plugin auto-updater on or off. Plugin updates are installed when the server restarts.", ChatColor.GRAY)));
+
             return icon.asGuiItem(e -> {
-                e.getWhoClicked().closeInventory();
-                new AdminGui(e.getWhoClicked());
+                config.set("auto-update", !current);
+                plugin.saveConfig();
+                pluginGui.updateIcon(slot);
+            });
+        });
+        icons.add(slot -> {
+            boolean current = config.getBoolean("show main scoreboard", true);
+            ItemBuilder icon = ItemBuilder.from(Material.PAINTING).name(Tools.componentalize("&eShow Main Scoreboard: &f" +
+                    (current ? "yes" : "no")));
+            icon.lore(Tools.componentalize(Tools.wrapText("  &7Disable if you use another scoreboard plugin. If enabled, players can still disable it individually with /settings", ChatColor.GRAY)));
+
+            return icon.asGuiItem(e -> {
+                config.set("show main scoreboard", !current);
+                plugin.saveConfig();
+                pluginGui.updateIcon(slot);
             });
         });
 
         pluginGui.setIcons(icons);
+        player.closeInventory();
         pluginGui.open(player);
     }
 
@@ -327,5 +355,36 @@ public class AdminGui extends Gui {
 
     private interface BaseIcon {
         GuiItem createIcon(int slot);
+    }
+
+    private void openMysqlSettingsBook(HumanEntity player) {
+        ItemStack book = new ItemStack(Material.WRITABLE_BOOK);
+        BookMeta meta = (BookMeta) book.getItemMeta();
+        List<String> page = new ArrayList<>();
+
+
+        page.add("   &1&lMySQL Settings");
+        page.add("");
+        page.add("&0adr: 127.0.0.1");
+        page.add("&0prt: 3306");
+        page.add("&0db:  BGHR");
+        page.add("&0usr: minecraft");
+        page.add("&0pwd: hunter2");
+        page.add("");
+        page.add("&8Enter your MySQL server info above. (&5adr&8=address, &5prt&8=port, &5db&8=database, &5usr&8=user, &5pwd&8=password)");
+
+        Component pageComponent = Component.empty();
+        for (String s : page) {
+            pageComponent = pageComponent.append(Tools.componentalize(s)).append(Component.newline());
+        }
+
+        meta.addPages(pageComponent);
+        meta.getPersistentDataContainer().set(Tools.PLUGIN_KEY, PersistentDataType.STRING, "mysql");
+
+        book.setItemMeta(meta);
+
+        player.getInventory().addItem(book);
+        player.sendMessage(Tools.formatInstructions("You have been given a writable book. Open the book to configure your MySQL Server settings. " +
+                "When finished, &lsign the book &fwith the title '&emysql&f' to apply the settings.", ""));
     }
 }

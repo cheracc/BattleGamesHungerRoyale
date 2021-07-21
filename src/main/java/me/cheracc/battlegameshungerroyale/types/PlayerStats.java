@@ -1,8 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 public class PlayerStats {
@@ -18,9 +15,10 @@ public class PlayerStats {
     int damageDealt;
     int damageTaken;
     int activeAbilitiesUsed;
-
-    List<String> usedKits = new ArrayList<>();
-    List<String> playedMaps = new ArrayList<>();
+    int chestsOpened;
+    int currentKillStreak;
+    int itemsLooted;
+    int arrowsShot;
 
     public PlayerStats(UUID id) {
         this.uuid = id;
@@ -35,14 +33,6 @@ public class PlayerStats {
         this.damageDealt = 0;
         this.damageTaken = 0;
         this.activeAbilitiesUsed = 0;
-    }
-
-    public String[] getUsedKits() {
-        return usedKits.toArray(new String[0]);
-    }
-
-    public String[] getPlayedMaps() {
-        return usedKits.toArray(new String[0]);
     }
 
     public int getPlayed() {
@@ -89,12 +79,35 @@ public class PlayerStats {
         return activeAbilitiesUsed;
     }
 
+    public int getChestsOpened() {
+        return chestsOpened;
+    }
+
+    public void setChestsOpened(int value) {
+        chestsOpened = value;
+    }
+
+    public void addChestOpened() {
+        chestsOpened++;
+    }
+
     public void setPlayed(int value) {
         played = value;
     }
 
+    public void addGamePlayed() {
+        played++;
+    }
+
     public void setKills(int value) {
         kills = value;
+    }
+
+    public void addKill() {
+        kills++;
+        currentKillStreak++;
+        if (currentKillStreak > killStreak)
+            killStreak = currentKillStreak;
     }
 
     public void setKillStreak(int value) {
@@ -105,42 +118,65 @@ public class PlayerStats {
         deaths = value;
     }
 
+    public void addDeath() {
+        deaths++;
+        currentKillStreak = 0;
+    }
+
     public void setWins(int value) {
         wins = value;
+    }
+
+    public void addWin() {
+        wins++;
     }
 
     public void setSecondPlaceFinishes(int value) {
         secondPlaceFinishes = value;
     }
 
+    public void addSecondPlaceFinish() {
+        secondPlaceFinishes++;
+    }
+
     public void setTotalTimePlayed(long value) {
         totalTimePlayed = value;
+    }
+
+    public void addToTimePlayed(long value) {
+        totalTimePlayed += value;
     }
 
     public void setQuits(int value) {
         gamesQuit = value;
     }
 
+    public void addGameQuit() {
+        gamesQuit++;
+    }
+
     public void setDamageDealt(int value) {
         damageDealt = value;
+    }
+
+    public void addDamageDealt(double value) {
+        damageDealt += value;
     }
 
     public void setDamageReceived(int value) {
         damageTaken = value;
     }
 
+    public void addDamageReceived(double value) {
+        damageTaken += value;
+    }
+
     public void setActiveAbilitiesUsed(int value) {
         activeAbilitiesUsed = value;
     }
 
-    public void setUsedKits(Object[] usedKits) {
-        for (Object o : usedKits) {
-            this.usedKits.add((String) o);
-        }
+    public void addActiveAbilityUsed() {
+        activeAbilitiesUsed++;
     }
 
-    public void setPlayedMaps(Object[] playedMaps) {
-        for (Object o : playedMaps)
-            this.playedMaps.add((String) o);
-    }
 }

@@ -72,6 +72,8 @@ public class PluginUpdater {
     }
 
     private void getLatestVersionInfo() {
+        if (!plugin.getConfig().getBoolean("auto-update", true))
+            return;
         try {
             String projectName = useSnapshotBuilds ? "BGHR-SNAPSHOT" : "BattleGamesHungerRoyale";
             URL url = new URL("http://jenkins.cheracc.me/job/" + projectName + "/api/json?tree=lastStableBuild[number,url]");
@@ -126,7 +128,7 @@ public class PluginUpdater {
                 if (toSave.exists())
                     toSave.delete();
 
-                Bukkit.getLogger().info(String.format("update found (build #%s): preparing to download", mostRecentBuildAvailable));
+                Logr.info(String.format("(Updater) Found a new update (build #%s): preparing to download", mostRecentBuildAvailable));
 
                 try {
                     URL url = new URL(urlString);
@@ -155,14 +157,17 @@ public class PluginUpdater {
             @Override
             public void run() {
                 if (downloadStatus != null && downloadStatus.isDone()) {
-                    if (downloadStatus.getNow(false))
-                        Bukkit.getLogger().info("finished downloading plugin update. it will be installed on next restart");
-                    else
-                        Bukkit.getLogger().info("failed to download update");
-                    cancel();
+                    if (downloadStatus.getNow(false)) {
+                        Logr.info("(Updater) Finished downloading plugin update. it will be installed on restart");
+                        cancel();
+                    }
+                    else {
+                        Logr.info("(Updater) Failed to download update!");
+                        downloadStatus = null;
+                    }
                     return;
                 }
-                if (System.currentTimeMillis() - last > 1000*60*30 && !isLatestVersion()) {
+                if (System.currentTimeMillis() - last > 1000*60*15 && !isLatestVersion()) {
                     downloadStatus = downloadLatest();
                     last = System.currentTimeMillis();
                 }

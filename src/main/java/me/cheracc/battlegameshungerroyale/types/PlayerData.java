@@ -1,11 +1,9 @@
 package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,7 +12,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -26,21 +27,20 @@ public class PlayerData {
     private final PlayerStats stats;
     private final PlayerSettings settings;
     private Kit kit;
-    private final long joinTime;
+    private long joinTime;
     private boolean modified = false;
     private boolean loaded = false;
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
         settings = new PlayerSettings();
-        joinTime = System.currentTimeMillis();
         stats = new PlayerStats(uuid);
         // load the stats and if new, mark as modified so they can be saved on the next update
         loadAsynchronously(foundRecords -> {
             if (foundRecords)
-                Bukkit.getLogger().info("finished loading playerdata for " + uuid);
+                Logr.info("Finished loading playerdata for " + uuid);
             else
-                Bukkit.getLogger().info("created new playerdata for " + uuid);
+                Logr.info("Created new playerdata for " + uuid);
             modified = !foundRecords;
             PlayerManager.getInstance().thisPlayerIsLoaded(this);
             loaded = true;
@@ -72,6 +72,10 @@ public class PlayerData {
 
     public long getJoinTime() {
         return joinTime;
+    }
+
+    public void setJoinTime(long value) {
+        joinTime = value;
     }
 
     public Kit getKit() {
@@ -182,20 +186,16 @@ public class PlayerData {
         }.runTaskAsynchronously(BGHR.getPlugin());
     }
 
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:h2:" + BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/plugin_data;mode=MySQL;DATABASE_TO_LOWER=TRUE" , "bghr", "bghr");
-    }
 
     public boolean load() {
-        final BGHR plugin = BGHR.getPlugin();
         boolean found = false;
 
-        try ( Connection con = getConnection();
+        try (Connection con = DatabaseManager.get().getConnection();
         PreparedStatement loadStatsQuery = con.prepareStatement("SELECT * FROM player_stats WHERE uuid=?");
         PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?");
         PreparedStatement loadDataQuery = con.prepareStatement("SELECT * FROM player_data WHERE uuid=?")) {
 
-            loadStatsQuery.setObject(1, uuid);
+            loadStatsQuery.setString(1, uuid.toString());
             ResultSet result = loadStatsQuery.executeQuery();
 
             if (result.isBeforeFirst()) {
@@ -217,12 +217,11 @@ public class PlayerData {
                 stats.setDamageDealt(result.getInt("damagedealt"));
                 stats.setDamageReceived(result.getInt("damagetaken"));
                 stats.setActiveAbilitiesUsed(result.getInt("activeabilities"));
-                stats.setUsedKits((Object[]) result.getArray("usedkits").getArray());
-                stats.setPlayedMaps((Object[]) result.getArray("playedmaps").getArray());
+                stats.setChestsOpened(result.getInt("chests"));
                 result.close();
             }
 
-            loadSettingsQuery.setObject(1, uuid);
+            loadSettingsQuery.setString(1, uuid.toString());
             result = loadSettingsQuery.executeQuery();
             if (result.isBeforeFirst()) {
                 result.next();
@@ -239,7 +238,7 @@ public class PlayerData {
                 result.close();
             }
 
-            loadDataQuery.setObject(1, uuid);
+            loadDataQuery.setString(1, uuid.toString());
             result = loadDataQuery.executeQuery();
             if (result.isBeforeFirst()) {
                 result.next();
@@ -250,7 +249,7 @@ public class PlayerData {
                 }
 
                 found = true;
-                World w = Bukkit.getWorld((UUID) result.getObject("lastworld"));
+                World w = Bukkit.getWorld(UUID.fromString(result.getString("lastworld")));
                 if (w == null)
                     w = Bukkit.getWorlds().get(0);
                 int x = result.getInt("lastx");
@@ -273,37 +272,46 @@ public class PlayerData {
     }
 
     public void save() {
-        try {
-            Connection con = getConnection();
-            PreparedStatement updateSettings = con.prepareStatement(
-                    "INSERT INTO player_settings (uuid,showmain,showhelp,defaultkit) VALUES (?,?,?,?) " +
-                            "ON DUPLICATE KEY UPDATE " +
-                            "showmain=VALUES(showmain)," +
-                            "showhelp=VALUES(showhelp)," +
-                            "defaultkit=VALUES(defaultkit);");
-            updateSettings.setObject(1, getUuid());
+        try (Connection con = DatabaseManager.get().getConnection();
+             PreparedStatement updateSettings = con.prepareStatement(
+                     "INSERT INTO player_settings (uuid,showmain,showhelp,defaultkit) VALUES (?,?,?,?) " +
+                             "ON DUPLICATE KEY UPDATE " +
+                             "showmain=VALUES(showmain)," +
+                             "showhelp=VALUES(showhelp)," +
+                             "defaultkit=VALUES(defaultkit);");
+             PreparedStatement updateStats = con.prepareStatement(
+                     "INSERT INTO player_stats (uuid,played,kills,killstreak,deaths,wins,secondplaces,totaltime,quits,damagedealt,damagetaken,activeabilities,chests) VALUES " +
+                             "(?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
+                             "played=VALUES(played)," +
+                             "kills=VALUES(kills)," +
+                             "killstreak=VALUES(killstreak)," +
+                             "deaths=VALUES(deaths)," +
+                             "wins=VALUES(wins)," +
+                             "secondplaces=VALUES(secondplaces)," +
+                             "totaltime=VALUES(totaltime)," +
+                             "quits=VALUES(quits)," +
+                             "damagedealt=VALUES(damagedealt)," +
+                             "damagetaken=VALUES(damagetaken)," +
+                             "activeabilities=VALUES(activeabilities)," +
+                             "chests=VALUES(chests)");
+             PreparedStatement updateData = con.prepareStatement(
+                     "INSERT INTO player_data (uuid,lastworld,lastx,lasty,lastz,inventory,armor,enderchest) VALUES (?,?,?,?,?,?,?,?) " +
+                             "ON DUPLICATE KEY UPDATE " +
+                             "lastworld=VALUES(lastworld)," +
+                             "lastx=VALUES(lastx)," +
+                             "lasty=VALUES(lasty)," +
+                             "lastz=VALUES(lastz)," +
+                             "inventory=VALUES(inventory)," +
+                             "armor=VALUES(armor)," +
+                             "enderchest=VALUES(enderchest)")) {
+
+            updateSettings.setString(1, getUuid().toString());
             updateSettings.setBoolean(2, settings.isShowMainScoreboard());
             updateSettings.setBoolean(3, settings.isShowHelp());
             updateSettings.setString(4, settings.getDefaultKit());
             updateSettings.executeUpdate();
 
-            PreparedStatement updateStats = con.prepareStatement(
-                    "INSERT INTO player_stats (uuid,played,kills,killstreak,deaths,wins,secondplaces,totaltime,quits,damagedealt,damagetaken,activeabilities,usedkits,playedmaps) VALUES " +
-                            "(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
-                            "played=VALUES(played)," +
-                            "kills=VALUES(kills)," +
-                            "killstreak=VALUES(killstreak)," +
-                            "deaths=VALUES(deaths)," +
-                            "wins=VALUES(wins)," +
-                            "secondplaces=VALUES(secondplaces)," +
-                            "totaltime=VALUES(totaltime)," +
-                            "quits=VALUES(quits)," +
-                            "damagedealt=VALUES(damagedealt)," +
-                            "damagetaken=VALUES(damagetaken)," +
-                            "usedkits=VALUES(usedkits)," +
-                            "playedmaps=VALUES(playedmaps)," +
-                            "activeabilities=VALUES(activeabilities);");
-            updateStats.setObject(1, getUuid());
+            updateStats.setString(1, getUuid().toString());
             updateStats.setInt(2, stats.getPlayed());
             updateStats.setInt(3, stats.getKills());
             updateStats.setInt(4, stats.getKillStreak());
@@ -315,22 +323,11 @@ public class PlayerData {
             updateStats.setInt(10, stats.getDamageDealt());
             updateStats.setInt(11, stats.getDamageTaken());
             updateStats.setInt(12, stats.getActiveAbilitiesUsed());
-            updateStats.setObject(13, stats.getUsedKits());
-            updateStats.setObject(14, stats.getPlayedMaps());
+            updateStats.setInt(13, stats.getChestsOpened());
             updateStats.execute();
 
-            PreparedStatement updateData = con.prepareStatement(
-                    "INSERT INTO player_data (uuid,lastworld,lastx,lasty,lastz,inventory,armor,enderchest) VALUES (?,?,?,?,?,?,?,?) " +
-                            "ON DUPLICATE KEY UPDATE " +
-                            "lastworld=VALUES(lastworld)," +
-                            "lastx=VALUES(lastx)," +
-                            "lasty=VALUES(lasty)," +
-                            "lastz=VALUES(lastz)," +
-                            "inventory=VALUES(inventory)," +
-                            "armor=VALUES(armor)," +
-                            "enderchest=VALUES(enderchest)");
-            updateData.setObject(1, getUuid());
-            updateData.setObject(2, getLastLocation().getWorld().getUID());
+            updateData.setString(1, getUuid().toString());
+            updateData.setString(2, getLastLocation().getWorld().getUID().toString());
             updateData.setInt(3, (int) getLastLocation().getX());
             updateData.setInt(4, (int) getLastLocation().getY());
             updateData.setInt(5, (int) getLastLocation().getZ());
@@ -340,7 +337,6 @@ public class PlayerData {
             updateData.execute();
 
             modified = false;
-            con.close();
 
         } catch (SQLException e) {
             e.printStackTrace();

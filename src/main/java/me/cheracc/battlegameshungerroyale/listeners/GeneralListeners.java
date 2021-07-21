@@ -114,8 +114,11 @@ public class GeneralListeners implements Listener {
 
             if (ability instanceof ActiveAbility && activeItem != null && !p.hasCooldown(activeItem.getType())) {
                 ActiveAbility activeAbility = (ActiveAbility) ability;
-                if (activeAbility.doAbility(p))
+                if (activeAbility.doAbility(p)) {
                     p.setCooldown(activeItem.getType(), activeAbility.getCooldown() * 20);
+                    data.getStats().addActiveAbilityUsed();
+                    data.setModified(true);
+                }
             }
 
             else if (ability instanceof PassiveAbility && activeItem != null) {
@@ -186,7 +189,7 @@ public class GeneralListeners implements Listener {
         GameMode mode = GameMode.valueOf(gm.toUpperCase());
         p.setGameMode(mode);
 
-        if (PlayerManager.getInstance().isPlayerDataLoaded(p))
+        if (PlayerManager.getInstance().isPlayerDataLoaded(p.getUniqueId()))
             PlayerManager.getInstance().getPlayerData(p).restorePlayer();
 
         if (plugin.getConfig().getBoolean("main world.place players at spawn on join", false))

@@ -6,7 +6,7 @@
 
     <groupId>me.cheracc</groupId>
     <artifactId>BattleGamesHungerRoyale</artifactId>
-    <version>alpha4</version>
+    <version>0.1.0.beta1</version>
     <build>
         <plugins>
             <plugin>
@@ -238,7 +238,7 @@
                 </property>
             </activation>
             <build>
-                <finalName>bghr-test_${project.version}</finalName>
+                <finalName>bghr-test</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -258,7 +258,7 @@
                                             <directory>${basedir}/target</directory>
                                             <filtering>false</filtering>
                                             <includes>
-                                                <include>bghr*.jar</include>
+                                                <include>bghr-test.jar</include>
                                             </includes>
                                         </resource>
                                     </resources>

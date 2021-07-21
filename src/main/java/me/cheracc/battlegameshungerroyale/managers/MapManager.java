@@ -1,8 +1,9 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.types.MapData;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -24,19 +25,19 @@ public class MapManager implements Listener {
 
     private MapManager() {
         plugin = BGHR.getPlugin();
-        mainConfig = plugin.getConfig();
+        FileConfiguration mainConfig = plugin.getConfig();
         mapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("maps directory", "BGHR_Maps/")).getAbsoluteFile();
         mainWorldFolder = getMainWorldFolder();
         activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();
 
         if (!mapsDirectory.exists()) {
             if (mapsDirectory.mkdirs())
-                Bukkit.getLogger().info("Unpacking sample maps into " + mapsDirectory.getPath());
+                Logr.info("Unpacking sample maps into " + mapsDirectory.getPath());
             Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.toPath());
         }
         deleteCompletedMaps();
-        loadLobby();
         registerMaps();
+        installDataPack();
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -48,7 +49,6 @@ public class MapManager implements Listener {
 
     // private fields
     private final BGHR plugin;
-    private final FileConfiguration mainConfig;
     private final File mapsDirectory;
     private final File mainWorldFolder;
     private final File activeMapsDirectory;
@@ -140,7 +140,7 @@ public class MapManager implements Listener {
     public void saveMap(MapData mapData, World world) {
         File oldVersionsDirectory = new File(mapsDirectory, "old_maps");
         if (!oldVersionsDirectory.exists() && oldVersionsDirectory.mkdirs())
-            Bukkit.getLogger().info("created old_maps directory inside maps directory");
+            Logr.info("Creating 'old_maps' directory for archiving old versions...");
         String[] unwantedFiles = { "uid.dat", "session.lock", "level.dat_old", "playerdata", "advancements", "stats" };
 
         world.save();
@@ -151,11 +151,11 @@ public class MapManager implements Listener {
             try {
                 File archiveFolder = new File(oldVersionsDirectory, mapData.getMapDirectory().getName() + "_" + Tools.getTimestamp());
                 FileUtils.moveDirectory(mapData.getMapDirectory(), archiveFolder);
-                Bukkit.getLogger().info("archived " + mapData.getMapDirectory().getPath() + " as " + archiveFolder.getPath());
+                Logr.info("Archived " + mapData.getMapDirectory().getPath() + " as " + archiveFolder.getPath());
                 FileUtils.deleteDirectory(mapData.getMapDirectory());
-                Bukkit.getLogger().info("deleted " + mapData.getMapDirectory().getPath());
+                Logr.info("Deleted old " + mapData.getMapDirectory().getPath());
                 FileUtils.copyDirectory(loadedMap, mapData.getMapDirectory());
-                Bukkit.getLogger().info("copied " + loadedMap.getAbsolutePath() + " to " + mapData.getMapDirectory().getPath());
+                Logr.info("Copied replacement " + loadedMap.getAbsolutePath() + " to " + mapData.getMapDirectory().getPath());
                 for (String s : unwantedFiles) {
                     File delete = new File(mapData.getMapDirectory(), s);
                     FileUtils.deleteQuietly(delete);
@@ -187,19 +187,6 @@ public class MapManager implements Listener {
     private File getMainWorldFolder() {
         String worldName = getServerProperties().getProperty("level-name", "world");
         return new File(plugin.getDataFolder().getParentFile().getParentFile(), worldName);
-    }
-
-    private void loadLobby() {
-        String relativePath = mainConfig.getString("lobby world to copy", "BGHR_Maps/islandtower");
-        File lobby = new File(plugin.getDataFolder().getParentFile().getParent(), relativePath);
-        boolean resetLobby = mainConfig.getBoolean("reset lobby on restart", false);
-
-        if (resetLobby && lobby.exists() && lobby.isDirectory()) {
-            copyMap(lobby, mainWorldFolder);
-        }
-
-        installDataPack();
-
     }
 
     private void registerMaps() {
@@ -245,7 +232,7 @@ public class MapManager implements Listener {
             }
         }
         if (destination.mkdirs())
-            Bukkit.getLogger().info("copying " + mapSourceDirectory.getName() + " to active maps directory");
+            Logr.info("Making a fresh copy of " + mapSourceDirectory.getName() + "...");
 
         if (mapSourceDirectory.listFiles() == null)
             return;
@@ -300,7 +287,7 @@ public class MapManager implements Listener {
         if (!mcmeta.exists()) {
             try {
                 if (mcmeta.createNewFile())
-                    Bukkit.getLogger().info("Installing plugin datapack files");
+                    Logr.info("Installing plugin datapack files");
                 OutputStream out = new FileOutputStream(mcmeta);
                 plugin.getResource("datapack_files/pack.mcmeta").transferTo(out);
                 out.close();
@@ -313,17 +300,17 @@ public class MapManager implements Listener {
         File pluginLootTablesDir = new File(plugin.getDataFolder(), "loot_tables");
         if (!pluginLootTablesDir.exists())
             if (pluginLootTablesDir.mkdirs())
-                Bukkit.getLogger().info("creating directory " + pluginLootTablesDir.getAbsolutePath());
+                Logr.info("Creating directory " + pluginLootTablesDir.getAbsolutePath() + " (put your own loot tables here!)");
 
         File defaultLootTable = new File(pluginLootTablesDir, "default.json");
         if (!defaultLootTable.exists()) {
             try {
                 if (defaultLootTable.createNewFile())
-                    Bukkit.getLogger().info("Inserting default loot table");
+                    Logr.info("Inserting default loot table");
                 OutputStream out = new FileOutputStream(defaultLootTable);
                 plugin.getResource("datapack_files/default.json").transferTo(out);
                 out.close();
-                Bukkit.getLogger().info("creating file " + defaultLootTable.getAbsolutePath());
+                Logr.info("Creating file " + defaultLootTable.getAbsolutePath());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -348,40 +335,4 @@ public class MapManager implements Listener {
         }
     }
 
-    private void copyMap(File mapSourceDirectory, File destination) {
-        try {
-            List<String> filesToIgnore = new ArrayList<>(Arrays.asList("uid.dat", "session.lock"));
-
-            if (destination.exists()) {
-                FileUtils.deleteDirectory(destination);
-            }
-            if (destination.mkdirs())
-                Bukkit.getLogger().info("resetting main (lobby) world from " + mapSourceDirectory.getPath());
-
-            if (mapSourceDirectory.listFiles() == null)
-                return;
-
-
-            List<File> mapFiles = new ArrayList<>(Arrays.asList(Objects.requireNonNull(mapSourceDirectory.listFiles())));
-
-            for (File file : mapFiles) {
-                if (filesToIgnore.contains(file.getName()))
-                    continue;
-                if (file.isDirectory())
-                    FileUtils.copyDirectoryToDirectory(file, destination);
-                else
-                    FileUtils.copyFileToDirectory(file, destination);
-            }
-
-            if (destination.equals(mainWorldFolder)) {
-                File playerdataDirectory = new File(destination, "playerdata");
-                if (!playerdataDirectory.exists())
-                    if (!playerdataDirectory.mkdirs())
-                        Bukkit.getLogger().warning("could not create empty playerdata directory");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }
