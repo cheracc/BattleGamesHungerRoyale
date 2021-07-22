@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.guis;
 
 import dev.triumphteam.gui.builder.item.ItemBuilder;
+import dev.triumphteam.gui.builder.item.SkullBuilder;
 import dev.triumphteam.gui.components.GuiType;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
@@ -8,6 +9,7 @@ import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.PlayerStats;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemFlag;
@@ -16,10 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StatsGui extends Gui {
+    private final PlayerData data;
     private final PlayerStats stats;
 
     public StatsGui(HumanEntity viewer, PlayerData data) {
         super(GuiType.DISPENSER, data.getName() + "'s Statistics:", InteractionModifier.VALUES);
+        this.data = data;
         this.stats = data.getStats();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 
@@ -34,7 +38,7 @@ public class StatsGui extends Gui {
     }
 
     private GuiItem playHistoryIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.PAINTING).name(Tools.componentalize("&ePlayer History"));
+        SkullBuilder icon = ItemBuilder.skull().owner(Bukkit.getOfflinePlayer(data.getUuid())).name(Tools.componentalize("&ePlayer History"));
         List<String> lore = new ArrayList<>();
 
         lore.add("&fGames Played&7: " + stats.getPlayed());
@@ -48,7 +52,7 @@ public class StatsGui extends Gui {
     }
 
     private GuiItem playerStatsIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.WOODEN_SWORD).name(Tools.componentalize("&ePlayer Statistics"));
+        ItemBuilder icon = ItemBuilder.from(Material.NETHERITE_CHESTPLATE).name(Tools.componentalize("&ePlayer Statistics"));
         icon.flags(ItemFlag.HIDE_ATTRIBUTES);
         List<String> lore = new ArrayList<>();
 
@@ -63,7 +67,8 @@ public class StatsGui extends Gui {
     }
 
     private GuiItem otherStatsIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.ZOMBIE_HEAD).name(Tools.componentalize("&eOther Stats"));
+        ItemBuilder icon = ItemBuilder.from(Material.GOLDEN_BOOTS).name(Tools.componentalize("&eOther Stats"));
+        icon.flags(ItemFlag.HIDE_ATTRIBUTES);
         List<String> lore = new ArrayList<>();
 
         lore.add("&fAbilities Used&7: " + stats.getActiveAbilitiesUsed());
