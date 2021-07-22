@@ -173,20 +173,25 @@ public class InventorySerializer {
     }
 
     public static void resetPlayerInventoryFromBase64(Player player, String[] base64EncodedPlayerInventory) throws IOException {
-        Inventory primary = fromBase64(base64EncodedPlayerInventory[0]);
+        if (base64EncodedPlayerInventory[0] == null || base64EncodedPlayerInventory[0].length() <= 1)
+            return;
+
+        ItemStack[] primary = fromBase64(base64EncodedPlayerInventory[0]).getContents();
         ItemStack[] armor = itemStackArrayFromBase64(base64EncodedPlayerInventory[1]);
 
-        if (primary.getContents() != null && primary.getContents().length >= 0)
-            player.getInventory().setContents(primary.getContents());
+        if (primary != null && primary.length >= 0)
+            player.getInventory().setContents(primary);
 
         player.getInventory().setArmorContents(armor);
 
+        if (base64EncodedPlayerInventory[2] == null)
+            return;
         if (base64EncodedPlayerInventory.length >= 3) {
             Inventory enderChest = fromBase64(base64EncodedPlayerInventory[2]);
+            ItemStack[] enderContents = enderChest.getContents();
 
-            if (enderChest.getContents() != null && enderChest.getContents().length >= 0)
-                player.getEnderChest().setContents(enderChest.getContents());
-
+            if (enderContents != null && enderContents.length >= 0)
+                player.getEnderChest().setContents(enderContents);
         }
 
     }
