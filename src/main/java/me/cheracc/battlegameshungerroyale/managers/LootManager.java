@@ -125,7 +125,7 @@ public class LootManager implements Listener {
                 if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0 && System.currentTimeMillis() - startTime > 1000*10)) {
                     cancel();
                     Logr.info(String.format("Finished searching, found %s loot chest locations.",
-                            unusedChestLocations.size() + usedChestLocations.size(), scanned, System.currentTimeMillis() - last));
+                            unusedChestLocations.size() + usedChestLocations.size()));
                     return;
                 }
 
