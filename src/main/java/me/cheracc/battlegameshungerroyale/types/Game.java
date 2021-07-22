@@ -2,10 +2,7 @@ package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.*;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.LootManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.apache.commons.lang.StringUtils;
@@ -79,7 +76,6 @@ public class Game implements Listener {
         gameTime = -1;
         postgameTime = -1;
 
-        long time = System.currentTimeMillis();
         MapManager.getInstance().createNewWorldAsync(map, w -> {
             setGameWorld(w);
             setupGame();
@@ -147,6 +143,10 @@ public class Game implements Listener {
         }
         for (Player p : getActivePlayers()) {
             p.setInvulnerable(true);
+            PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+            if (data.getKit() == null || (!data.getKit().isEnabled() && !p.hasPermission("bghr.admin.kits.disabled"))) {
+                data.registerKit(KitManager.getInstance().getRandomKit(false), false);
+            }
         }
         new GameStartEvent(this).callEvent();
     }
@@ -232,7 +232,7 @@ public class Game implements Listener {
         gameLog.addLogEntry(String.format("%s joined (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
 
         if (PlayerManager.getInstance().getPlayerData(player).getKit() == null) {
-            player.sendMessage(Tools.componentalize("&fYou haven't selected a kit! Type &e/kitmenu &for &e/kit <name> &fto select one!"));
+            player.sendMessage(Tools.componentalize("&fYou haven't selected a kit! Type &e/kit &for let the gods of randomness have their say!"));
         } else {
             PlayerManager.getInstance().getPlayerData(player).getKit().outfitPlayer(player);
         }

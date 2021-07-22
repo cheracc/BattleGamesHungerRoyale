@@ -35,6 +35,7 @@ public class LootManager implements Listener {
     private final boolean loadPrePlacedChests;
     private final int maxChestsPerChunk;
     private final boolean loosenChestSearchRestrictions;
+    private final long startTime;
 
     private final LootTable lootTable;
     private final List<Location> unusedChestLocations = new ArrayList<>();
@@ -48,6 +49,7 @@ public class LootManager implements Listener {
         this.maxChestsPerChunk = game.getOptions().getMaxChestsPerChunk();
         this.loosenChestSearchRestrictions = game.getOptions().isLoosenSearchRestrictions();
         this.game = game;
+        this.startTime = System.currentTimeMillis();
         this.asyncChunkScanner = asyncChunkScanner();
         this.updateChests = updateChests();
         this.chestRecycler = chestRecycler();
@@ -120,7 +122,7 @@ public class LootManager implements Listener {
             int scanned = 0;
             @Override
             public void run() {
-                if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0)) {
+                if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0 && System.currentTimeMillis() - startTime > 1000*30)) {
                     cancel();
                     Logr.info(String.format("Finished searching, found %s loot chest locations.",
                             unusedChestLocations.size() + usedChestLocations.size(), scanned, System.currentTimeMillis() - last));

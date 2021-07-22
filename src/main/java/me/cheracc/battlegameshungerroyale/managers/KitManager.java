@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class KitManager {
     private static KitManager singletonInstance = null;
@@ -111,5 +112,14 @@ public class KitManager {
         if (singletonInstance == null)
             singletonInstance = new KitManager();
         return singletonInstance;
+    }
+
+    public Kit getRandomKit(boolean includeDisabled) {
+        int random = ThreadLocalRandom.current().nextInt(loadedKits.size());
+        int safetyCounter = 0;
+        while (!(includeDisabled || loadedKits.get(random).isEnabled()) && safetyCounter < 100) {
+            random = ThreadLocalRandom.current().nextInt(loadedKits.size());
+        }
+        return loadedKits.get(random);
     }
 }

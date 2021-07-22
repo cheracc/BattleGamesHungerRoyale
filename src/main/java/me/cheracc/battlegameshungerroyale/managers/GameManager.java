@@ -153,14 +153,13 @@ public class GameManager {
         Objective mainObj = mainScoreboard.getObjective("mainSb");
 
         if (mainObj == null) {
-            mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
-            mainObj = mainScoreboard.getObjective("mainSb");
-        }
-        mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+            mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
+            mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
-        mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
-        mainObj.getScore("  " + ChatColor.MAGIC).setScore(13);
+            mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
+            mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
+            mainObj.getScore("  " + ChatColor.MAGIC).setScore(13);
+        }
 
         int lineNumber = 12;
         for (Game game : GameManager.getInstance().getActiveGames()) {
@@ -199,13 +198,12 @@ public class GameManager {
             for (; lineNumber > 0; lineNumber--) {
                 mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Component.space());
             }
-        mainScoreboard.getTeam("line2").prefix(Tools.componentalize(" &e/games &7to join or watch a game"));
+        mainScoreboard.getTeam("line2").prefix(Tools.componentalize(" &e/games &7to join or watch a game").hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Tools.componentalize("/games"))));
         mainScoreboard.getTeam("line1").prefix(Tools.componentalize(" &e/settings &7to turn this off"));
     }
 
     public void setupScoreboardTeams() {
-        mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
-        Objective obj = mainScoreboard.getObjective("mainSb");
+        Objective obj = mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
 
         for (int i = 12; i >= 0; i--) {
             String entry = ChatColor.values()[i] + "" + ChatColor.values()[i+1];
