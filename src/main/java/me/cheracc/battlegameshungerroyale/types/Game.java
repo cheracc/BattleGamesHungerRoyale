@@ -355,7 +355,7 @@ public class Game implements Listener {
         int scanRadius = map.getSpawnRadius() + 1;
         int startSize = spawnPoints.size();
 
-        if (spawnPoints.size() < number && map.getSpawnBlockType() != null) {
+        if (startSize < number && map.getSpawnBlockType() != null) {
             for (int x = -scanRadius; x <= scanRadius; x++) {
                 for (int y = -scanRadius; y <= scanRadius; y++)
                     for (int z = -scanRadius; z <= scanRadius; z++) {
@@ -375,7 +375,7 @@ public class Game implements Listener {
 
 
         int spawnPointsNeeded = Math.max(getActivePlayers().size(), number);
-        int extra = 5;
+        int extra = 2;
         if (spawnPoints.size() < spawnPointsNeeded) {
             for (int i = 0; i < spawnPointsNeeded + extra; i++) {
                 double angle = (Math.PI * 2 * i) / spawnPointsNeeded + Math.PI/(ThreadLocalRandom.current().nextInt(16,32));
@@ -389,7 +389,6 @@ public class Game implements Listener {
                 spawnPoints.add(spawnPoint);
             }
         }
-        Logr.info(String.format("Created %s spawn points around spawn center", spawnPoints.size() - startSize));
         return spawnPoints;
     }
 
