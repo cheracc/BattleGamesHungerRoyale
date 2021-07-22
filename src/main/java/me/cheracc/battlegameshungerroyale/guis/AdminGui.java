@@ -300,7 +300,9 @@ public class AdminGui extends Gui {
                 });
             });
         }
-        new BaseAdminGui(player, "Map Configurations", icons.size() / 9 + 1);
+        BaseAdminGui mapsGui = new BaseAdminGui(player, "Map Configurations", icons.size() / 9 + 1);
+        mapsGui.setIcons(icons);
+        mapsGui.open(player);
     }
 
     public void sendGameAdminGui(HumanEntity player) {
@@ -333,7 +335,9 @@ public class AdminGui extends Gui {
                     }
                 });
             });
-        new BaseAdminGui(player, "Game Configurations", icons.size() / 9 + 1);
+        BaseAdminGui gameGui = new BaseAdminGui(player, "Game Configurations", icons.size() / 9 + 1);
+        gameGui.setIcons(icons);
+        gameGui.open(player);
     }
 
     private static class BaseAdminGui extends Gui {
@@ -346,9 +350,6 @@ public class AdminGui extends Gui {
                 new AdminGui(player);
             });
 
-            int slot = 0;
-            if (slot > 0)
-                this.open(player);
         }
 
         public void updateIcon(int slot) {
