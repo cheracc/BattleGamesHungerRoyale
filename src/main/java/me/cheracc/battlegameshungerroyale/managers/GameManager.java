@@ -223,5 +223,4 @@ public class GameManager {
         return updater.runTaskTimer(plugin, 100L, 100L);
     }
 
-
 }
