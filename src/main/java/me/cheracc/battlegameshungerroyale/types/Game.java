@@ -134,6 +134,7 @@ public class Game implements Listener {
                 gameTick = startGameTick();
                 gameLog.addPhaseEntry(currentPhase);
                 currentPhase = GamePhase.INVINCIBILITY;
+                world.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, false);
                 new GameChangedPhaseEvent(this, "invincibility").callEvent();
             });
         else if (options.getStartType() == GameOptions.StartType.HUNGERGAMES) {
@@ -400,6 +401,7 @@ public class Game implements Listener {
             getSpawnPoints(getActivePlayers().size());
         }
 
+        world.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
         Collections.shuffle(spawnPoints);
         int count = 0;
         for (Player p : getActivePlayers()) {
@@ -416,7 +418,6 @@ public class Game implements Listener {
                         return;
 
                     if (count == 0) {
-                        p.setAllowFlight(true);
                         p.setVelocity(boost);
                     } else {
                         p.setVelocity(p.getVelocity().add(boost));
