@@ -1,7 +1,6 @@
 map: ak6
 lives per player: 3
 players needed to start: 2
-allow regular building: false
 timers:
   pregame: 60
   invincibility: 60

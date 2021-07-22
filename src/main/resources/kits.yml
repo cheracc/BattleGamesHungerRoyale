@@ -362,7 +362,7 @@ berserker:
         has-icon: true
       chance: 1.0
       custom name: Rage+
-      description: gain Strength when killing anything else
+      description: gain Strength when killing a monster or animal
 fireman:
   name: Fireman
   description: The fireman is immune to fire and starts with a lighter to have some
@@ -577,7 +577,7 @@ unstoppableforce:
       affects only placing player: false
       totem item type: jack_o_lantern
       totem name: GET REKT
-      item description: anything near this thing gets rekt
+      item description: anything near this thing gets rekt (unless its undead)
       effect:
         ==: PotionEffect
         effect: 7

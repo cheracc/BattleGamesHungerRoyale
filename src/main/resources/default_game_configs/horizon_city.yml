@@ -1,7 +1,6 @@
 map: horizon_city
 lives per player: 1
-players needed to start: 4
-allow regular building: false
+players needed to start: 2
 timers:
   pregame: 60
   invincibility: 60
