@@ -31,6 +31,7 @@
                                     <include>com.github.MilkBowl:VaultAPI</include>
                                     <include>org.bstats:bstats-base</include>
                                     <include>org.bstats:bstats-bukkit</include>
+                                    <include>com.zaxxer:HikariCP</include>
                                 </includes>
                             </artifactSet>
                             <filters>
@@ -124,6 +125,11 @@
             <artifactId>LibsDisguises</artifactId>
             <version>10.0.25</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>4.0.3</version>
         </dependency>
     </dependencies>
 

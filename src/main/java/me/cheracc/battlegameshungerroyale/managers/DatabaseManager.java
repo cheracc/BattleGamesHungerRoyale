@@ -1,5 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import org.bukkit.Bukkit;
@@ -12,7 +14,8 @@ public class DatabaseManager {
     private final static int CURRENT_DB_VERSION = 3;
 
     private static DatabaseManager singletonInstance = null;
-    private Connection con = null;
+    private HikariConfig config = new HikariConfig();
+    private HikariDataSource ds;
     private boolean useMySql;
     private String connectString;
     private String user;
@@ -33,6 +36,7 @@ public class DatabaseManager {
 
             connectString = String.format("jdbc:mysql://%s:%s/%s%s", hostname, port, database, arguments.length() > 1 ? "?" + arguments : "");
             try {
+                setupDataSource();
                 getConnection();
             } catch (SQLException e) {
                 Logr.warn("Could not connect to MySQL: " + e.getMessage());
@@ -53,8 +57,17 @@ public class DatabaseManager {
                                         plugin.getDataFolder().getAbsolutePath());
                 this.user = "bghr";
                 this.pass = "bghr";
+                setupDataSource();
             }
         }
+    }
+
+    private void setupDataSource() {
+        config.setJdbcUrl(connectString);
+        config.setUsername(user);
+        config.setPassword(pass);
+
+        ds = new HikariDataSource(config);
     }
 
     public static void initialize(BGHR plugin) {
@@ -73,10 +86,7 @@ public class DatabaseManager {
     }
 
     public Connection getConnection() throws SQLException {
-        if (con != null && !con.isClosed())
-            return con;
-        con = DriverManager.getConnection(connectString, user, pass);
-        return con;
+        return ds.getConnection();
     }
 
     public boolean isUsingMySql() {
@@ -86,7 +96,7 @@ public class DatabaseManager {
     private void setupTables() throws SQLException {
         getConnection();
 
-        try (PreparedStatement createStats = con.prepareStatement("CREATE TABLE IF NOT EXISTS player_stats (" +
+        try (PreparedStatement createStats = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS player_stats (" +
                 "uuid CHAR(36) PRIMARY KEY, " +
                 "played INT," +
                 "kills INT," +
@@ -105,16 +115,16 @@ public class DatabaseManager {
                 "monsterskilled INT," +
                 "animalskilled INT," +
                 "foodeaten INT)");
-             PreparedStatement createSettings = con.prepareStatement("CREATE TABLE IF NOT EXISTS player_settings (" +
+             PreparedStatement createSettings = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS player_settings (" +
                  "uuid CHAR(36) PRIMARY KEY," +
                  "showmain BOOLEAN," +
                  "showhelp BOOLEAN," +
                  "defaultkit VARCHAR(24)" +
                  ")");
-             PreparedStatement createVersionTable = con.prepareStatement("CREATE TABLE IF NOT EXISTS db_version (" +
+             PreparedStatement createVersionTable = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS db_version (" +
                  "lockcol CHAR(1) PRIMARY KEY," +
                  "version TINYINT NOT NULL)");
-             PreparedStatement createDataTable = con.prepareStatement("CREATE TABLE IF NOT EXISTS player_data (" +
+             PreparedStatement createDataTable = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS player_data (" +
                  "uuid CHAR(36) PRIMARY KEY," +
                  "lastworld CHAR(36)," +
                  "lastx INT," +
@@ -133,7 +143,7 @@ public class DatabaseManager {
                 updateDb();
 
             Logr.info("Successfully connected to " + (useMySql ? "MySQL" : "H2" + " database."));
-            con.close();
+            ds.getConnection().close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -143,22 +153,22 @@ public class DatabaseManager {
         int foundVersion;
 
         getConnection();
-        try (PreparedStatement stmt = con.prepareStatement("SELECT * FROM db_version WHERE lockcol='v'")) {
+        try (PreparedStatement stmt = ds.getConnection().prepareStatement("SELECT * FROM db_version WHERE lockcol='v'")) {
             ResultSet result = stmt.executeQuery();
             if (result.next()) {
                 foundVersion = result.getInt("version");
             }
             else {
-                PreparedStatement setVer = con.prepareStatement("INSERT INTO db_version (lockcol, version) VALUES (?, ?)");
+                PreparedStatement setVer = ds.getConnection().prepareStatement("INSERT INTO db_version (lockcol, version) VALUES (?, ?)");
                 setVer.setString(1, "v");
                 setVer.setInt(2, CURRENT_DB_VERSION);
                 setVer.execute();
                 setVer.close();
-                con.close();
+                ds.getConnection().close();
                 result.close();
                 return true;
             }
-            con.close();
+            ds.getConnection().close();
             result.close();
 
             if (foundVersion < CURRENT_DB_VERSION) {
@@ -177,19 +187,19 @@ public class DatabaseManager {
         try {
             Logr.info("Updating database...");
             getConnection();
-            PreparedStatement s = con.prepareStatement("ALTER TABLE player_stats ADD chests INT");
+            PreparedStatement s = ds.getConnection().prepareStatement("ALTER TABLE player_stats ADD chests INT");
             s.execute();
             s.close();
 
-            s = con.prepareStatement("ALTER TABLE db_version MODIFY version TINYINT NOT NULL");
+            s = ds.getConnection().prepareStatement("ALTER TABLE db_version MODIFY version TINYINT NOT NULL");
             s.execute();
             s.close();
 
-            s = con.prepareStatement("DELETE FROM db_version");
+            s = ds.getConnection().prepareStatement("DELETE FROM db_version");
             s.execute();
             s.close();
 
-            s = con.prepareStatement("INSERT INTO db_version (version, lock) VALUES (?,?)");
+            s = ds.getConnection().prepareStatement("INSERT INTO db_version (version, lock) VALUES (?,?)");
             s.setInt(1, CURRENT_DB_VERSION);
             s.setString(2, "v");
             s.execute();

@@ -43,7 +43,7 @@ public class PlayerData {
             else {
                 Logr.info("Creating new playerdata for " + uuid);
                 lastLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
-                lastInventory = new String[0];
+                lastInventory = new String[] { "", "", "" };
             }
             modified = !foundRecords;
             PlayerManager.getInstance().thisPlayerIsLoaded(this);
