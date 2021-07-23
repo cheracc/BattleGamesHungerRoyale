@@ -36,7 +36,7 @@ public class VoteGui extends Gui {
                 if (opt.getMap().getMapName().equals(map.getMapName()))
                     games.add(opt);
             });
-            updateItem(slot, mapIcon(slot, map, games));
+            updateItem(slot, mapIcon(map, games));
             slot++;
         }
     }
@@ -49,12 +49,12 @@ public class VoteGui extends Gui {
                 if (opt.getMap().getMapName().equals(map.getMapName()))
                     games.add(opt);
             });
-            setItem(slot, mapIcon(slot, map, games));
+            setItem(slot, mapIcon(map, games));
             slot++;
         }
     }
 
-    private GuiItem mapIcon(int slot, MapData map, List<GameOptions> games) {
+    private GuiItem mapIcon(MapData map, List<GameOptions> games) {
         List<String> lore = new ArrayList<>();
         int votes = GameManager.getInstance().getVotes(map.getMapName());
         ItemBuilder icon = ItemBuilder.from(map.getIcon()).name(Tools.componentalize(ChatColor.YELLOW + map.getMapName() +
