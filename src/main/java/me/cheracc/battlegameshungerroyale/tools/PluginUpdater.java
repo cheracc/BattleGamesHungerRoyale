@@ -26,6 +26,7 @@ public class PluginUpdater {
     private final BukkitTask updateChecker;
     private CompletableFuture<Boolean> downloadStatus = null;
     private final boolean useSnapshotBuilds;
+    private boolean isSnapshotBuild = false;
     private boolean notified = false;
 
     public PluginUpdater(BGHR plugin) {
@@ -34,6 +35,7 @@ public class PluginUpdater {
         new BukkitRunnable() {
             @Override
             public void run() {
+                getCurrentBuildNumber();
                 getLatestVersionInfo();
             }
         }.runTaskAsynchronously(plugin);
@@ -55,7 +57,7 @@ public class PluginUpdater {
         }
     }
 
-    private int currentBuildNumber() {
+    private void getCurrentBuildNumber() {
         if (currentBuildNumber <= 0) {
             YamlConfiguration pluginYml = new YamlConfiguration();
             InputStream input = plugin.getResource("plugin.yml");
@@ -67,10 +69,12 @@ public class PluginUpdater {
             }
 
 
-            apiVersion = pluginYml.getString("api-version");
+            apiVersion = Double.toString(pluginYml.getDouble("api-version"));
             currentBuildNumber = pluginYml.getInt("build-number", 0);
+            isSnapshotBuild = pluginYml.getString("version", "").contains("SNAPSHOT");
+            if (isSnapshotBuild)
+                Logr.info("Using snapshot builds - expect errors or bugs!");
         }
-        return currentBuildNumber;
     }
 
     private void getLatestVersionInfo() {
@@ -107,11 +111,13 @@ public class PluginUpdater {
     }
 
     private boolean isLatestVersion() {
+        if (isSnapshotBuild != useSnapshotBuilds)
+            return false;
         if (mostRecentBuildAvailable > 0 && urlToMostRecentBuild != null && urlToMostRecentBuild.length() > 0) {
-            if (notified = false)
-                Logr.info("Updater found no new version.");
+            if (!notified)
+                Logr.info(String.format("Updater found no new version. (snapshots:%s, current:%s, newest:%s)", useSnapshotBuilds, currentBuildNumber, mostRecentBuildAvailable));
             notified = true;
-            return mostRecentBuildAvailable <= currentBuildNumber();
+            return mostRecentBuildAvailable <= currentBuildNumber;
         }
         return true;
     }
@@ -134,7 +140,7 @@ public class PluginUpdater {
                     toSave.delete();
                 toSave.getParentFile().mkdirs();
 
-                Logr.info(String.format("(Updater) Found a new update (build #%s): preparing to download", mostRecentBuildAvailable));
+                Logr.info(String.format("Updater found a new update (%s build #%s): preparing to download", useSnapshotBuilds ? "SNAPSHOT" : "" ,mostRecentBuildAvailable));
 
                 try {
                     toSave.createNewFile();
@@ -165,12 +171,15 @@ public class PluginUpdater {
             public void run() {
                 if (downloadStatus != null && downloadStatus.isDone()) {
                     if (downloadStatus.getNow(false)) {
-                        Logr.info("(Updater) Finished downloading plugin update. it will be installed on restart");
+                        Logr.info("Updater finished downloading plugin update. it will be installed on restart");
                         cancel();
                     }
                     else {
-                        Logr.info("(Updater) Failed to download update!");
+                        Logr.info("Updater failed to download update!");
                         downloadStatus = null;
+                        File failure = new File(Bukkit.getUpdateFolderFile(), plugin.getJarFilename());
+                        if (failure.exists())
+                            failure.delete();
                     }
                     return;
                 }

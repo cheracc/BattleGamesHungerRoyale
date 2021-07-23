@@ -1,6 +1,6 @@
 name: BattleGamesHungerRoyale
 main: me.cheracc.battlegameshungerroyale.BGHR
-version: ${project.version}_b${build-number}
+version: ${project.version}${snapshot}
 build-number: ${build-number}
 api-version: 1.16
 load: STARTUP
