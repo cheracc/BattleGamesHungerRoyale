@@ -217,7 +217,7 @@ public class GameManager {
                 updateScoreboard();
             }
         };
-        return updater.runTaskTimer(plugin, 100L, 100L);
+        return updater.runTaskTimer(plugin, 100L, 20L);
     }
 
     private class MapDecider {
