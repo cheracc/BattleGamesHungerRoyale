@@ -28,6 +28,19 @@ public class VoteGui extends Gui {
         open(player);
     }
 
+    private void forceUpdateAll() {
+        int slot = 0;
+        for (MapData map : MapManager.getInstance().getMaps()) {
+            List<GameOptions> games = new ArrayList<>();
+            GameManager.getInstance().getAllConfigs().forEach(opt -> {
+                if (opt.getMap().getMapName().equals(map.getMapName()))
+                    games.add(opt);
+            });
+            updateItem(slot, mapIcon(slot, map, games));
+            slot++;
+        }
+    }
+
     private void fillGui() {
         int slot = 0;
         for (MapData map : MapManager.getInstance().getMaps()) {
@@ -91,7 +104,7 @@ public class VoteGui extends Gui {
 
         return icon.asGuiItem(e -> {
             GameManager.getInstance().addVote((Player) e.getWhoClicked(), map.getMapName());
-            updateItem(slot, mapIcon(slot, map, games));
+            forceUpdateAll();
         });
     }
 }
