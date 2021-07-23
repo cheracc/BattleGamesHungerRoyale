@@ -73,7 +73,7 @@ public class PluginUpdater {
             currentBuildNumber = pluginYml.getInt("build-number", 0);
             isSnapshotBuild = pluginYml.getString("version", "").contains("SNAPSHOT");
             if (isSnapshotBuild)
-                Logr.info("Using snapshot builds - expect errors or bugs!");
+                Logr.info("[WARNING]: Using a snapshot build - expect errors or bugs! Please report them if you find them!");
         }
     }
 
