@@ -56,7 +56,10 @@ public class GameManager {
     }
 
     public Scoreboard getMainScoreboard() {
-        return mainScoreboard;
+        if (plugin.getConfig().getBoolean("show main scoreboard", true))
+            return mainScoreboard;
+        else
+            return Bukkit.getScoreboardManager().getMainScoreboard();
     }
 
     public List<Game> getActiveGames() {

@@ -200,9 +200,17 @@ public class AdminGui extends Gui {
             icon.lore(Tools.componentalize(Tools.wrapText("  &7Disable if you use another scoreboard plugin. If enabled, players can still disable it individually with /settings", ChatColor.GRAY)));
 
             return icon.asGuiItem(e -> {
+                boolean newValue = !current;
                 config.set("show main scoreboard", !current);
                 plugin.saveConfig();
                 pluginGui.updateIcon(slot);
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (!GameManager.getInstance().isInAGame(p))
+                        if (newValue)
+                            p.setScoreboard(GameManager.getInstance().getMainScoreboard());
+                        else
+                            p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+                }
             });
         });
 

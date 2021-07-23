@@ -127,6 +127,8 @@ public class PlayerData {
         Player p = getPlayer();
         if (settings.isShowMainScoreboard())
             p.setScoreboard(GameManager.getInstance().getMainScoreboard());
+        else
+            p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
         writeSavedInventoryToPlayer();
 

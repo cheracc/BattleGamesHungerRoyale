@@ -262,7 +262,7 @@ public class Game implements Listener {
         else
             player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         bar.removePlayer(player);
-        if (PlayerManager.getInstance().getPlayerData(player).getSettings().isShowMainScoreboard())
+        if (PlayerManager.getInstance().getPlayerData(player).getSettings().isShowMainScoreboard() && plugin.getConfig().getBoolean("show main scoreboard", true))
             player.setScoreboard(GameManager.getInstance().getMainScoreboard());
         else
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
