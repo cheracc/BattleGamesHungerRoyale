@@ -20,9 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class GameManager {
@@ -31,14 +29,16 @@ public class GameManager {
     private final Scoreboard mainScoreboard;
     private final BukkitTask scoreboardUpdater;
     private final BGHR plugin;
+    private final MapDecider mapDecider;
 
     private GameManager(BGHR plugin) {
         this.plugin = plugin;
         ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
         mainScoreboard = scoreboardManager.getNewScoreboard();
-        startWithRandomConfig();
+        mapDecider = new MapDecider();
         setupScoreboardTeams();
         scoreboardUpdater = scoreboardUpdater();
+        Game.createNewGame(mapDecider.selectNextMap(), plugin);
     }
 
     public static GameManager getInstance() {
@@ -92,9 +92,14 @@ public class GameManager {
 
     public void gameOver(Game game) {
         activeGames.remove(game);
+        mapDecider.setLastMap(game.getMap().getMapName());
         if (activeGames.isEmpty() && plugin.isEnabled())
-            startWithRandomConfig();
+            Game.createNewGame(mapDecider.selectNextMap(), plugin);
         updateScoreboard();
+    }
+
+    public void addVote(Player player, String mapName) {
+        mapDecider.addVote(player, mapName);
     }
 
     public void stopUpdater() {
@@ -138,15 +143,6 @@ public class GameManager {
             }
         }
         return configs;
-    }
-
-    private void startWithRandomConfig() {
-        List<GameOptions> configs = getAllConfigs();
-        Collections.shuffle(configs);
-        int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
-
-        GameOptions options = configs.get(index);
-        Game.createNewGame(options.getMap(), options, plugin);
     }
 
     public void updateScoreboard() {
@@ -223,4 +219,67 @@ public class GameManager {
         return updater.runTaskTimer(plugin, 100L, 100L);
     }
 
+    private class MapDecider {
+        private final Map<UUID, String> outstandingVotes = new HashMap<>();
+        private String lastMap = null;
+
+        public void addVote(Player player, String mapName) {
+            if (outstandingVotes.containsKey(player.getUniqueId()))
+                player.sendMessage(Tools.componentalize("Your vote has been changed to " + mapName));
+            else
+                player.sendMessage(Tools.componentalize("Your vote has been cast for " + mapName));
+            outstandingVotes.put(player.getUniqueId(), mapName);
+        }
+
+        public void setLastMap(String mapName) {
+            this.lastMap = mapName;
+        }
+
+        public String getLastMap() {
+            return lastMap;
+        }
+
+        public GameOptions selectNextMap() {
+            GameOptions winner = null;
+            if (outstandingVotes.isEmpty()) {
+                winner = selectRandomConfig();
+            }
+
+            Map<GameOptions, Integer> voteCounts = new HashMap<>();
+            for (GameOptions opts : getAllConfigs()) {
+                for (String s : outstandingVotes.values()) {
+                    if (s.equals(opts.getMap().getMapName()) && !s.equals(lastMap)) {
+                        Integer count = voteCounts.get(opts);
+                        voteCounts.put(opts, count == null ? 1 : count + 1);
+                    }
+                }
+            }
+
+            for (Map.Entry<GameOptions, Integer> e : voteCounts.entrySet()) {
+                if (winner == null)
+                    winner = e.getKey();
+                if (e.getValue() > voteCounts.get(e.getKey()))
+                    winner = e.getKey();
+            }
+
+            if (winner == null)
+                winner = getAllConfigs().get(0);
+
+            String winnerMapName = winner.getMap().getMapName();
+            outstandingVotes.values().removeIf(s -> s.equals(winnerMapName));
+            return winner;
+        }
+
+        private GameOptions selectRandomConfig() {
+            List<GameOptions> configs = getAllConfigs();
+
+            if (mapDecider.getLastMap() != null && configs.size() > 2)
+                configs.removeIf(opts -> opts.getMap().getMapName().equals(mapDecider.getLastMap()));
+
+            Collections.shuffle(configs);
+            int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
+
+            return configs.get(index);
+        }
+    }
 }

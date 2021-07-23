@@ -331,7 +331,7 @@ public class AdminGui extends Gui {
                     if (e.isRightClick()) {
                         new ConfigureGameGui(e.getWhoClicked(), game, this);
                     } else {
-                        Game.createNewGameWithCallback(game.getMap(), game, GameManager.getInstance().getPlugin(), newGame -> new SelectGameGui(e.getWhoClicked()));
+                        Game.createNewGameWithCallback(game, GameManager.getInstance().getPlugin(), newGame -> new SelectGameGui(e.getWhoClicked()));
                     }
                 });
             });

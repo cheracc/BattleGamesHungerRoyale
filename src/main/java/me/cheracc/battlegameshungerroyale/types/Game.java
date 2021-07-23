@@ -764,12 +764,12 @@ public class Game implements Listener {
     }
 
     // static fields and methods
-    public static void createNewGameWithCallback(MapData map, GameOptions options, BGHR plugin, Consumer<Game> callback) {
-        new Game(map, options, plugin, callback);
+    public static void createNewGameWithCallback(GameOptions options, BGHR plugin, Consumer<Game> callback) {
+        new Game(options.getMap(), options, plugin, callback);
     }
 
-    public static void createNewGame(MapData map, GameOptions options, BGHR plugin) {
-        new Game(map, options, plugin,null);
+    public static void createNewGame(GameOptions options, BGHR plugin) {
+        new Game(options.getMap(), options, plugin,null);
     }
 
     // listeners

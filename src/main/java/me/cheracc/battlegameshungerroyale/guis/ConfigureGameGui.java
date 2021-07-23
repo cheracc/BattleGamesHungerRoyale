@@ -192,7 +192,7 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            Game.createNewGameWithCallback(options.getMap(), options, GameManager.getInstance().getPlugin(), game -> new SelectGameGui(e.getWhoClicked()));
+            Game.createNewGameWithCallback(options, GameManager.getInstance().getPlugin(), game -> new SelectGameGui(e.getWhoClicked()));
         });
 
     }
