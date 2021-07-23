@@ -4,7 +4,6 @@ version: ${project.version}${snapshot}
 build-number: ${build-number}
 api-version: 1.16
 load: STARTUP
-softdepend: [Vault, LibsDisguises]
 commands:
   savemap:
     usage: "/savemap"
