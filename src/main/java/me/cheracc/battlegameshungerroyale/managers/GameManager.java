@@ -36,6 +36,7 @@ public class GameManager {
         ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
         mainScoreboard = scoreboardManager.getNewScoreboard();
         mapDecider = new MapDecider();
+        setupScoreboard();
         setupScoreboardTeams();
         scoreboardUpdater = scoreboardUpdater();
         Game.createNewGame(mapDecider.selectNextMap(), plugin);
@@ -102,6 +103,10 @@ public class GameManager {
         mapDecider.addVote(player, mapName);
     }
 
+    public int getVotes(String mapName) {
+        return mapDecider.getVotes(mapName);
+    }
+
     public void stopUpdater() {
         scoreboardUpdater.cancel();
     }
@@ -145,18 +150,16 @@ public class GameManager {
         return configs;
     }
 
+    private void setupScoreboard() {
+        Objective mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
+        mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
+        mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
+        mainObj.getScore("  " + ChatColor.MAGIC).setScore(13);
+
+    }
+
     public void updateScoreboard() {
-        Objective mainObj = mainScoreboard.getObjective("mainSb");
-
-        if (mainObj == null) {
-            mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
-            mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-            mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
-            mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
-            mainObj.getScore("  " + ChatColor.MAGIC).setScore(13);
-        }
-
         int lineNumber = 12;
         for (Game game : GameManager.getInstance().getActiveGames()) {
             if (lineNumber < 0)
@@ -199,13 +202,11 @@ public class GameManager {
     }
 
     public void setupScoreboardTeams() {
-        Objective obj = mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
-
         for (int i = 12; i >= 0; i--) {
             String entry = ChatColor.values()[i] + "" + ChatColor.values()[i+1];
             Team lineText = mainScoreboard.registerNewTeam(String.format("line%s", i));
             lineText.addEntry(entry);
-            obj.getScore(entry).setScore(i);
+            mainScoreboard.getObjective("mainSb").getScore(entry).setScore(i);
         }
     }
 
@@ -222,6 +223,10 @@ public class GameManager {
     private class MapDecider {
         private final Map<UUID, String> outstandingVotes = new HashMap<>();
         private String lastMap = null;
+
+        public int getVotes(String mapName) {
+            return (int) outstandingVotes.values().stream().filter(s -> s.equals(mapName)).count();
+        }
 
         public void addVote(Player player, String mapName) {
             if (outstandingVotes.containsKey(player.getUniqueId()))

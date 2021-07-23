@@ -45,3 +45,6 @@ commands:
   topstats:
     usage: "/topstats"
     description: "shows the top 10 players in each tracked statistic"
+  vote:
+    usage: "/vote"
+    description: "lets you vote for your favorite map"
