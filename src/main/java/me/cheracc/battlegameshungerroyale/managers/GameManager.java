@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 public class GameManager {
     private static GameManager singletonInstance = null;
@@ -91,11 +92,20 @@ public class GameManager {
         updateScoreboard();
     }
 
-    public void gameOver(Game game) {
+    public void gameIsEnding(Game game) {
+        if (activeGames.size() <= 1 && plugin.isEnabled())
+            Game.createNewGame(mapDecider.selectNextMap(), plugin);
+        updateScoreboard();
+    }
+
+    public void gameOver(Game game, Consumer<Game> callback) {
         activeGames.remove(game);
         mapDecider.setLastMap(game.getMap().getMapName());
         if (activeGames.isEmpty() && plugin.isEnabled())
-            Game.createNewGame(mapDecider.selectNextMap(), plugin);
+            if (callback != null)
+                Game.createNewGameWithCallback(mapDecider.selectNextMap(), plugin, callback);
+            else
+                Game.createNewGame(mapDecider.selectNextMap(), plugin);
         updateScoreboard();
     }
 
@@ -224,6 +234,10 @@ public class GameManager {
         private final Map<UUID, String> outstandingVotes = new HashMap<>();
         private String lastMap = null;
 
+        public MapDecider() {
+            voteCleaner();
+        }
+
         public int getVotes(String mapName) {
             return (int) outstandingVotes.values().stream().filter(s -> s.equals(mapName)).count();
         }
@@ -285,6 +299,16 @@ public class GameManager {
             int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
             return configs.get(index);
+        }
+
+        private BukkitTask voteCleaner() {
+            BukkitRunnable task = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    outstandingVotes.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
+                }
+            };
+            return task.runTaskTimer(plugin, 200L, 200L);
         }
     }
 }

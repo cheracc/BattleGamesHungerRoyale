@@ -554,12 +554,16 @@ public class Game implements Listener {
         postgameTimer = startPostGameTimer();
         currentPhase = GamePhase.POSTGAME;
         new GameChangedPhaseEvent(this, "postgame").callEvent();
-        GameManager.getInstance().updateScoreboard();
+        GameManager.getInstance().gameIsEnding(this);
         gameLog.addPhaseEntry(currentPhase);
         world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
     }
 
     public void endGame() {
+        endGame(null);
+    }
+
+    public void endGame(Consumer<Game> callback) {
         if (gameTick != null) {
             gameTick.cancel();
             gameTick = null;
@@ -599,7 +603,7 @@ public class Game implements Listener {
         participants.clear();
         spawnPoints.clear();
         MapManager.getInstance().unloadWorld(world);
-        GameManager.getInstance().gameOver(this);
+        GameManager.getInstance().gameOver(this, callback);
         HandlerList.unregisterAll(this);
         world = null;
     }
