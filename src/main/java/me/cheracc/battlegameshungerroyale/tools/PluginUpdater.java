@@ -111,8 +111,9 @@ public class PluginUpdater {
     }
 
     private boolean isLatestVersion() {
-        if (isSnapshotBuild != useSnapshotBuilds)
+        if (isSnapshotBuild != useSnapshotBuilds) // this .jar is not from the branch we're after so just go get the latest one
             return false;
+
         if (mostRecentBuildAvailable > 0 && urlToMostRecentBuild != null && urlToMostRecentBuild.length() > 0) {
             if (!notified)
                 Logr.info(String.format("Updater found no new version. (snapshots:%s, current:%s, newest:%s)", useSnapshotBuilds, currentBuildNumber, mostRecentBuildAvailable));
