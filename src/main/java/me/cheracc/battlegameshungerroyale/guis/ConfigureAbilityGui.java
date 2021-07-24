@@ -10,6 +10,7 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.AbilityOptionEnum;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
@@ -154,9 +155,14 @@ public class ConfigureAbilityGui extends Gui {
             valueString = WordUtils.capitalize(item.getType().name().toLowerCase().replace("_", " "));
             lore.addAll(Tools.decomponentalize(item.lore()));
             event = handleItemStack(configOption, item);
-        } else {
+        } else if (value instanceof AbilityOptionEnum) {
+            AbilityOptionEnum abilityEnum = (AbilityOptionEnum) value;
+            icon = Material.BOOKSHELF;
+            valueString = abilityEnum.name().toLowerCase();
+            lore.add("&bClick to change");
+            event = handleEnums(configOption, abilityEnum);
+        } else
             return ItemBuilder.from(Material.BARRIER).asGuiItem();
-        }
 
         if (valueString.length() > 0)
             lore.add(0, "&eCurrent value: &7" + valueString);
@@ -224,6 +230,13 @@ public class ConfigureAbilityGui extends Gui {
                         sendingGui.open(p);
                     }
                 });
+    }
+
+    private GuiAction<InventoryClickEvent> handleEnums(String configOption, AbilityOptionEnum currentValue) {
+        return event -> {
+            ability.setOption(configOption, currentValue.next());
+            updateItem(event.getSlot(), genericOptionGuiItem(configOption));
+        };
     }
 
     private GuiAction<InventoryClickEvent> handleBoolean(String configOption, boolean currentValue) {
