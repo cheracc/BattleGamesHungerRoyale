@@ -112,14 +112,14 @@ public class Sentry extends Totem implements Listener {
             totem.teleport(loc);
             Projectile projectile = attackType.getProjectile(totem, target.getEyeLocation());
             projectile.setMetadata("owner", new FixedMetadataValue(plugin, owner.getUniqueId()));
-            projectile.setMetadata("ability_id", new FixedMetadataValue(plugin, owner.getUniqueId()));
+            projectile.setMetadata("ability_id", new FixedMetadataValue(plugin, this.getId()));
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (projectile != null && projectile.isValid())
                         projectile.remove();
                 }
-            }.runTaskLater(plugin, 40L);
+            }.runTaskLater(plugin, (projectile instanceof Arrow) ? 30L : 200L);
         }
     }
 
@@ -145,8 +145,22 @@ public class Sentry extends Totem implements Listener {
 
     @EventHandler
     public void stopExplosions(EntityExplodeEvent event) {
+        int fireDuration = 100;
+        event.setYield(0F);
         if (event.getEntity() instanceof WitherSkull && isMyProjectile((Projectile) event.getEntity())) {
-            event.setCancelled(true);
+            WitherSkull projectile = (WitherSkull) event.getEntity();
+            event.blockList().clear();
+            if (projectilesExplode) {
+                Player owner = getOwner(projectile);
+                projectile.getLocation().createExplosion(owner, attackDamage, false, false);
+                if (incendiaryProjectiles) {
+                    for (LivingEntity e : projectile.getLocation().getNearbyLivingEntities(attackDamage/2F, attackDamage/2F, attackDamage/2F)) {
+                        e.setFireTicks(fireDuration);
+                        if (e instanceof Player)
+                            new DamageSource(owner, EntityDamageEvent.DamageCause.FIRE_TICK, (int) (fireDuration * 1.1)).apply((Player) e);
+                    }
+                }
+            }
         }
     }
 
@@ -161,7 +175,7 @@ public class Sentry extends Totem implements Listener {
         projectile.remove();
         if (projectilesExplode) {
             Player owner = getOwner(projectile);
-            projectile.getLocation().createExplosion(owner, attackDamage/2F, false, false);
+            projectile.getLocation().createExplosion(owner, attackDamage, false, false);
             if (incendiaryProjectiles) {
                 for (LivingEntity e : projectile.getLocation().getNearbyLivingEntities(attackDamage/2F, attackDamage/2F, attackDamage/2F)) {
                     e.setFireTicks(fireDuration);
