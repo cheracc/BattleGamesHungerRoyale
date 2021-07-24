@@ -48,7 +48,6 @@ public class EffectTotem extends Totem implements Listener {
         this.affectsOnlyPlacingPlayer = false;
         this.totemType = TotemType.FIRE_TOTEM;
         setDescription("This will place a totem on the ground that provides a potion effect to nearby players. The range, cooldown, effects are all configurable.");
-        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
 
     @Override

@@ -1,7 +1,9 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
+import com.destroystokyo.paper.event.entity.ProjectileCollideEvent;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Totem;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType;
@@ -16,6 +18,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -53,7 +56,6 @@ public class Sentry extends Totem implements Listener {
         this.attackType = TotemAttackType.FIREBALL;
         this.totemType = TotemType.SENTRY;
         setDescription("Places a totem that attacks nearby enemies until it is destroyed or expires");
-        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
 
     @Override
@@ -111,6 +113,7 @@ public class Sentry extends Totem implements Listener {
             Location loc = totem.getLocation().setDirection(target.getLocation().subtract(totem.getLocation()).toVector());
             totem.teleport(loc);
             Projectile projectile = attackType.getProjectile(totem, target.getEyeLocation());
+            projectile.setMetadata("owner", new FixedMetadataValue(BGHR.getPlugin(), owner.getUniqueId()));
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -121,10 +124,50 @@ public class Sentry extends Totem implements Listener {
         }
     }
 
+    private boolean isMyProjectile(Projectile projectile) {
+        if (projectile.hasMetadata("owner")) {
+            UUID uuid = (UUID) projectile.getMetadata("owner").get(0).value();
+            Logr.info("isMyProjectile " + PlayerManager.getInstance().getPlayerData(uuid).getKit().getName());
+            return PlayerManager.getInstance().getPlayerData(uuid).hasKit(getAssignedKit());
+        }
+        return false;
+    }
+
+    private Player getOwner(Projectile projectile) {
+        if (projectile.hasMetadata("owner")) {
+            UUID uuid = (UUID) projectile.getMetadata("owner").get(0).value();
+            return Bukkit.getPlayer(uuid);
+        }
+        return null;
+
+    }
+
     @EventHandler
     public void stopExplosions(EntityExplodeEvent event) {
-        if (event.getEntity() instanceof Projectile && event.getEntity().hasMetadata("owner")) {
+        if (event.getEntity() instanceof WitherSkull && isMyProjectile((Projectile) event.getEntity())) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onProjectileCollide(ProjectileCollideEvent event) {
+        Projectile projectile = event.getEntity();
+        int fireDuration = 100;
+
+        if (!isMyProjectile(projectile))
+            return;
+
+        projectile.remove();
+        if (projectilesExplode) {
+            Player owner = getOwner(projectile);
+            projectile.getLocation().createExplosion(owner, attackDamage/2F, false, false);
+            if (incendiaryProjectiles) {
+                for (LivingEntity e : projectile.getLocation().getNearbyLivingEntities(attackDamage/2F, attackDamage/2F, attackDamage/2F)) {
+                    e.setFireTicks(fireDuration);
+                    if (e instanceof Player)
+                        new DamageSource(owner, EntityDamageEvent.DamageCause.FIRE_TICK, (int) (fireDuration * 1.1)).apply((Player) e);
+                }
+            }
         }
     }
 
@@ -138,19 +181,8 @@ public class Sentry extends Totem implements Listener {
                 if (owner == null || !owner.isOnline() || !PlayerManager.getInstance().getPlayerData(owner).hasKit(this.getAssignedKit()))
                     return;
                 event.setDamage(attackDamage);
-                if (incendiaryProjectiles) {
-                    target.setFireTicks(100);
-                    if (target instanceof Player)
-                        new DamageSource(owner, EntityDamageEvent.DamageCause.FIRE_TICK, 110).apply((Player) target);
-                }
                 if (target instanceof Player)
                     new DamageSource(owner, EntityDamageEvent.DamageCause.PROJECTILE, 20).apply((Player) target);
-
-                if (projectilesExplode) {
-                    target.getLocation().createExplosion(owner, attackDamage/4F, false, false);
-                }
-
-                proj.remove();
             }
         }
     }
