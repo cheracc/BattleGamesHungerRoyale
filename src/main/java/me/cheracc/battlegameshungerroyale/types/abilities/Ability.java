@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -163,6 +164,9 @@ public abstract class Ability implements Cloneable {
     }
 
     public void setAssignedKit(Kit kit) {
+        if (this instanceof Listener) {
+            Bukkit.getPluginManager().registerEvents((Listener) this, BGHR.getPlugin());
+        }
         forKit = kit;
     }
 
