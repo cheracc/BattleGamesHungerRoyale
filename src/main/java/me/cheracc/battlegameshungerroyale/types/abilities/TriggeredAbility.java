@@ -1,9 +1,6 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.types.Kit;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.*;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -17,12 +14,6 @@ public abstract class TriggeredAbility extends Ability implements Listener {
     public abstract void onTrigger(Player player, Event event);
 
     public TriggeredAbility() {
-    }
-
-    @Override
-    public void setAssignedKit(Kit kit) {
-        super.setAssignedKit(kit);
-        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
 
     public enum Trigger {
@@ -126,7 +117,6 @@ public abstract class TriggeredAbility extends Ability implements Listener {
                         if (((Projectile) event.getDamager()).getShooter() instanceof Player) {
                             if (getTrigger() == Trigger.DEATH_BY_PLAYER) {
                                 onTrigger(p, event);
-                                return;
                             }
                         }
                     }
