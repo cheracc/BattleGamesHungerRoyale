@@ -11,7 +11,7 @@ import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
-import net.milkbowl.vault.permission.Permission;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
@@ -20,7 +20,6 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.InvocationTargetException;
@@ -38,6 +37,7 @@ public class BGHR extends JavaPlugin implements Listener {
         saveDefaultConfig();
         MapManager.getInstance();
         ConfigurationSerialization.registerClass(SoundEffect.class);
+        ConfigurationSerialization.registerClass(TotemAttackType.class);
         try {
             KitManager.getInstance().findAndLoadDefaultAbilities();
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
@@ -90,14 +90,6 @@ public class BGHR extends JavaPlugin implements Listener {
         PlayerManager.getInstance().disable();
         if (updater != null)
             updater.disable();
-    }
-
-    public static Permission getPerms() {
-        RegisteredServiceProvider<Permission> rsp = Bukkit.getServer().getServicesManager().getRegistration(Permission.class);
-        if (rsp != null) {
-            return rsp.getProvider();
-        }
-        return null;
     }
 
     public String getJarFilename() {

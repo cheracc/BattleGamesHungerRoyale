@@ -1,12 +1,22 @@
 package me.cheracc.battlegameshungerroyale.types.abilities.enums;
 
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.abilities.AbilityOptionEnum;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.entity.*;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 
-public enum TotemAttackType implements AbilityOptionEnum {
-    ARROW, FIREBALL, TRIDENT, SHULKER_BULLET, WITHER_SKULL;
+import java.util.HashMap;
+import java.util.Map;
+
+public enum TotemAttackType implements AbilityOptionEnum, ConfigurationSerializable {
+    FIREBALL, WITHER_SKULL, ITEM, ARROW;
 
     @Override
     public AbilityOptionEnum next() {
@@ -16,29 +26,48 @@ public enum TotemAttackType implements AbilityOptionEnum {
         return values()[ordinal];
     }
 
+    public static TotemAttackType deserialize(Map<String, Object> map) {
+        Logr.info("deserializing");
+        return valueOf((String) map.get("name"));
+    }
+
     public Projectile getProjectile(LivingEntity totem, Location target) {
         Projectile p;
-        Vector direction = target.subtract(totem.getLocation()).toVector().normalize();
-        totem.getLocation().setDirection(direction);
+        Vector direction = target.subtract(totem.getEyeLocation().clone().add(0,1,0)).toVector().normalize();
+        totem.teleport(totem.getLocation().add(0,0.5,0));
 
         switch (this) {
-            case TRIDENT:
-                p = totem.launchProjectile(Trident.class, direction);
-                break;
-            case FIREBALL:
-                p = totem.launchProjectile(Fireball.class, direction);
-                break;
-            case SHULKER_BULLET:
-                p = totem.launchProjectile(ShulkerBullet.class, direction);
-                break;
             case WITHER_SKULL:
-                p = totem.launchProjectile(WitherSkull.class, direction);
+                WitherSkull skull = totem.launchProjectile(WitherSkull.class);
+                skull.setCharged(false);
+                skull.setYield(0F);
+                p = skull;
+                break;
+            case ARROW:
+                p = totem.launchProjectile(Arrow.class);
+                p.setVelocity(p.getVelocity().multiply(2));
+                ((ArmorStand) totem).setArms(true);
+                ((ArmorStand) totem).setRightArmPose(new EulerAngle(-Math.PI/2, -Math.PI/8, 0));
+                ((ArmorStand) totem).setItem(EquipmentSlot.HAND, new ItemStack(Material.CROSSBOW));
+                break;
+            case ITEM:
+                p = totem.launchProjectile(Snowball.class, direction.multiply(2));
+                ((Snowball) p).setItem(new ItemStack(Material.DIAMOND));
                 break;
             default:
-                p = totem.launchProjectile(Arrow.class, direction);
-                p.setVelocity(direction.multiply(2));
+                p = totem.launchProjectile(SmallFireball.class);
+                ((Fireball) p).setIsIncendiary(false);
+                ((Fireball) p).setYield(0);
         }
-        //p.getLocation().setDirection(direction);
+        totem.teleport(totem.getLocation().add(0,-0.5,0));
+
         return p;
+    }
+
+    @Override
+    public @NotNull Map<String, Object> serialize() {
+        Map<String, Object> value = new HashMap<>();
+        value.put("name", name());
+        return value;
     }
 }
