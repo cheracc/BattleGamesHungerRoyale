@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -16,9 +17,11 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.List;
 import java.util.UUID;
 
 public class EffectProjectile extends Ability implements ActiveAbility, Listener {
@@ -56,7 +59,8 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
     public void onProjectileHit(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof ThrowableProjectile) {
             ThrowableProjectile proj = (ThrowableProjectile) event.getDamager();
-            if (proj.getMetadata("effectprojectile") != null) {
+            List<MetadataValue> mv = proj.getMetadata("effectprojectile");
+            if (mv != null && !mv.isEmpty()) {
                 Object o = proj.getMetadata("effectprojectile").get(0).value();
                 if (o instanceof UUID) {
                     if (getId().equals(o)) {
@@ -64,7 +68,7 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
                         if (o instanceof UUID) {
                             Player damager = Bukkit.getPlayer((UUID) o);
 
-                            if (damager != null && event.getEntity() instanceof Player) {
+                            if (damager != null && event.getEntity() instanceof Player && PlayerManager.getInstance().getPlayerData(damager).hasKit(this.getAssignedKit())) {
                                 Player target = (Player) event.getEntity();
                                 EntityDamageEvent.DamageCause type = null;
 
