@@ -40,8 +40,9 @@ public class BGHR extends JavaPlugin implements Listener {
         ConfigurationSerialization.registerClass(SoundEffect.class);
         ConfigurationSerialization.registerClass(TotemAttackType.class);
         ConfigurationSerialization.registerClass(TotemType.class);
+        KitManager.initialize(this);
         try {
-            KitManager.getInstance().findAndLoadDefaultAbilities();
+            KitManager.getInstance().findAndLoadDefaultAbilities(this);
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
             Logr.info(e.getCause().toString());

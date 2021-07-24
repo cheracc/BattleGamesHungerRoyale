@@ -29,9 +29,10 @@ public abstract class Ability implements Cloneable {
     private ConfigurationSection section;
     private UUID id;
     private Kit forKit = null;
-    String description = "";
-    String customName = null;
-    SoundEffect sound = null;
+    protected String description = "";
+    protected String customName = null;
+    protected SoundEffect sound = null;
+    protected BGHR plugin = null;
 
     public Ability() {
         this.section = null;
@@ -50,6 +51,10 @@ public abstract class Ability implements Cloneable {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    public void initialize(BGHR plugin) {
+        this.plugin = plugin;
     }
 
     public void generateConfigSection() {
@@ -165,7 +170,7 @@ public abstract class Ability implements Cloneable {
 
     public void setAssignedKit(Kit kit) {
         if (this instanceof Listener) {
-            Bukkit.getPluginManager().registerEvents((Listener) this, BGHR.getPlugin());
+            Bukkit.getPluginManager().registerEvents((Listener) this, plugin);
         }
         forKit = kit;
     }

@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Totem;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType;
@@ -87,7 +86,6 @@ public class EffectTotem extends Totem implements Listener {
 
     @Override
     public UnaryOperator<LivingEntity> additionalOptions() {
-        BGHR plugin = BGHR.getPlugin();
         return totem -> {
             Player owner = Bukkit.getPlayer((UUID) totem.getMetadata("owner").get(0).value());
             if (owner == null)

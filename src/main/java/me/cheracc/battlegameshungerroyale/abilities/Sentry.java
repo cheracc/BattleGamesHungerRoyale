@@ -1,9 +1,7 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
 import com.destroystokyo.paper.event.entity.ProjectileCollideEvent;
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Totem;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType;
@@ -113,22 +111,25 @@ public class Sentry extends Totem implements Listener {
             Location loc = totem.getLocation().setDirection(target.getLocation().subtract(totem.getLocation()).toVector());
             totem.teleport(loc);
             Projectile projectile = attackType.getProjectile(totem, target.getEyeLocation());
-            projectile.setMetadata("owner", new FixedMetadataValue(BGHR.getPlugin(), owner.getUniqueId()));
+            projectile.setMetadata("owner", new FixedMetadataValue(plugin, owner.getUniqueId()));
+            projectile.setMetadata("ability_id", new FixedMetadataValue(plugin, owner.getUniqueId()));
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (projectile != null && projectile.isValid())
                         projectile.remove();
                 }
-            }.runTaskLater(BGHR.getPlugin(), 40L);
+            }.runTaskLater(plugin, 40L);
         }
     }
 
     private boolean isMyProjectile(Projectile projectile) {
-        if (projectile.hasMetadata("owner")) {
-            UUID uuid = (UUID) projectile.getMetadata("owner").get(0).value();
-            Logr.info("isMyProjectile " + PlayerManager.getInstance().getPlayerData(uuid).getKit().getName());
-            return PlayerManager.getInstance().getPlayerData(uuid).hasKit(getAssignedKit());
+        if (projectile.hasMetadata("owner") && projectile.hasMetadata("ability_id")) {
+            UUID ownerId = (UUID) projectile.getMetadata("owner").get(0).value();
+            UUID abilityId = (UUID) projectile.getMetadata("ability_id").get(0).value();
+            if (PlayerManager.getInstance().getPlayerData(ownerId).hasKit(getAssignedKit())) {
+                return (abilityId.equals(getId()));
+            }
         }
         return false;
     }

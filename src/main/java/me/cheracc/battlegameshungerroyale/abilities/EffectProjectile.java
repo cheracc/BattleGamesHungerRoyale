@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
@@ -35,7 +34,6 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
 
     public EffectProjectile() {
         setDescription("provides an item that can be thrown as a projectile (optionally consumable and/or regenerating) that causes a potion effect on the target it hits");
-        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
     }
 
     @Override
@@ -45,8 +43,8 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
         projectile.setShooter(source);
         projectile.setRotation(1,2);
         projectile.setGravity(affectedByGravity);
-        projectile.setMetadata("effectprojectile", new FixedMetadataValue(BGHR.getPlugin(), getId()));
-        projectile.setMetadata("thrower", new FixedMetadataValue(BGHR.getPlugin(), source.getUniqueId()));
+        projectile.setMetadata("effectprojectile", new FixedMetadataValue(plugin, getId()));
+        projectile.setMetadata("thrower", new FixedMetadataValue(plugin, source.getUniqueId()));
 
         ItemStack kitItem = source.getInventory().getItemInMainHand();
         if (kitItem != null && !infiniteProjectiles) {

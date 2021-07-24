@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class KitManager {
     private static KitManager singletonInstance = null;
-    private final BGHR plugin = BGHR.getPlugin();
+    private static BGHR plugin = null;
     private final List<Kit> loadedKits = new ArrayList<>();
     private final List<Ability> defaultAbilities = new ArrayList<>();
 
@@ -95,7 +95,7 @@ public class KitManager {
         return new ArrayList<>(defaultAbilities);
     }
 
-    public void findAndLoadDefaultAbilities() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public void findAndLoadDefaultAbilities(BGHR plugin) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         Set<Class<?>> abilityClasses = new HashSet<>((new Reflections("me.cheracc.battlegameshungerroyale.abilities", new SubTypesScanner(false))).getSubTypesOf(Ability.class));
 
         for (Class<?> c : abilityClasses) {
@@ -103,9 +103,16 @@ public class KitManager {
                 continue;
             Constructor<?> con = c.getDeclaredConstructor();
             Object o = con.newInstance();
-            if (o instanceof Ability)
-                defaultAbilities.add((Ability) o);
+            if (o instanceof Ability) {
+                Ability ability = (Ability) o;
+                ability.initialize(plugin);
+                defaultAbilities.add(ability);
+            }
         }
+    }
+
+    public static void initialize(BGHR plugin) {
+        KitManager.plugin = plugin;
     }
 
     public static KitManager getInstance() {

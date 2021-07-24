@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType;
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
@@ -55,7 +54,7 @@ public abstract class Totem extends Ability implements ActiveAbility, Listener {
                 }
                 count++;
             }
-        }.runTaskTimer(BGHR.getPlugin(), 5L, 10L);
+        }.runTaskTimer(this.plugin, 5L, 10L);
     }
 
     private void destroyTotem(LivingEntity totem) {
@@ -65,12 +64,11 @@ public abstract class Totem extends Ability implements ActiveAbility, Listener {
                 totem.getWorld().playEffect(totem.getLocation(), Effect.LAVA_CONVERTS_BLOCK, null);
                 totem.remove();
             }
-        }.runTask(BGHR.getPlugin());
+        }.runTask(plugin);
     }
 
     @Override
     public boolean doAbility(Player source) {
-        BGHR plugin = BGHR.getPlugin();
         Location loc = source.getLocation();
 
         LivingEntity totem = getTotemType().createBaseTotem(loc, getTotemHead(), getCustomName());
