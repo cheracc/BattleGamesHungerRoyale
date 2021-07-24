@@ -37,7 +37,7 @@ public enum TotemAttackType implements AbilityOptionEnum, ConfigurationSerializa
         switch (this) {
             case WITHER_SKULL:
                 WitherSkull skull = totem.launchProjectile(WitherSkull.class);
-                skull.setCharged(false);
+                skull.setCharged(true);
                 skull.setYield(0F);
                 p = skull;
                 break;
