@@ -12,6 +12,7 @@ import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
@@ -38,6 +39,7 @@ public class BGHR extends JavaPlugin implements Listener {
         MapManager.getInstance();
         ConfigurationSerialization.registerClass(SoundEffect.class);
         ConfigurationSerialization.registerClass(TotemAttackType.class);
+        ConfigurationSerialization.registerClass(TotemType.class);
         try {
             KitManager.getInstance().findAndLoadDefaultAbilities();
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {

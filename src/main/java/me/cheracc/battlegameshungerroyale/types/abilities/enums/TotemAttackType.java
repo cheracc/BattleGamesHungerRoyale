@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types.abilities.enums;
 
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.abilities.AbilityOptionEnum;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -27,7 +26,6 @@ public enum TotemAttackType implements AbilityOptionEnum, ConfigurationSerializa
     }
 
     public static TotemAttackType deserialize(Map<String, Object> map) {
-        Logr.info("deserializing");
         return valueOf((String) map.get("name"));
     }
 

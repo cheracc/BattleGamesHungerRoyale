@@ -2,26 +2,27 @@ package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
-import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
-import org.bukkit.*;
-import org.bukkit.entity.*;
-import org.bukkit.event.EventHandler;
+import me.cheracc.battlegameshungerroyale.types.abilities.Totem;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.UnaryOperator;
 
-public class EffectTotem extends Ability implements ActiveAbility, Listener {
+public class EffectTotem extends Totem implements Listener {
     private int cooldown;
     private int duration;
     private int radius;
@@ -32,6 +33,7 @@ public class EffectTotem extends Ability implements ActiveAbility, Listener {
     private String totemName;
     private String itemDescription;
     private PotionEffect effect;
+    private TotemType totemType;
 
     public EffectTotem() {
         this.cooldown = 15;
@@ -44,14 +46,9 @@ public class EffectTotem extends Ability implements ActiveAbility, Listener {
         this.totemIsDestroyable = true;
         this.placingPlayerIsImmune = false;
         this.affectsOnlyPlacingPlayer = false;
+        this.totemType = TotemType.FIRE_TOTEM;
         setDescription("This will place a totem on the ground that provides a potion effect to nearby players. The range, cooldown, effects are all configurable.");
         Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
-    }
-
-    @Override
-    public boolean doAbility(Player source) {
-        setTotem(source);
-        return true;
     }
 
     @Override
@@ -64,127 +61,74 @@ public class EffectTotem extends Ability implements ActiveAbility, Listener {
         return cooldown;
     }
 
-    private void setTotem(Player player) {
+    @Override
+    public TotemType getTotemType() {
+        return totemType;
+    }
+
+    @Override
+    public boolean isDestroyable() {
+        return totemIsDestroyable;
+    }
+
+    @Override
+    public int getDuration() {
+        return duration;
+    }
+
+    @Override
+    public int getAttackSpeed() {
+        return 1;
+    }
+
+    @Override
+    public ItemStack getTotemHead() {
+        return new ItemStack(Material.valueOf(totemItemType.toUpperCase()));
+    }
+
+    @Override
+    public UnaryOperator<LivingEntity> additionalOptions() {
         BGHR plugin = BGHR.getPlugin();
-        Location loc = player.getLocation();
-
-        LivingEntity totem = createBaseTotem(loc);
-        if (!totemIsDestroyable)
-            totem.setInvulnerable(true);
-        totem.setMetadata("effect", new FixedMetadataValue(plugin, effect));
-        totem.setMetadata("expires", new FixedMetadataValue(plugin, System.currentTimeMillis() + (duration * 1000L)));
-        if (affectsOnlyPlacingPlayer)
-            totem.setMetadata("affects", new FixedMetadataValue(plugin, player.getUniqueId()));
-        else if (placingPlayerIsImmune)
-            totem.setMetadata("immune", new FixedMetadataValue(plugin, player.getUniqueId()));
-        if (!totemIsDestroyable)
-            totem.setMetadata("invulnerable", new FixedMetadataValue(plugin, true));
-        totem.setMetadata("owner", new FixedMetadataValue(plugin, player.getUniqueId()));
-
-        startTotemWatcher(totem);
+        return totem -> {
+            Player owner = Bukkit.getPlayer((UUID) totem.getMetadata("owner").get(0).value());
+            if (owner == null)
+                return totem;
+            totem.setMetadata("effect", new FixedMetadataValue(plugin, effect));
+            if (affectsOnlyPlacingPlayer)
+                totem.setMetadata("affects", new FixedMetadataValue(plugin, owner.getUniqueId()));
+            else if (placingPlayerIsImmune)
+                totem.setMetadata("immune", new FixedMetadataValue(plugin, owner.getUniqueId()));
+            return totem;
+        };
     }
 
-    private void destroyTotem(LivingEntity totem) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                totem.getWorld().playEffect(totem.getLocation(), Effect.LAVA_CONVERTS_BLOCK, null);
-                totem.remove();
-            }
-        }.runTask(BGHR.getPlugin());
-    }
-
-    private void startTotemWatcher(LivingEntity totem) {
-        new BukkitRunnable() {
-            boolean bit = false;
-            @Override
-            public void run() {
-                if (totem == null || totem.isDead() || !totem.isValid()) {
-                    cancel();
-                }
-                bit = !bit;
-                if (bit) {
-                    if (totem.hasMetadata("affects")) {
-                        Player p = Bukkit.getPlayer((UUID) totem.getMetadata("affects").get(0).value());
-                        if (p != null && p.getLocation().distance(totem.getLocation()) <= radius) {
-                            p.addPotionEffect(effect);
-                        }
-                    }
-                    else {
-                        List<Entity> targets = new ArrayList<>(totem.getNearbyEntities(radius, radius, radius));
-
-                        if (totem.hasMetadata("immune"))
-                            targets.removeIf(e -> e.getUniqueId().equals(totem.getMetadata("immune").get(0).value()));
-
-                        targets.forEach(e -> {
-                            if (e instanceof LivingEntity) {
-                                ((LivingEntity) e).addPotionEffect(effect);
-                                if (e instanceof Player) {
-                                    Player source = Bukkit.getPlayer((UUID) totem.getMetadata("owner").get(0).value());
-                                    if (source != null)
-                                        DamageSource.fromPotionEffect(effect, source).apply((Player) e);
-                                }
-                            }
-                        });
-                    }
-                }
-                visualizeRadius(totem);
-                long expiry = totem.getMetadata("expires").get(0).asLong();
-                if (expiry < System.currentTimeMillis())
-                    destroyTotem(totem);
-            }
-        }.runTaskTimer(BGHR.getPlugin(), 5L, 10L);
-    }
-
-    private LivingEntity createBaseTotem(Location loc) {
-        while (!loc.getBlock().isSolid()) {
-            loc.add(0, -1, 0);
-        }
-        loc.add(0,1,0);
-        ArmorStand totem = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
-        ItemStack head = new ItemStack(Material.valueOf(totemItemType.toUpperCase()));
-
-        totem.setSmall(true);
-        totem.setInvisible(true);
-        totem.setInvulnerable(true);
-        totem.setFireTicks(duration*21);
-        totem.setCustomName(totemName);
-        totem.setCustomNameVisible(true);
-        totem.setAI(false);
-        totem.setHealth(4);
-        totem.setSilent(true);
-        totem.getEquipment().setHelmet(head, false);
-
-        return totem;
-    }
-
-    @EventHandler (ignoreCancelled = true)
-    public void noDropsFromTotems(EntityDeathEvent event) {
-        if (event.getEntity() instanceof ArmorStand)
-            event.getDrops().clear();
-    }
-
-    @EventHandler
-    public void damageTotems(PlayerInteractEvent event) {
-        Player p = event.getPlayer();
-        Entity e = p.getTargetEntity(2);
-
-        if (e instanceof ArmorStand && !e.hasMetadata("invulnerable") && ((ArmorStand) e).getNoDamageTicks() <= 0) {
-            if (e.hasMetadata("expires")) {
-                ArmorStand totem = (ArmorStand) e;
-                double damage = 1 + ThreadLocalRandom.current().nextDouble();
-                totem.getWorld().playSound(totem.getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 1F, 1F);
-                totem.getWorld().spawnParticle(Particle.CRIT, totem.getLocation(), 4);
-                if (totem.getHealth() - damage <= 0)
-                    destroyTotem(totem);
-                else {
-                    totem.setHealth(totem.getHealth() - damage);
-                    totem.setNoDamageTicks(8);
-                }
+    @Override
+    public void doTotemAbility(LivingEntity totem, Player owner) {
+        visualizeRadius(totem);
+        if (totem.hasMetadata("affects")) {
+            Player p = Bukkit.getPlayer((UUID) totem.getMetadata("affects").get(0).value());
+            if (p != null && p.getLocation().distance(totem.getLocation()) <= radius) {
+                p.addPotionEffect(effect);
             }
         }
-    }
+        else {
+            List<Entity> targets = new ArrayList<>(totem.getNearbyEntities(radius, radius, radius));
 
+            if (totem.hasMetadata("immune"))
+                targets.removeIf(e -> e.getUniqueId().equals(totem.getMetadata("immune").get(0).value()));
+
+            targets.forEach(e -> {
+                if (e instanceof LivingEntity) {
+                    ((LivingEntity) e).addPotionEffect(effect);
+                    if (e instanceof Player) {
+                        Player source = Bukkit.getPlayer((UUID) totem.getMetadata("owner").get(0).value());
+                        if (source != null)
+                            DamageSource.fromPotionEffect(effect, source).apply((Player) e);
+                    }
+                }
+            });
+        }
+    }
     private void visualizeRadius(LivingEntity totem) {
         Location center = totem.getLocation();
         double angle = 2 * Math.PI / 100;
