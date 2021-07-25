@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -55,14 +56,14 @@ public class KitManager {
         return null;
     }
 
-    // TODO make this super clean - check for players with the kit and update them as well, make sure all items match etc
     public void replaceKit(Kit kit) {
         List<Kit> toRemove = new ArrayList<>();
         for (Kit k : getLoadedKits()) {
-            if (kit.getId().equalsIgnoreCase(k.getId()))
+            if (kit.getId().equalsIgnoreCase(k.getId()) || kit.getName().equals(k.getName()))
                 toRemove.add(k);
         }
         for (Kit k : toRemove) {
+            k.getMyPlayers().forEach(data -> data.registerKit(kit, false));
             loadedKits.remove(k);
         }
         loadedKits.add(kit);
@@ -89,6 +90,7 @@ public class KitManager {
                 loadedKits.add(kit);
             }
         }
+        Logr.info("Loaded " + loadedKits.size() + " kits and " + defaultAbilities.size() + " abilities");
     }
 
     public List<Ability> getDefaultAbilities() {
