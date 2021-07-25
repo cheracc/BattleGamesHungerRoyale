@@ -123,4 +123,7 @@ public class PlayerManager {
         return task.runTaskTimer(plugin, 600L, 80L);
     }
 
+    public List<PlayerData> getLoadedPlayers() {
+        return new ArrayList<>(loadedPlayers);
+    }
 }
