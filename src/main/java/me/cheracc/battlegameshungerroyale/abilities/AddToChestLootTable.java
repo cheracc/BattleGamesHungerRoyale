@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -21,8 +22,8 @@ public class AddToChestLootTable extends TriggeredAbility {
         setDescription("Add an item to the loot table used when the player opens a loot chest");
     }
 
-    public Trigger getTrigger() {
-        return Trigger.OPEN_LOOT_CHEST;
+    public AbilityTrigger getTrigger() {
+        return AbilityTrigger.OPEN_LOOT_CHEST;
     }
 
     @Override

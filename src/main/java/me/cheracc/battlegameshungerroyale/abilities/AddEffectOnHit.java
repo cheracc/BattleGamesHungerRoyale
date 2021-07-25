@@ -2,6 +2,7 @@ package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -26,12 +27,12 @@ public class AddEffectOnHit extends TriggeredAbility {
     }
 
     @Override
-    public Trigger getTrigger() {
+    public AbilityTrigger getTrigger() {
         if (meleeOnly)
-            return Trigger.DEAL_MELEE_HIT;
+            return AbilityTrigger.DEAL_MELEE_HIT;
         if (projectileOnly)
-            return Trigger.DEAL_PROJECTILE_HIT;
-        return Trigger.DEAL_ANY_DAMAGE;
+            return AbilityTrigger.DEAL_PROJECTILE_HIT;
+        return AbilityTrigger.DEAL_ANY_DAMAGE;
     }
 
     @Override

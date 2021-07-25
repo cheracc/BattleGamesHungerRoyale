@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.potion.PotionEffect;
@@ -25,14 +26,14 @@ public class AddEffectOnKill extends TriggeredAbility {
     }
 
     @Override
-    public Trigger getTrigger() {
+    public AbilityTrigger getTrigger() {
         if (playersOnly)
-            return Trigger.KILL_PLAYER;
+            return AbilityTrigger.KILL_PLAYER;
         if (monstersOnly)
-            return Trigger.KILL_MONSTER;
+            return AbilityTrigger.KILL_MONSTER;
         if (animalsOnly)
-            return Trigger.KILL_ANIMAL;
-        return Trigger.KILL_ANYTHING;
+            return AbilityTrigger.KILL_ANIMAL;
+        return AbilityTrigger.KILL_ANYTHING;
     }
 
     @Override

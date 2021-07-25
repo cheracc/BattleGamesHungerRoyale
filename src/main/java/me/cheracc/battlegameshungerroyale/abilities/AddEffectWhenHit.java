@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.potion.PotionEffect;
@@ -23,12 +24,12 @@ public class AddEffectWhenHit extends TriggeredAbility {
     }
 
     @Override
-    public Trigger getTrigger() {
+    public AbilityTrigger getTrigger() {
         if (meleeOnly)
-            return Trigger.TAKE_MELEE_HIT;
+            return AbilityTrigger.TAKE_MELEE_HIT;
         if (projectileOnly)
-            return Trigger.TAKE_PROJECTILE_HIT;
-        return Trigger.TAKE_ANY_DAMAGE;
+            return AbilityTrigger.TAKE_PROJECTILE_HIT;
+        return AbilityTrigger.TAKE_ANY_DAMAGE;
     }
 
     @Override

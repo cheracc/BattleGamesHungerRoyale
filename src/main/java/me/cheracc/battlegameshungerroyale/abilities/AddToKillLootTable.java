@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -26,14 +27,14 @@ public class AddToKillLootTable extends TriggeredAbility {
     }
 
     @Override
-    public Trigger getTrigger() {
+    public AbilityTrigger getTrigger() {
         if (playersOnly)
-            return Trigger.KILL_PLAYER;
+            return AbilityTrigger.KILL_PLAYER;
         if (monstersOnly)
-            return Trigger.KILL_MONSTER;
+            return AbilityTrigger.KILL_MONSTER;
         if (animalsOnly)
-            return Trigger.KILL_ANIMAL;
-        return Trigger.KILL_ANYTHING;
+            return AbilityTrigger.KILL_ANIMAL;
+        return AbilityTrigger.KILL_ANYTHING;
     }
 
     @Override
