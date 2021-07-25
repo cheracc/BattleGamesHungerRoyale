@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.types.abilities.enums;
 
-public interface AbilityOptionEnum{
+public interface AbilityOptionEnum {
     AbilityOptionEnum next();
     String name();
 }

@@ -97,7 +97,7 @@ public enum EnchantWrapper implements AbilityOptionEnum, ConfigurationSerializab
         return map;
     }
 
-    public EnchantWrapper deserialize(Map<String, Object> map) {
+    public static EnchantWrapper deserialize(Map<String, Object> map) {
         return valueOf((String) map.get("name"));
     }
 }

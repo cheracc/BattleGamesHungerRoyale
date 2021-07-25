@@ -32,7 +32,7 @@ public class KitCommand implements CommandExecutor {
                         return true;
                     }
 
-                    if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+                    if (GameManager.getInstance().isActivelyPlayingAGame(p) && !p.isOp()) {
                         p.sendMessage(Tools.componentalize("You cannot change your kit while playing a game"));
                         return true;
                     }

@@ -33,7 +33,7 @@ public class CustomEventsListener implements Listener {
 
     @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void callGameDeathEvent(GameDamageEvent event) {
-        if (event.getDamage() > event.getVictim().getHealth()) {
+        if (event.getDamage() >= event.getVictim().getHealth()) {
             GameDeathEvent deathEvent = new GameDeathEvent(event.getVictim(), event.getAggressor(), event.getGame(), event.getDamage(), event.getType());
             deathEvent.callEvent();
         }

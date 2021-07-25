@@ -23,14 +23,14 @@ import java.util.UUID;
 public class DualWield extends TriggeredAbility implements Listener {
     private boolean bonusWhenUsingSwords;
     private boolean bonusWhenUsingAxes;
-    private DualWieldBonusType bonusType;
     private double attackSpeedBonus;
     private int moveSpeedBonusDuration;
+    private DualWieldBonusType dualWieldBonus;
 
     public DualWield() {
         bonusWhenUsingSwords = false;
         bonusWhenUsingAxes = true;
-        bonusType = DualWieldBonusType.ATTACK_SPEED_BONUS;
+        dualWieldBonus = DualWieldBonusType.ATTACK_SPEED_BONUS;
         attackSpeedBonus = 0.25;
         moveSpeedBonusDuration = 8;
         setDescription("Provides a bonus when the player is dual wielding a sword and/or axe");
@@ -93,7 +93,7 @@ public class DualWield extends TriggeredAbility implements Listener {
             if (!(event instanceof EntityDamageByEntityEvent))
                 return;
             EntityDamageByEntityEvent e = (EntityDamageByEntityEvent) event;
-            switch (bonusType) {
+            switch (dualWieldBonus) {
                 case DAMAGE_BONUS:
                     e.setDamage(e.getDamage() * (1 + attackSpeedBonus));
                     break;

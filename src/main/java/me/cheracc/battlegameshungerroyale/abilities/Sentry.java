@@ -111,6 +111,7 @@ public class Sentry extends Totem implements Listener {
             Location loc = totem.getLocation().setDirection(target.getLocation().subtract(totem.getLocation()).toVector());
             totem.teleport(loc);
             Projectile projectile = attackType.getProjectile(totem, target.getEyeLocation());
+            projectile.setShooter(owner);
             projectile.setMetadata("owner", new FixedMetadataValue(plugin, owner.getUniqueId()));
             projectile.setMetadata("ability_id", new FixedMetadataValue(plugin, this.getId()));
             new BukkitRunnable() {
@@ -152,7 +153,7 @@ public class Sentry extends Totem implements Listener {
             event.blockList().clear();
             if (projectilesExplode) {
                 Player owner = getOwner(projectile);
-                projectile.getLocation().createExplosion(owner, attackDamage, false, false);
+                projectile.getLocation().createExplosion(owner, attackDamage/2F, false, false);
                 if (incendiaryProjectiles) {
                     for (LivingEntity e : projectile.getLocation().getNearbyLivingEntities(attackDamage/2F, attackDamage/2F, attackDamage/2F)) {
                         e.setFireTicks(fireDuration);

@@ -24,7 +24,7 @@ public enum UpgradeType implements AbilityOptionEnum, ConfigurationSerializable 
         return map;
     }
 
-    public UpgradeType deserialize(Map<String, Object> map) {
+    public static UpgradeType deserialize(Map<String, Object> map) {
         return valueOf((String) map.get("name"));
     }
 }

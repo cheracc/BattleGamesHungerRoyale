@@ -10,7 +10,7 @@ public enum DualWieldBonusType implements AbilityOptionEnum, ConfigurationSerial
     DAMAGE_BONUS, ATTACK_SPEED_BONUS, MOVEMENT_SPEED_BONUS;
 
     @Override
-    public AbilityOptionEnum next() {
+    public DualWieldBonusType next() {
         int ordinal = this.ordinal() + 1;
         if (ordinal >= values().length)
             ordinal = 0;
@@ -24,7 +24,7 @@ public enum DualWieldBonusType implements AbilityOptionEnum, ConfigurationSerial
         return map;
     }
 
-    public DualWieldBonusType deserialize(Map<String, Object> map) {
+    public static DualWieldBonusType deserialize(Map<String, Object> map) {
         return valueOf((String) map.get("name"));
     }
 }

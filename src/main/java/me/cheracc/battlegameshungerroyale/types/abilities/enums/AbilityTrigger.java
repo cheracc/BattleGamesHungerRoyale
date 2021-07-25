@@ -36,7 +36,7 @@ public enum AbilityTrigger implements AbilityOptionEnum, ConfigurationSerializab
         return map;
     }
 
-    public AbilityTrigger deserialize(Map<String, Object> map) {
+    public static AbilityTrigger deserialize(Map<String, Object> map) {
         return valueOf((String) map.get("name"));
     }
 }

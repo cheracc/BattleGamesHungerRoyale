@@ -18,7 +18,7 @@ public class KitMenu implements CommandExecutor {
             Player p = (Player) commandSender;
             PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
-            if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+            if (GameManager.getInstance().isActivelyPlayingAGame(p) && !p.isOp()) {
                 p.sendMessage(Tools.componentalize("You cannot change your kit while playing a game"));
                 return true;
             }

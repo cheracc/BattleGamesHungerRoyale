@@ -32,17 +32,18 @@ public class BGHR extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         Logr.initialize(this);
+        @SuppressWarnings("unused")
         Metrics metrics = new Metrics(this, 12102);
         plugin = this;
         saveDefaultConfig();
         MapManager.getInstance();
+        ConfigurationSerialization.registerClass(DualWieldBonusType.class);
         ConfigurationSerialization.registerClass(SoundEffect.class);
         ConfigurationSerialization.registerClass(TotemAttackType.class);
         ConfigurationSerialization.registerClass(TotemType.class);
         ConfigurationSerialization.registerClass(UpgradeType.class);
         ConfigurationSerialization.registerClass(AbilityTrigger.class);
         ConfigurationSerialization.registerClass(EnchantWrapper.class);
-        ConfigurationSerialization.registerClass(DualWieldBonusType.class);
         KitManager.initialize(this);
         try {
             KitManager.getInstance().findAndLoadDefaultAbilities(this);

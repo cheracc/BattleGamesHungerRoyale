@@ -1,5 +1,6 @@
 package me.cheracc.battlegameshungerroyale.events;
 
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -29,6 +30,8 @@ public class GameDamageEvent extends Event implements Cancellable,GameEvent {
         this.directDamage = directDamage;
         this.type = type;
         this.bestGuess = null;
+        Logr.info(String.format("new DamEvent: agg:%s vic:%s dam:%s direct:%s type:%s", aggressor == null ? "null" : aggressor.getName(),
+                victim == null ? "null" : victim.getName(), damage, directDamage, type.name()));
     }
 
     public @Nullable Player getAggressor() {

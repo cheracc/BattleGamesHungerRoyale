@@ -87,18 +87,19 @@ public abstract class Ability implements Cloneable {
             for (String key : section.getKeys(false)) {
                 String fieldName = Tools.configOptionToFieldName(key);
                 Object value = section.get(key);
+                Field f = null;
                 try {
-                    Field f = this.getClass().getDeclaredField(fieldName);
+                    f = this.getClass().getDeclaredField(fieldName);
                     f.setAccessible(true);
                     f.set(this, value);
                 } catch (NoSuchFieldException | IllegalAccessException e) {
                     try {
-                        Field f = this.getClass().getSuperclass().getDeclaredField(fieldName);
+                        f = this.getClass().getSuperclass().getDeclaredField(fieldName);
                         f.setAccessible(true);
                         f.set(this, value);
                     } catch (NoSuchFieldException | IllegalAccessException ex) {
                         try {
-                            Field f = this.getClass().getSuperclass().getSuperclass().getDeclaredField(fieldName);
+                            f = this.getClass().getSuperclass().getSuperclass().getDeclaredField(fieldName);
                             f.setAccessible(true);
                             f.set(this, value);
                         } catch (NoSuchFieldException | IllegalAccessException exc) {
