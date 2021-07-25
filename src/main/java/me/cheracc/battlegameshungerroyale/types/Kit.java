@@ -246,5 +246,10 @@ public class Kit {
         }
     }
 
+    public List<PlayerData> getMyPlayers() {
+        List<PlayerData> players = PlayerManager.getInstance().getLoadedPlayers();
+        players.removeIf(data -> data.getKit() == null || !data.getKit().equals(this));
 
+        return players;
+    }
 }
