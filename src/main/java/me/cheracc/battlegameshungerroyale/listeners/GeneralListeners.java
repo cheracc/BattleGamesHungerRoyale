@@ -109,7 +109,7 @@ public class GeneralListeners implements Listener {
         if (!data.hasKit(ability.getAssignedKit()))
             return;
 
-        if (ability instanceof ActiveAbility) {
+        if (ability instanceof ActiveAbility && event.getAction().name().contains("RIGHT")) {
             ActiveAbility activeAbility = (ActiveAbility) ability;
 
             if (activeAbility.doAbility(p)) {
@@ -119,7 +119,7 @@ public class GeneralListeners implements Listener {
             }
         }
 
-        else if (ability instanceof PassiveAbility) {
+        else if (ability instanceof PassiveAbility && event.getAction().name().contains("RIGHT")) {
             PassiveAbility passiveAbility = (PassiveAbility) ability;
 
             if (passiveAbility.isActive(p))

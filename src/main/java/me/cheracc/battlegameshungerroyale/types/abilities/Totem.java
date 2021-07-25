@@ -35,12 +35,12 @@ public abstract class Totem extends Ability implements ActiveAbility, Listener {
             int count = 0;
             @Override
             public void run() {
-                if (totem == null || totem.isDead() || !totem.isValid()) {
-                    cancel();
-                }
                 Player owner = Bukkit.getPlayer((UUID) totem.getMetadata("owner").get(0).value());
                 if (owner == null || !owner.isOnline()) {
                     destroyTotem(totem);
+                    cancel();
+                }
+                if (totem == null || totem.isDead() || !totem.isValid()) {
                     cancel();
                 }
 

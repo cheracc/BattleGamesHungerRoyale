@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum TotemType implements AbilityOptionEnum, ConfigurationSerializable {
-    FIRE_TOTEM, SENTRY;
+    FIRE_TOTEM, SENTRY, BASIC, INVISIBLE;
 
     public LivingEntity createBaseTotem(Location loc, ItemStack head, String customName) {
         while (!loc.getBlock().isSolid()) {
@@ -42,6 +42,13 @@ public enum TotemType implements AbilityOptionEnum, ConfigurationSerializable {
                 totem.setItem(EquipmentSlot.CHEST, new ItemStack(Material.IRON_CHESTPLATE));
                 totem.setItem(EquipmentSlot.LEGS, new ItemStack(Material.IRON_LEGGINGS));
                 totem.setItem(EquipmentSlot.FEET, new ItemStack(Material.IRON_BOOTS));
+                break;
+            case BASIC:
+                totem.setCustomNameVisible(false);
+                break;
+            case INVISIBLE:
+                totem.setInvisible(true);
+                totem.setCustomNameVisible(false);
         }
         totem.setDisabledSlots(EquipmentSlot.values());
 
