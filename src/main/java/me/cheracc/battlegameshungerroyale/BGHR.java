@@ -11,8 +11,7 @@ import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
-import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType;
-import me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.*;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
@@ -40,6 +39,9 @@ public class BGHR extends JavaPlugin implements Listener {
         ConfigurationSerialization.registerClass(SoundEffect.class);
         ConfigurationSerialization.registerClass(TotemAttackType.class);
         ConfigurationSerialization.registerClass(TotemType.class);
+        ConfigurationSerialization.registerClass(UpgradeType.class);
+        ConfigurationSerialization.registerClass(AbilityTrigger.class);
+        ConfigurationSerialization.registerClass(EnchantWrapper.class);
         KitManager.initialize(this);
         try {
             KitManager.getInstance().findAndLoadDefaultAbilities(this);
