@@ -42,6 +42,7 @@ public class BGHR extends JavaPlugin implements Listener {
         ConfigurationSerialization.registerClass(UpgradeType.class);
         ConfigurationSerialization.registerClass(AbilityTrigger.class);
         ConfigurationSerialization.registerClass(EnchantWrapper.class);
+        ConfigurationSerialization.registerClass(DualWieldBonusType.class);
         KitManager.initialize(this);
         try {
             KitManager.getInstance().findAndLoadDefaultAbilities(this);

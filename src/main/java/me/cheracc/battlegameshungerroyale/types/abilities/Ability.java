@@ -2,8 +2,10 @@ package me.cheracc.battlegameshungerroyale.types.abilities;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
+import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -12,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -55,6 +58,11 @@ public abstract class Ability implements Cloneable {
 
     public void initialize(BGHR plugin) {
         this.plugin = plugin;
+    }
+
+    public boolean hasMyAbility(Player player) {
+        PlayerData data = PlayerManager.getInstance().getPlayerData(player);
+        return data.getKit() != null && data.getKit().equals(getAssignedKit());
     }
 
     public void generateConfigSection() {
