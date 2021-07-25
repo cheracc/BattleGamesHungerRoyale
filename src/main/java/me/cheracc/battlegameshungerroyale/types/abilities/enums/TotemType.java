@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types.abilities.enums;
 
-import me.cheracc.battlegameshungerroyale.types.abilities.AbilityOptionEnum;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;

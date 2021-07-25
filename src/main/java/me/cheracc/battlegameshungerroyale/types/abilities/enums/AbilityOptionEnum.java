@@ -1,4 +1,4 @@
-package me.cheracc.battlegameshungerroyale.types.abilities;
+package me.cheracc.battlegameshungerroyale.types.abilities.enums;
 
 public interface AbilityOptionEnum{
     AbilityOptionEnum next();

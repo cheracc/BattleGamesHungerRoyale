@@ -10,7 +10,7 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.types.abilities.AbilityOptionEnum;
+import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityOptionEnum;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
