@@ -43,6 +43,7 @@ public class RemoteActivation extends Totem implements Listener {
         device.setMetadata("owner", new FixedMetadataValue(plugin, player.getUniqueId()));
 
         startTotemWatcher(device);
+
         player.setMetadata("remote_device", new FixedMetadataValue(plugin, device));
         player.setCooldown(Material.valueOf(totemItemType.toUpperCase()), cooldown/10);
     }
