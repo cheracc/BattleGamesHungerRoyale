@@ -15,6 +15,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -87,48 +88,45 @@ public class GeneralListeners implements Listener {
     // detects when a player uses an ability item and executes the ability
     @EventHandler
     public void onUseActiveAbility(PlayerInteractEvent event) {
-        if (event.getAction().name().contains("RIGHT")) {
-            Player p = event.getPlayer();
-            ItemStack activeItem = p.getActiveItem();
-            if (activeItem == null)
-                return;
-            if (!Ability.isAbilityItem(activeItem))
-                activeItem = p.getInventory().getItemInMainHand();
-            if (!Ability.isAbilityItem(activeItem))
-                activeItem = p.getInventory().getItemInOffHand();
-            if (!Ability.isAbilityItem(activeItem))
-                return;
+        Player p = event.getPlayer();
+        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+        ItemStack item = p.getInventory().getItemInMainHand();
+        Ability ability = Ability.getFromItem(item);
 
-            PlayerData data = PlayerManager.getInstance().getPlayerData(p);
-            Ability ability = Ability.getFromItem(activeItem);
+        if (item == null || ability == null) {
+            item = p.getInventory().getItemInOffHand();
+            ability = Ability.getFromItem(item);
+        }
 
-            if (ability == null)
-                return;
+        if (p == null || item == null || ability == null)
+            return;
 
-            event.setCancelled(true);
+        event.setUseInteractedBlock(Event.Result.ALLOW);
+        event.setUseItemInHand(Event.Result.DENY);
 
-            if (!data.hasKit(ability.getAssignedKit())) {
-                Bukkit.getLogger().warning(p.getName() + " has an item for kit " + ability.getAssignedKit().getName() + " but has kit " + data.getKit().getName());
-                return;
+        if (p.hasCooldown(item.getType()))
+            return;
+        if (!data.hasKit(ability.getAssignedKit()))
+            return;
+
+        if (ability instanceof ActiveAbility) {
+            ActiveAbility activeAbility = (ActiveAbility) ability;
+
+            if (activeAbility.doAbility(p)) {
+                p.setCooldown(item.getType(), activeAbility.getCooldown() * 20);
+                data.getStats().addActiveAbilityUsed();
+                data.setModified(true);
             }
+        }
 
-            if (ability instanceof ActiveAbility && activeItem != null && !p.hasCooldown(activeItem.getType())) {
-                ActiveAbility activeAbility = (ActiveAbility) ability;
-                if (activeAbility.doAbility(p)) {
-                    p.setCooldown(activeItem.getType(), activeAbility.getCooldown() * 20);
-                    data.getStats().addActiveAbilityUsed();
-                    data.setModified(true);
-                }
-            }
+        else if (ability instanceof PassiveAbility) {
+            PassiveAbility passiveAbility = (PassiveAbility) ability;
 
-            else if (ability instanceof PassiveAbility && activeItem != null) {
-                PassiveAbility passiveAbility = (PassiveAbility) ability;
-                if (passiveAbility.isActive(p))
-                    passiveAbility.deactivate(p);
-                else
-                    passiveAbility.activate(p);
-                p.setCooldown(activeItem.getType(), 10);
-            }
+            if (passiveAbility.isActive(p))
+                passiveAbility.deactivate(p);
+            else
+                passiveAbility.activate(p);
+            p.setCooldown(item.getType(), 20);
         }
     }
 
