@@ -31,7 +31,10 @@ public class SelectAbilityGui extends Gui {
             sendingGui.open(e.getWhoClicked());
         });
 
-        for (Ability a : KitManager.getInstance().getDefaultAbilities())
+        List<Ability> abilities = KitManager.getInstance().getDefaultAbilities();
+        abilities.sort(Comparator.comparing(Ability::getName));
+
+        for (Ability a : abilities)
             addItem(abilityIcon(a.newWithDefaults(), callback));
 
         open(player);

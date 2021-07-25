@@ -35,8 +35,24 @@ public class SelectMaterialGui extends ScrollingGui {
     }
 
     private void populate() {
-        setItem(6, 3, ItemBuilder.from(Material.PAPER).name(Component.text("Scroll Up")).asGuiItem(event -> previous()));
-        setItem(6, 7, ItemBuilder.from(Material.PAPER).name(Component.text("Scroll Down")).asGuiItem(event -> next()));
+        setItem(6, 3, ItemBuilder.from(Material.PAPER).name(Component.text("Scroll Up")).asGuiItem(event -> {
+            if (event.isShiftClick()) {
+                previous();
+                previous();
+                previous();
+                previous();
+            }
+            previous();
+        }));
+        setItem(6, 7, ItemBuilder.from(Material.PAPER).name(Component.text("Scroll Down")).asGuiItem(event -> {
+            if (event.isShiftClick()) {
+                next();
+                next();
+                next();
+                next();
+            }
+            next();
+        }));
         setItem(6, 5, ItemBuilder.from(Material.BARRIER).name(Component.text("Cancel and Go Back")).asGuiItem(event -> {
             event.getWhoClicked().closeInventory();
             sendingGui.open(event.getWhoClicked());

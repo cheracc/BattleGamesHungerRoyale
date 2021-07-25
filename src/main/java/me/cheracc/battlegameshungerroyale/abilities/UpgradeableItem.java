@@ -37,6 +37,7 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
         enchantment = EnchantWrapper.SHARPNESS;
         neededToUpgrade = 1;
         addMoreAmount = 1;
+        setDescription("Give the player an item at the start of each game that can be upgraded by configurable triggers");
     }
 
     @Override

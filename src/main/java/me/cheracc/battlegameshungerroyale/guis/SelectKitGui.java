@@ -18,6 +18,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemFlag;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -35,7 +36,10 @@ public class SelectKitGui extends ScrollingGui {
                 sendingGui.open(player);
         });
 
-        for (Kit kit : KitManager.getInstance().getLoadedKits(player.hasPermission("bghr.admin.kits.disabled"))) {
+        List<Kit> availableKits = KitManager.getInstance().getLoadedKits(player.hasPermission("bghr.admin.kits.disabled"));
+        availableKits.sort(Comparator.comparing(Kit::getName));
+
+        for (Kit kit : availableKits) {
             addItem(createKitIcon(kit));
         }
         open(player);

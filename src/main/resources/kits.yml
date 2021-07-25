@@ -9,7 +9,7 @@ rocketman:
       item name: Jump Rocket
       item description: Use this to give you a little boost!
       amplifier: 1.0
-      cooldown: 25
+      cooldown: 15
       custom name: Rocket Jump
       description: Jump about 20 blocks up into the air, with no fall damage!
       sound:
@@ -168,72 +168,6 @@ gladiator:
     \nZWQiOmZhbHNlLCJjb2xvciI6IndoaXRlIiwidGV4dCI6IkhvdGJhciBJdGVtOiJ9XSwidGV4dCI6\r\
     \nIiJ9cQB+ACBzcQB+ACg/QAAAAAAADHcIAAAAEAAAAAF0AB5iYXR0bGVnYW1lc2h1bmdlcnJveWFs\r\
     \nZTptZi1ndWl0ACRlMThjMDkwMC01NzQ1LTQ0NzQtODE0Yi03N2ExZDEzYzcwNzJ4\r\n"
-shaman:
-  name: Shaman
-  description: The Shaman can place powerful totems that either boost his abilities
-    or weaken his opponents.
-  icon: totem_of_undying
-  abilities:
-    EffectTotem:
-      cooldown: 30
-      duration: 15
-      radius: 8
-      totem is destroyable: true
-      placing player is immune: false
-      affects only placing player: true
-      totem item type: lodestone
-      totem name: Strength of Earth Totem
-      item description: Use this to place your Strength of Earth Totem
-      effect:
-        ==: PotionEffect
-        effect: 5
-        duration: 25
-        amplifier: 1
-        ambient: true
-        has-particles: true
-        has-icon: true
-      custom name: Strength of Earth Totem
-      description: Places a totem that gives the shaman a strength effect
-    EffectTotem_47780077:
-      cooldown: 25
-      duration: 8
-      radius: 8
-      totem is destroyable: true
-      placing player is immune: true
-      affects only placing player: false
-      totem item type: soul_sand
-      totem name: Earthbind Totem
-      item description: Use this to place your Earthbind Totem
-      effect:
-        ==: PotionEffect
-        effect: 2
-        duration: 25
-        amplifier: 1
-        ambient: true
-        has-particles: true
-        has-icon: true
-      custom name: Earthbind Totem
-      description: Places a totem that slows all nearby enemy players
-    EffectTotem_1651453:
-      cooldown: 30
-      duration: 5
-      radius: 6
-      totem is destroyable: true
-      placing player is immune: true
-      affects only placing player: false
-      totem item type: light_blue_stained_glass
-      totem name: Curse of Air Totem
-      item description: Use this to place your Curse of Air Totem
-      effect:
-        ==: PotionEffect
-        effect: 25
-        duration: 25
-        amplifier: 0
-        ambient: false
-        has-particles: false
-        has-icon: true
-      custom name: Curse of Air Totem
-      description: Places a totem that captures nearby enemies with a levitation effect
 scavenger:
   name: Scavenger
   description: The scavenger has a higher chance of finding armor and weapon components
@@ -247,7 +181,7 @@ scavenger:
         v: 2586
         type: CRAFTING_TABLE
       custom name: Workbench+
-      description: find crafting tables in loot chests
+      description: find crafting tables
     AddToChestLootTable_38666373:
       chance: 0.2
       item:
@@ -255,7 +189,7 @@ scavenger:
         v: 2586
         type: GOLD_INGOT
       custom name: Gold+
-      description: find more gold in loot chests
+      description: find more gold
     AddToChestLootTable_48279359:
       chance: 0.2
       item:
@@ -263,7 +197,7 @@ scavenger:
         v: 2586
         type: LEATHER
       custom name: Leather+
-      description: find more leather in loot chests
+      description: find more leather
     AddToChestLootTable_90287404:
       chance: 0.1
       item:
@@ -271,7 +205,7 @@ scavenger:
         v: 2586
         type: IRON_INGOT
       custom name: Iron+
-      description: find more iron in loot chests
+      description: find more iron
 archer:
   name: Archer
   description: The archer starts with a bow, finds more arrows in chests, and his
@@ -316,7 +250,7 @@ archer:
 berserker:
   name: Berserker
   description: The berserker goes into a rage every time he kills something!
-  icon: blaze_powder
+  icon: sweet_berries
   abilities:
     AddEffectOnKill:
       players only: true
@@ -333,7 +267,7 @@ berserker:
       chance: 1.0
       custom name: Rage++
       description: gain Strength II after killing a player
-    AddEffectOnKill_60344486:
+    AddEffectOnKill_99039854:
       players only: false
       monsters only: false
       animals only: false
@@ -348,7 +282,7 @@ berserker:
       chance: 1.0
       custom name: Rage Blindness
       description: channeling that rage can be an issue...
-    AddEffectOnKill_31382052:
+    AddEffectOnKill_19870498:
       players only: false
       monsters only: false
       animals only: false
@@ -362,7 +296,7 @@ berserker:
         has-icon: true
       chance: 1.0
       custom name: Rage+
-      description: gain Strength when killing a monster or animal
+      description: gain Strength when killing anything else
 fireman:
   name: Fireman
   description: The fireman is immune to fire and starts with a lighter to have some
@@ -435,7 +369,7 @@ forager:
         v: 2586
         type: GOLDEN_APPLE
       custom name: Apple+
-      description: rarely find golden apples in loot chests
+      description: rarely find golden apples
     AddToKillLootTable:
       players only: false
       monsters only: false
@@ -490,7 +424,6 @@ unstoppableforce:
   name: The Unstoppable Force
   description: Why? Why would someone create this?
   icon: netherite_sword
-  enabled: false
   equipment: "rO0ABXcEAAAAC3NyABpvcmcuYnVra2l0LnV0aWwuaW8uV3JhcHBlcvJQR+zxEm8FAgABTAADbWFw\r\
     \ndAAPTGphdmEvdXRpbC9NYXA7eHBzcgA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFi\r\
     \nbGVNYXAkU2VyaWFsaXplZEZvcm0AAAAAAAAAAAIAAlsABGtleXN0ABNbTGphdmEvbGFuZy9PYmpl\r\
@@ -527,6 +460,7 @@ unstoppableforce:
     \nIXVxAH4ABgAAAAdxAH4AaHEAfgBocQB+ACVxAH4AI3EAfgAkcQB+ACVxAH4AJXNxAH4AAHNxAH4A\r\
     \nA3VxAH4ABgAAAANxAH4ACHEAfgAJcQB+AAp1cQB+AAYAAAADcQB+AA1zcQB+AA4AAAoacQB+AFVx\r\
     \nAH4AVnEAfgBpcA==\r\n"
+  enabled: false
   abilities:
     AddPotionEffect:
       potion effect:
@@ -543,7 +477,7 @@ unstoppableforce:
       item description: Use this to do what it does
       custom name: UNSHAKEABLE HEALTH
       description: constant max regen
-    AddPotionEffect_28124805:
+    AddPotionEffect_6486444:
       potion effect:
         ==: PotionEffect
         effect: 11
@@ -577,7 +511,7 @@ unstoppableforce:
       affects only placing player: false
       totem item type: jack_o_lantern
       totem name: GET REKT
-      item description: anything near this thing gets rekt (unless its undead)
+      item description: anything near this thing gets rekt
       effect:
         ==: PotionEffect
         effect: 7
@@ -588,3 +522,379 @@ unstoppableforce:
         has-icon: true
       custom name: GET REKT
       description: a totem that makes anything near it get rekt
+fireshaman:
+  name: Fire Shaman
+  description: Fire Shamans can control the spirits of fire through use of their totems
+  icon: blaze_powder
+  abilities:
+    Sentry:
+      cooldown: 30
+      duration: 10
+      attack radius: 8
+      attack damage: 1
+      seconds between attacks: 2
+      totem is destroyable: true
+      incendiary projectiles: true
+      projectiles explode: false
+      totem item type: brewing_stand
+      totem name: Searing Totem
+      item description: Use this to place your searing totem
+      totem type: &id001
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType
+        name: FIRE_TOTEM
+      attack type:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType
+        name: FIREBALL
+      custom name: Searing Totem
+      description: shoots nearby enemies with incendiary fireballs
+    EffectTotem:
+      cooldown: 24
+      duration: 15
+      radius: 10
+      totem is destroyable: true
+      placing player is immune: false
+      affects only placing player: true
+      totem item type: magma_block
+      totem name: Totem of Fiery Wrath
+      item description: Use this to place your Totem of Fiery Wrath
+      effect:
+        ==: PotionEffect
+        effect: 5
+        duration: 25
+        amplifier: 0
+        ambient: true
+        has-particles: true
+        has-icon: true
+      totem type: *id001
+      custom name: Totem of Fiery Wrath
+      description: Placing this totem increases your attack damage while you stay
+        near it
+earthshaman:
+  name: Earth Shaman
+  description: Earth Shamans can control the spirits of earth through use of their
+    totems
+  icon: podzol
+  abilities:
+    Sentry:
+      cooldown: 30
+      duration: 12
+      attack radius: 10
+      attack damage: 1
+      seconds between attacks: 1
+      totem is destroyable: true
+      incendiary projectiles: false
+      projectiles explode: false
+      totem item type: cobblestone
+      totem name: Earthfury Totem
+      item description: Use this to place your Earthfury Totem
+      totem type: *id001
+      attack type:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType
+        name: ITEM
+      custom name: Earthfury Totem
+      description: Launches rocks at nearby enemies at a high rate of speed
+    EffectTotem:
+      cooldown: 30
+      duration: 12
+      radius: 8
+      totem is destroyable: true
+      placing player is immune: true
+      affects only placing player: false
+      totem item type: podzol
+      totem name: Earthbind Totem
+      item description: Use this to place your Earthbind Totem
+      effect:
+        ==: PotionEffect
+        effect: 2
+        duration: 25
+        amplifier: 2
+        ambient: true
+        has-particles: true
+        has-icon: true
+      totem type: *id001
+      custom name: Earthbind Totem
+      description: Places a totem on the ground that drastically slows any enemies
+        that come near it
+    EffectTotem_44068310:
+      cooldown: 20
+      duration: 12
+      radius: 10
+      totem is destroyable: true
+      placing player is immune: false
+      affects only placing player: true
+      totem item type: bedrock
+      totem name: Earthen Shield Totem
+      item description: Use this to place your Earthen Shield Totem
+      effect:
+        ==: PotionEffect
+        effect: 11
+        duration: 25
+        amplifier: 0
+        ambient: true
+        has-particles: false
+        has-icon: true
+      totem type: *id001
+      custom name: Earthen Shield Totem
+      description: Places a totem on the ground that provides the shaman with damage
+        resistance
+Commando:
+  name: Commando
+  description: The commando is a master of heavy weaponry. His sentries can provide
+    either cover fire or heavy damage.
+  icon: crossbow
+  enabled: true
+  abilities:
+    Sentry:
+      cooldown: 45
+      duration: 15
+      attack radius: 10
+      attack damage: 1
+      seconds between attacks: 1
+      totem is destroyable: true
+      incendiary projectiles: false
+      projectiles explode: false
+      totem item type: skeleton_skull
+      totem name: Rapid Fire Sentry
+      item description: Use this to place your Rapid Fire Sentry
+      totem type: &id002
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType
+        name: SENTRY
+      attack type:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType
+        name: ARROW
+      custom name: Rapid Fire Sentry
+      description: A stationary sentry that fires arrows at nearby enemies at a high
+        rate of speed
+    Sentry_55323522:
+      cooldown: 45
+      duration: 15
+      attack radius: 20
+      attack damage: 8
+      seconds between attacks: 4
+      totem is destroyable: true
+      incendiary projectiles: true
+      projectiles explode: true
+      totem item type: dragon_head
+      totem name: Artillery Sentry
+      item description: Use this to place your Artillery Sentry
+      totem type: *id002
+      attack type:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemAttackType
+        name: WITHER_SKULL
+      custom name: Artillery Sentry
+      description: A stationary sentry that fires slow, exploding, incendiary projectiles
+        at a low rate of speed
+Barbarian:
+  name: Barbarian
+  description: You are a reckless fighter with a wooden sword. As you kill things,
+    your sword will absorb spirit power. For every player you kill, the sword upgrades
+    to the next better type!
+  icon: wooden_sword
+  abilities:
+    UpgradeableItem:
+      base item:
+        ==: org.bukkit.inventory.ItemStack
+        v: 2586
+        type: WOODEN_SWORD
+      needed to upgrade: 1
+      add more amount: 1
+      custom name: Bloody Bane
+      description: Bloody Bane upgrades to the next best type whenever you kill a
+        player!
+viking:
+  name: Viking
+  description: Vikings love axes. When dual wielding axes of any kind, the Viking
+    gets a bonus to his attack speed. Vikings also find more axes in chests.
+  icon: wooden_axe
+  enabled: true
+  abilities:
+    DualWield:
+      bonus when using swords: false
+      bonus when using axes: true
+      dual wield bonus:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.DualWieldBonusType
+        name: ATTACK_SPEED_BONUS
+      attack speed bonus: 0.25
+      move speed bonus duration: 8
+      custom name: Odin's Grace
+      description: The Viking attacks faster when dual wielding axes
+    AddToChestLootTable:
+      chance: 0.3
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        v: 2586
+        type: WOODEN_AXE
+      custom name: WoodenAxes+
+      description: Find more wooden axes
+    AddToChestLootTable_83748610:
+      chance: 0.2
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        v: 2586
+        type: STONE_AXE
+      custom name: StoneAxes+
+      description: Find more stone axes
+    AddToChestLootTable_44036732:
+      chance: 0.1
+      item:
+        ==: org.bukkit.inventory.ItemStack
+        v: 2586
+        type: GOLDEN_AXE
+      custom name: GoldenAxes+
+      description: Occasionally find golden axes in chests
+ninja:
+  name: Ninja
+  description: The Ninja gains a movement speed bonus any time he engages in combat
+    while dual wielding swords. He also has a permanent night vision effect.
+  icon: golden_sword
+  enabled: true
+  abilities:
+    AddPotionEffect:
+      potion effect:
+        ==: PotionEffect
+        effect: 16
+        duration: 2147483647
+        amplifier: 0
+        ambient: true
+        has-particles: true
+        has-icon: false
+      toggleable: false
+      ability item type: potion
+      item name: Toggle Item
+      item description: Use this to do what it does
+      custom name: Night Vision
+      description: Ninjas have permanent night vision
+    DualWield:
+      bonus when using swords: true
+      bonus when using axes: false
+      dual wield bonus:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.DualWieldBonusType
+        name: MOVEMENT_SPEED_BONUS
+      attack speed bonus: 0.25
+      move speed bonus duration: 8
+      custom name: Hanzo's Legacy
+      description: When dual wielding swords, the ninja receives a temporary movement
+        speed boost when he attacks an enemy.
+turtle:
+  name: Turtle
+  description: Nobody's more defensive than the Turtle. His helmet provides additional
+    defense and his shield becomes more protective the more he gets hit!
+  icon: turtle_helmet
+  equipment: "rO0ABXcEAAAAC3NyABpvcmcuYnVra2l0LnV0aWwuaW8uV3JhcHBlcvJQR+zxEm8FAgABTAADbWFw\r\
+    \ndAAPTGphdmEvdXRpbC9NYXA7eHBzcgA1Y29tLmdvb2dsZS5jb21tb24uY29sbGVjdC5JbW11dGFi\r\
+    \nbGVNYXAkU2VyaWFsaXplZEZvcm0AAAAAAAAAAAIAAlsABGtleXN0ABNbTGphdmEvbGFuZy9PYmpl\r\
+    \nY3Q7WwAGdmFsdWVzcQB+AAR4cHVyABNbTGphdmEubGFuZy5PYmplY3Q7kM5YnxBzKWwCAAB4cAAA\r\
+    \nAAR0AAI9PXQAAXZ0AAR0eXBldAAEbWV0YXVxAH4ABgAAAAR0AB5vcmcuYnVra2l0LmludmVudG9y\r\
+    \neS5JdGVtU3RhY2tzcgARamF2YS5sYW5nLkludGVnZXIS4qCk94GHOAIAAUkABXZhbHVleHIAEGph\r\
+    \ndmEubGFuZy5OdW1iZXKGrJUdC5TgiwIAAHhwAAAKGnQADVRVUlRMRV9IRUxNRVRzcQB+AABzcQB+\r\
+    \nAAN1cQB+AAYAAAAEcQB+AAh0AAltZXRhLXR5cGV0AAhlbmNoYW50c3QAC3JlcGFpci1jb3N0dXEA\r\
+    \nfgAGAAAABHQACEl0ZW1NZXRhdAAKVU5TUEVDSUZJQ3NxAH4AA3VxAH4ABgAAAAJ0AA1CSU5ESU5H\r\
+    \nX0NVUlNFdAAVUFJPVEVDVElPTl9QUk9KRUNUSUxFdXEAfgAGAAAAAnNxAH4ADgAAAAFzcQB+AA4A\r\
+    \nAAAEc3EAfgAOAAAAA3NxAH4AAHNxAH4AA3VxAH4ABgAAAANxAH4ACHEAfgAJcQB+AAp1cQB+AAYA\r\
+    \nAAADcQB+AA1zcQB+AA4AAAoadAADQUlSc3EAfgAAc3EAfgADdXEAfgAGAAAAA3EAfgAIcQB+AAlx\r\
+    \nAH4ACnVxAH4ABgAAAANxAH4ADXNxAH4ADgAAChpxAH4AKHNxAH4AAHNxAH4AA3VxAH4ABgAAAANx\r\
+    \nAH4ACHEAfgAJcQB+AAp1cQB+AAYAAAADcQB+AA1zcQB+AA4AAAoacQB+AChzcQB+AABzcQB+AAN1\r\
+    \ncQB+AAYAAAADcQB+AAhxAH4ACXEAfgAKdXEAfgAGAAAAA3EAfgANc3EAfgAOAAAKGnEAfgAoc3EA\r\
+    \nfgAAc3EAfgADdXEAfgAGAAAAA3EAfgAIcQB+AAlxAH4ACnVxAH4ABgAAAANxAH4ADXNxAH4ADgAA\r\
+    \nChpxAH4AKHNxAH4AAHNxAH4AA3VxAH4ABgAAAANxAH4ACHEAfgAJcQB+AAp1cQB+AAYAAAADcQB+\r\
+    \nAA1zcQB+AA4AAAoacQB+AChzcQB+AABzcQB+AAN1cQB+AAYAAAADcQB+AAhxAH4ACXEAfgAKdXEA\r\
+    \nfgAGAAAAA3EAfgANc3EAfgAOAAAKGnEAfgAocHBw\r\n"
+  enabled: true
+  abilities:
+    UpgradeableItem:
+      base item:
+        ==: org.bukkit.inventory.ItemStack
+        v: 2586
+        type: SHIELD
+        meta:
+          ==: ItemMeta
+          meta-type: TILE_ENTITY
+          display-name: '{"text":"Turtle Shell"}'
+          blockMaterial: SHIELD
+      trigger:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger
+        name: TAKE_MELEE_HIT
+      upgrade type:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.UpgradeType
+        name: ENCHANT_ITEM
+      enchantment:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.EnchantWrapper
+        name: PROTECTION
+      needed to upgrade: 15
+      add more amount: 1
+      custom name: Turtle Shield
+      description: The Turtle Shield has a chance of upgrading its protection every
+        time you take melee damage
+bombtastic:
+  name: Bombtastic
+  description: Bombtastic can place (not so) little bombs and detonate them from far,
+    far away!
+  icon: tnt
+  enabled: true
+  abilities:
+    RemoteActivation:
+      totem type:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType
+        name: BASIC
+      remote ability:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.RemoteAbility
+        name: EXPLODE
+      is destroyable: true
+      totem item type: tnt
+      item description: Use this to place your remote charge
+      cooldown: 8
+      explosion power: 3
+      custom name: Remote Detonator
+      description: Place and detonate an explosive device that is 75% as powerful
+        as TNT
+      sound:
+        ==: me.cheracc.battlegameshungerroyale.types.SoundEffect
+        volume: 1.0
+        sound: block_comparator_click
+        pitch: 1.2
+endermage:
+  name: Endermage
+  description: The Endermage can place an indestructable beacon to which he can teleport
+    back to at any time. In trouble? Zip on back to your safe spot!
+  icon: ender_eye
+  abilities:
+    RemoteActivation:
+      totem type:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.TotemType
+        name: INVISIBLE
+      remote ability:
+        ==: me.cheracc.battlegameshungerroyale.types.abilities.enums.RemoteAbility
+        name: TELEPORT_SELF
+      is destroyable: false
+      totem item type: ender_eye
+      item description: Use this to teleport back to your beacon, or place it if you
+        haven't.
+      cooldown: 1
+      explosion power: 3
+      custom name: Enderporter
+      description: Once placed, the Endermage can teleport instantly back to his ender
+        beacon at any time
+      sound:
+        ==: me.cheracc.battlegameshungerroyale.types.SoundEffect
+        volume: 1.0
+        sound: entity_enderman_teleport
+        pitch: 0.9
+madman:
+  name: Madman
+  description: The Madman infects everybody he hits with a weakness effect.
+  icon: fermented_spider_eye
+  abilities:
+    AddEffectOnHit:
+      melee only: true
+      projectile only: false
+      effect:
+        ==: PotionEffect
+        effect: 18
+        duration: 40
+        amplifier: 0
+        ambient: false
+        has-particles: true
+        has-icon: true
+      chance: 0.2
+      custom name: Inflict Madness
+      description: Your very presence strikes fear, your touch strikes madness...
