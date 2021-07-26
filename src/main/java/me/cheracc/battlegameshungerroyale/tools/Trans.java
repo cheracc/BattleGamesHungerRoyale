@@ -49,9 +49,10 @@ public class Trans {
                 config.load(file);
 
             for (String className : translatables.keySet()) {
-
-                ConfigurationSection classSection = config.createSection(className, translatables.get(className));
-
+                Map<String, Map<String, String>> classMap = translatables.get(className);
+                for (String methodName : classMap.keySet()) {
+                    config.createSection(methodName, classMap.get(methodName));
+                }
             }
             config.save(file);
         } catch (IOException | InvalidConfigurationException e) {
