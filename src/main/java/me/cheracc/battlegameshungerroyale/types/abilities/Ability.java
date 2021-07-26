@@ -30,13 +30,15 @@ import java.util.Map;
 import java.util.UUID;
 
 public abstract class Ability implements Cloneable {
-    private ConfigurationSection section;
-    private UUID id;
-    private Kit forKit = null;
-    protected String description = "";
-    protected String customName = null;
-    protected SoundEffect sound = null;
-    protected BGHR plugin = null;
+    // static fields and methods
+    private static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_item");
+    protected String               description = "";
+    protected String               customName  = null;
+    protected SoundEffect          sound       = null;
+    protected BGHR                 plugin      = null;
+    private   ConfigurationSection section;
+    private   UUID                 id;
+    private   Kit                  forKit      = null;
 
     public Ability() {
         this.section = null;
@@ -57,6 +59,43 @@ public abstract class Ability implements Cloneable {
         }
     }
 
+    private String fieldNameToConfigOption(String string) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < string.length(); i++) {
+            Character c = string.charAt(i);
+            if (Character.isUpperCase(c)) {
+                sb.append(" ");
+                sb.append(Character.toLowerCase(c));
+            } else
+                sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    public static Ability getFromItem(ItemStack item) {
+        if (!isAbilityItem(item))
+            return null;
+        String id = item.getItemMeta().getPersistentDataContainer().get(ABILITY_KEY, PersistentDataType.STRING);
+        for (Ability a : KitManager.getInstance().getAllAbilitiesInUse()) {
+            if (a.getId().toString().equals(id))
+                return a;
+        }
+        Logr.warn("couldn't find ability with id %s", id);
+        return null;
+    }
+
+    public static boolean isAbilityItem(ItemStack item) {
+        if (item == null || item.getItemMeta() == null)
+            return false;
+        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
+        return !pdc.isEmpty() && pdc.has(ABILITY_KEY, PersistentDataType.STRING);
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
     public void initialize(BGHR plugin) {
         this.plugin = plugin;
     }
@@ -64,6 +103,29 @@ public abstract class Ability implements Cloneable {
     public boolean hasMyAbility(Player player) {
         PlayerData data = PlayerManager.getInstance().getPlayerData(player);
         return data.getKit() != null && data.getKit().equals(getAssignedKit());
+    }
+
+    public Kit getAssignedKit() {
+        return forKit;
+    }
+
+    public void setAssignedKit(Kit kit) {
+        if (this instanceof Listener) {
+            Bukkit.getPluginManager().registerEvents((Listener) this, plugin);
+        }
+        forKit = kit;
+    }
+
+    public Ability newWithDefaults() {
+        try {
+            Ability ability = (Ability) this.clone();
+            ability.generateConfigSection();
+            ability.newId();
+            return ability;
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public void generateConfigSection() {
@@ -79,6 +141,29 @@ public abstract class Ability implements Cloneable {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    public void newId() {
+        id = UUID.randomUUID();
+    }
+
+    public SoundEffect getSound() {
+        return sound;
+    }
+
+    public void setSound(SoundEffect sound) {
+        this.sound = sound;
+        getConfig().set("sound", sound);
+    }
+
+    public ConfigurationSection getConfig() {
+        return section;
+    }
+
+    // writes an option to the stored config
+    public void setOption(String configOption, Object value) {
+        getConfig().set(configOption, value);
+        loadFromConfig(getConfig());
     }
 
     public void loadFromConfig(ConfigurationSection section) {
@@ -112,56 +197,21 @@ public abstract class Ability implements Cloneable {
         }
     }
 
-    public Ability newWithDefaults() {
-        try {
-            Ability ability = (Ability) this.clone();
-            ability.generateConfigSection();
-            ability.newId();
-            return ability;
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void newId() {
-        id = UUID.randomUUID();
-    }
-
-    public SoundEffect getSound() {
-        return sound;
-    }
-
-    public void setSound(SoundEffect sound) {
-        this.sound = sound;
-        getConfig().set("sound", sound);
-    }
-
-    // writes an option to the stored config
-    public void setOption(String configOption, Object value) {
-        getConfig().set(configOption, value);
-        loadFromConfig(getConfig());
-    }
-
     // gets the custom name or the default name
     public String getName() {
         return getClass().getSimpleName();
+    }
+
+    // sets a custom name and saves the default class name
+    public void setName(String name) {
+        customName = name;
+        getConfig().set("custom name", customName);
     }
 
     public String getCustomName() {
         if (customName == null)
             return getName();
         return customName;
-    }
-
-    // sets a custom name and saves the default class name
-    public void setName(String name) {
-            customName = name;
-            getConfig().set("custom name", customName);
     }
 
     public String getDescription() {
@@ -172,17 +222,6 @@ public abstract class Ability implements Cloneable {
     public void setDescription(String text) {
         description = text;
         getConfig().set("description", description);
-    }
-
-    public Kit getAssignedKit() {
-        return forKit;
-    }
-
-    public void setAssignedKit(Kit kit) {
-        if (this instanceof Listener) {
-            Bukkit.getPluginManager().registerEvents((Listener) this, plugin);
-        }
-        forKit = kit;
     }
 
     public boolean isActive() {
@@ -218,25 +257,6 @@ public abstract class Ability implements Cloneable {
         return abilityItem;
     }
 
-    public ConfigurationSection getConfig() {
-        return section;
-    }
-
-    private String fieldNameToConfigOption(String string) {
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < string.length(); i++) {
-            Character c = string.charAt(i);
-            if (Character.isUpperCase(c)) {
-                sb.append(" ");
-                sb.append(Character.toLowerCase(c));
-            }
-            else
-                sb.append(c);
-        }
-        return sb.toString();
-    }
-
     public void tagAbilityItem(ItemStack item) {
         if (item == null || item.getItemMeta() == null)
             return;
@@ -244,28 +264,4 @@ public abstract class Ability implements Cloneable {
         meta.getPersistentDataContainer().set(ABILITY_KEY, PersistentDataType.STRING, id.toString());
         item.setItemMeta(meta);
     }
-
-    // static fields and methods
-    private static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_item");
-
-    public static Ability getFromItem(ItemStack item) {
-        if (!isAbilityItem(item))
-            return null;
-        String id = item.getItemMeta().getPersistentDataContainer().get(ABILITY_KEY, PersistentDataType.STRING);
-        for (Ability a : KitManager.getInstance().getAllAbilitiesInUse()) {
-            if (a.getId().toString().equals(id))
-                return a;
-        }
-        Logr.warn("couldn't find ability with id " + id);
-        return null;
-    }
-
-    public static boolean isAbilityItem(ItemStack item) {
-        if (item == null || item.getItemMeta() == null)
-            return false;
-        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
-        return !pdc.isEmpty() && pdc.has(ABILITY_KEY, PersistentDataType.STRING);
-    }
-
-
 }

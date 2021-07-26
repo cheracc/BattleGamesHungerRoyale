@@ -26,11 +26,11 @@ import java.util.function.Consumer;
 
 public class GameManager {
     private static GameManager singletonInstance = null;
-    private final List<Game> activeGames = new ArrayList<>();
-    private final Scoreboard mainScoreboard;
-    private final BukkitTask scoreboardUpdater;
-    private final BGHR plugin;
-    private final MapDecider mapDecider;
+    private final  List<Game>  activeGames       = new ArrayList<>();
+    private final  Scoreboard  mainScoreboard;
+    private final  BukkitTask  scoreboardUpdater;
+    private final  BGHR        plugin;
+    private final  MapDecider  mapDecider;
 
     private GameManager(BGHR plugin) {
         this.plugin = plugin;
@@ -41,6 +41,79 @@ public class GameManager {
         setupScoreboardTeams();
         scoreboardUpdater = scoreboardUpdater();
         Game.createNewGame(mapDecider.selectNextMap(), plugin);
+    }
+
+    private void setupScoreboard() {
+        Objective mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Trans.lateToComponent("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Trans.lateToComponent("Test"))));
+        mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
+        mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
+        mainObj.getScore("  " + ChatColor.MAGIC).setScore(13);
+    }
+
+    public void setupScoreboardTeams() {
+        for (int i = 12; i >= 0; i--) {
+            String entry = ChatColor.values()[i] + "" + ChatColor.values()[i + 1];
+            Team lineText = mainScoreboard.registerNewTeam(String.format("line%s", i));
+            lineText.addEntry(entry);
+            mainScoreboard.getObjective("mainSb").getScore(entry).setScore(i);
+        }
+    }
+
+    private BukkitTask scoreboardUpdater() {
+        BukkitRunnable updater = new BukkitRunnable() {
+            @Override
+            public void run() {
+                updateScoreboard();
+            }
+        };
+        return updater.runTaskTimer(plugin, 100L, 20L);
+    }
+
+    public void updateScoreboard() {
+        int lineNumber = 12;
+        for (Game game : GameManager.getInstance().getActiveGames()) {
+            if (lineNumber < 0)
+                break;
+            mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Tools.componentalize(
+                    String.format(" &a%s &3[&b%s&3]", game.getMap().getMapName(), StringUtils.capitalize(game.getPhase()))));
+            lineNumber--;
+            String line2;
+            int totalGameTime = game.getOptions().getInvincibilityTime() + game.getOptions().getMainPhaseTime() + game.getOptions().getBorderTime();
+            switch (game.getPhase()) {
+                case "Pregame":
+                    int needed = game.getOptions().getPlayersNeededToStart() - game.getStartingPlayersSize();
+                    if (needed > 0)
+                        line2 = String.format("&7    (Need &f%s &7more to start!&7)", needed);
+                    else
+                        line2 = String.format("&7    Starting in &f%s", Tools.secondsToAbbreviatedMinsSecs((int) game.getPregameTime()));
+                    break;
+                case "Invincibility":
+                case "Main":
+                case "Border":
+                    line2 = String.format("    &3[&f%s/%s&3] &7(&f%s left&7)", game.getActivePlayers().size(), game.getStartingPlayersSize(),
+                                          Tools.secondsToAbbreviatedMinsSecs(totalGameTime - game.getCurrentGameTime()));
+                    break;
+                case "Postgame":
+                    line2 = String.format("    &fWinner: &e%s&f! &7[&fCloses in %s&7]", game.getWinner() != null ? game.getWinner().getName() : "&7nobody",
+                                          Tools.secondsToAbbreviatedMinsSecs((int) game.getPostgameTime()));
+                    break;
+                default:
+                    line2 = "";
+            }
+            mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Tools.componentalize(line2));
+            lineNumber--;
+        }
+        if (lineNumber > 3)
+            for (; lineNumber > 0; lineNumber--) {
+                mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Component.space());
+            }
+        mainScoreboard.getTeam("line2").prefix(Trans.lateToComponent(" &e/games &7to join or watch a game").hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Trans.lateToComponent("/games"))));
+        mainScoreboard.getTeam("line1").prefix(Trans.lateToComponent(" &e/settings &7to turn this off"));
+    }
+
+    public List<Game> getActiveGames() {
+        return new ArrayList<>(activeGames);
     }
 
     public static GameManager getInstance() {
@@ -62,14 +135,6 @@ public class GameManager {
             return Bukkit.getScoreboardManager().getMainScoreboard();
     }
 
-    public List<Game> getActiveGames() {
-        return new ArrayList<>(activeGames);
-    }
-
-    public boolean isInAGame(Player player) {
-        return MapManager.getInstance().isThisAGameWorld(player.getWorld());
-    }
-
     public BGHR getPlugin() {
         return plugin;
     }
@@ -80,6 +145,10 @@ public class GameManager {
             return game.isPlaying(player) && !game.getPhase().toLowerCase().contains("game");
         }
         return false;
+    }
+
+    public boolean isInAGame(Player player) {
+        return MapManager.getInstance().isThisAGameWorld(player.getWorld());
     }
 
     public @Nullable Game getPlayersCurrentGame(Player player) {
@@ -133,7 +202,7 @@ public class GameManager {
                 Logr.info("Creating new directory for game config files...");
 
         if (configDir.listFiles().length == 0) {
-            String[] defaultConfigNames = { "crystal_avalanche.yml", "horizon_city.yml", "island_tower.yml", "king_of_the_ring.yml" };
+            String[] defaultConfigNames = {"crystal_avalanche.yml", "horizon_city.yml", "island_tower.yml", "king_of_the_ring.yml"};
 
             boolean sent = false;
             for (String filename : defaultConfigNames) {
@@ -150,7 +219,6 @@ public class GameManager {
                     Logr.warn("couldn't create file " + defaultConfig.getAbsolutePath());
                 }
             }
-
         }
 
         for (File file : configDir.listFiles()) {
@@ -163,82 +231,23 @@ public class GameManager {
         return configs;
     }
 
-    private void setupScoreboard() {
-        Objective mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Trans.lateToComponent("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Trans.lateToComponent("Test"))));
-        mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
-        mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
-        mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
-        mainObj.getScore("  " + ChatColor.MAGIC).setScore(13);
-
-    }
-
-    public void updateScoreboard() {
-        int lineNumber = 12;
-        for (Game game : GameManager.getInstance().getActiveGames()) {
-            if (lineNumber < 0)
-                break;
-            mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Tools.componentalize(
-                    String.format(" &a%s &3[&b%s&3]", game.getMap().getMapName(), StringUtils.capitalize(game.getPhase()))));
-            lineNumber--;
-            String line2;
-            int totalGameTime = game.getOptions().getInvincibilityTime() + game.getOptions().getMainPhaseTime() + game.getOptions().getBorderTime();
-            switch (game.getPhase()) {
-                case "Pregame":
-                    int needed = game.getOptions().getPlayersNeededToStart() - game.getStartingPlayersSize();
-                    if (needed > 0)
-                        line2 = String.format("&7    (Need &f%s &7more to start!&7)", needed);
-                    else
-                        line2 = String.format("&7    Starting in &f%s", Tools.secondsToAbbreviatedMinsSecs((int) game.getPregameTime()));
-                    break;
-                case "Invincibility":
-                case "Main":
-                case "Border":
-                    line2 = String.format("    &3[&f%s/%s&3] &7(&f%s left&7)", game.getActivePlayers().size(), game.getStartingPlayersSize(),
-                        Tools.secondsToAbbreviatedMinsSecs(totalGameTime - game.getCurrentGameTime()));
-                    break;
-                case "Postgame":
-                    line2 = String.format("    &fWinner: &e%s&f! &7[&fCloses in %s&7]", game.getWinner() != null ? game.getWinner().getName() : "&7nobody",
-                            Tools.secondsToAbbreviatedMinsSecs((int) game.getPostgameTime()));
-                    break;
-                default:
-                    line2 = "";
-            }
-            mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Tools.componentalize(line2));
-            lineNumber--;
-        }
-        if (lineNumber > 3)
-            for (; lineNumber > 0; lineNumber--) {
-                mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Component.space());
-            }
-        mainScoreboard.getTeam("line2").prefix(Trans.lateToComponent(" &e/games &7to join or watch a game").hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Trans.lateToComponent("/games"))));
-        mainScoreboard.getTeam("line1").prefix(Trans.lateToComponent(" &e/settings &7to turn this off"));
-    }
-
-    public void setupScoreboardTeams() {
-        for (int i = 12; i >= 0; i--) {
-            String entry = ChatColor.values()[i] + "" + ChatColor.values()[i+1];
-            Team lineText = mainScoreboard.registerNewTeam(String.format("line%s", i));
-            lineText.addEntry(entry);
-            mainScoreboard.getObjective("mainSb").getScore(entry).setScore(i);
-        }
-    }
-
-    private BukkitTask scoreboardUpdater() {
-        BukkitRunnable updater = new BukkitRunnable() {
-            @Override
-            public void run() {
-                updateScoreboard();
-            }
-        };
-        return updater.runTaskTimer(plugin, 100L, 20L);
-    }
-
     private class MapDecider {
         private final Map<UUID, String> outstandingVotes = new HashMap<>();
-        private String lastMap = null;
+        private       String            lastMap          = null;
+        private final BukkitTask        voteCleaner;
 
         public MapDecider() {
-            voteCleaner();
+            this.voteCleaner = voteCleaner();
+        }
+
+        private BukkitTask voteCleaner() {
+            BukkitRunnable task = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    outstandingVotes.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
+                }
+            };
+            return task.runTaskTimer(plugin, 200L, 200L);
         }
 
         public int getVotes(String mapName) {
@@ -247,18 +256,10 @@ public class GameManager {
 
         public void addVote(Player player, String mapName) {
             if (outstandingVotes.containsKey(player.getUniqueId()))
-                player.sendMessage(Trans.lateToComponent("Your vote has been changed to " + mapName));
+                player.sendMessage(Trans.lateToComponent("Your vote has been changed to %s", mapName));
             else
-                player.sendMessage(Trans.lateToComponent("Your vote has been cast for " + mapName));
+                player.sendMessage(Trans.lateToComponent("Your vote has been cast for %s", mapName));
             outstandingVotes.put(player.getUniqueId(), mapName);
-        }
-
-        public void setLastMap(String mapName) {
-            this.lastMap = mapName;
-        }
-
-        public String getLastMap() {
-            return lastMap;
         }
 
         public GameOptions selectNextMap() {
@@ -304,14 +305,12 @@ public class GameManager {
             return configs.get(index);
         }
 
-        private BukkitTask voteCleaner() {
-            BukkitRunnable task = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    outstandingVotes.keySet().removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
-                }
-            };
-            return task.runTaskTimer(plugin, 200L, 200L);
+        public String getLastMap() {
+            return lastMap;
+        }
+
+        public void setLastMap(String mapName) {
+            this.lastMap = mapName;
         }
     }
 }
