@@ -44,6 +44,9 @@ public class Trans {
         String callingClass = getCaller()[0];
         String callingMethod = getCaller()[1];
 
+        if (callingMethod.contains("$"))
+            callingMethod = callingMethod.split("\\$")[1];
+
         if (config.contains(callingClass + "." + callingMethod + "." + stringAsKey))
             return config.getString(callingClass + "." + callingMethod + "." + stringAsKey);
         else {
