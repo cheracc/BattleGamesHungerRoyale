@@ -81,10 +81,12 @@ public class Trans {
 
         for (int i = 1; i < elements.length; i++) {
             StackTraceElement e = elements[i];
+            Logr.info(e.toString());
             if (!e.getClassName().equals(Trans.class.getName()) && e.getClassName().indexOf("java.lang.Thread") != 0) {
                 if (callerName == null) {
                     callerName = e.getClassName();
                 } else if (!callerName.equals(e.getClassName())){
+                    Logr.info("Returning " + e.getClassName());
                     return e.getClassName();
                 }
             }
@@ -93,6 +95,6 @@ public class Trans {
     }
 
     private static String getCallingMethodName() {
-        return Thread.currentThread().getStackTrace()[1].getMethodName();
+        return Thread.currentThread().getStackTrace()[2].getMethodName();
     }
 }
