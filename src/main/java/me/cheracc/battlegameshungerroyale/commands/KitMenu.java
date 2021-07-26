@@ -1,9 +1,8 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
 import me.cheracc.battlegameshungerroyale.guis.SelectKitGui;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -19,7 +18,7 @@ public class KitMenu implements CommandExecutor {
             PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
             if (GameManager.getInstance().isActivelyPlayingAGame(p) && !p.isOp()) {
-                p.sendMessage(Tools.componentalize("You cannot change your kit while playing a game"));
+                p.sendMessage(Trans.lateToComponent("You cannot change your kit while playing a game"));
                 return true;
             }
 

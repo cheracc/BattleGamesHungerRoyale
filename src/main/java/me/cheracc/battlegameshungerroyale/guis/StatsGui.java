@@ -1,5 +1,4 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.builder.item.SkullBuilder;
 import dev.triumphteam.gui.components.GuiType;
@@ -7,6 +6,7 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.PlayerStats;
 import org.bukkit.Bukkit;
@@ -38,7 +38,7 @@ public class StatsGui extends Gui {
     }
 
     private GuiItem playHistoryIcon() {
-        SkullBuilder icon = ItemBuilder.skull().owner(Bukkit.getOfflinePlayer(data.getUuid())).name(Tools.componentalize("&ePlayer History"));
+        SkullBuilder icon = ItemBuilder.skull().owner(Bukkit.getOfflinePlayer(data.getUuid())).name(Trans.lateToComponent("&ePlayer History"));
         List<String> lore = new ArrayList<>();
 
         lore.add("&fGames Played&7: " + stats.getPlayed());
@@ -52,7 +52,7 @@ public class StatsGui extends Gui {
     }
 
     private GuiItem playerStatsIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.NETHERITE_CHESTPLATE).name(Tools.componentalize("&ePlayer Statistics"));
+        ItemBuilder icon = ItemBuilder.from(Material.NETHERITE_CHESTPLATE).name(Trans.lateToComponent("&ePlayer Statistics"));
         icon.flags(ItemFlag.HIDE_ATTRIBUTES);
         List<String> lore = new ArrayList<>();
 
@@ -67,7 +67,7 @@ public class StatsGui extends Gui {
     }
 
     private GuiItem otherStatsIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.GOLDEN_BOOTS).name(Tools.componentalize("&eOther Stats"));
+        ItemBuilder icon = ItemBuilder.from(Material.GOLDEN_BOOTS).name(Trans.lateToComponent("&eOther Stats"));
         icon.flags(ItemFlag.HIDE_ATTRIBUTES);
         List<String> lore = new ArrayList<>();
 

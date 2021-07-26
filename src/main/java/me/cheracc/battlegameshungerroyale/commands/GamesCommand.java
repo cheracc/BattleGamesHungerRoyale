@@ -1,8 +1,7 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
 import me.cheracc.battlegameshungerroyale.guis.SelectGameGui;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -16,7 +15,7 @@ public class GamesCommand implements CommandExecutor {
             Player p = (Player) sender;
 
             if (!p.getWorld().equals(MapManager.getInstance().getLobbyWorld())) {
-                p.sendMessage(Tools.componentalize("You must be in the main world to join a game. Type /quit to return to the main world."));
+                p.sendMessage(Trans.lateToComponent("You must be in the main world to join a game. Type /quit to return to the main world."));
                 return true;
             }
 

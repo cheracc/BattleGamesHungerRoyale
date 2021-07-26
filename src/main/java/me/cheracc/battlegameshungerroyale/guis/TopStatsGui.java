@@ -1,5 +1,4 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,6 +12,7 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.DatabaseManager;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -71,7 +71,7 @@ public class TopStatsGui extends Gui {
 
     private GuiItem categoryIcon(TopTenCategory statistic) {
         SkullBuilder icon = ItemBuilder.skull().texture(statistic.getTopTexture());
-        icon.name(Tools.componentalize("&bTop 10: &f&l" + statistic.getPrettyName()));
+        icon.name(Trans.lateToComponent("&bTop 10: &f&l%s", statistic.getPrettyName()));
         List<String> lore = new ArrayList<>(statistic.getOutput());
         lore.add(0, "&8========================");
         icon.lore(Tools.componentalize(lore));

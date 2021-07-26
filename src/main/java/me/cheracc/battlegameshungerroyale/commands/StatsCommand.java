@@ -1,8 +1,7 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
 import me.cheracc.battlegameshungerroyale.guis.StatsGui;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -22,7 +21,7 @@ public class StatsCommand implements CommandExecutor {
                 OfflinePlayer op = Bukkit.getOfflinePlayerIfCached(args[0]);
 
                 if (op == null) {
-                    p.sendMessage(Tools.componentalize("Couldn't find player: " + args[0]));
+                    p.sendMessage(Trans.lateToComponent("Couldn't find player: %s", args[0]));
                     return true;
                 }
                 PlayerManager.getInstance().getPlayerDataCallbackIfAsync(op.getUniqueId(), data -> new StatsGui(p, data));

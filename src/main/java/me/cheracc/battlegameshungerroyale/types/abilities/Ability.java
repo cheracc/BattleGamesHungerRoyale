@@ -4,6 +4,7 @@ import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
@@ -206,7 +207,7 @@ public abstract class Ability implements Cloneable {
         lore.addAll(Tools.componentalize(Tools.wrapText(description, ChatColor.GRAY)));
         lore.add(Component.text(""));
         if (cooldown > 0)
-            lore.add(Tools.componentalize("&7Cooldown: &f" + Tools.secondsToMinutesAndSeconds(cooldown)));
+            lore.add(Trans.lateToComponent("&7Cooldown: &f%s", Tools.secondsToMinutesAndSeconds(cooldown)));
 
         meta.lore(lore);
         abilityItem.setItemMeta(meta);

@@ -5,6 +5,7 @@ import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
@@ -173,7 +174,7 @@ public class GeneralListeners implements Listener {
         Player p = event.getPlayer();
 
         // change the join message to read "server" instead of "game"
-        event.joinMessage(Tools.componentalize("&e" + event.getPlayer().getName() + " has joined the server"));
+        event.joinMessage(Trans.lateToComponent("&e%s has joined the server", event.getPlayer().getName()));
 
         // clear the player's inventory (we will reload it from what was saved)
         p.getInventory().clear();

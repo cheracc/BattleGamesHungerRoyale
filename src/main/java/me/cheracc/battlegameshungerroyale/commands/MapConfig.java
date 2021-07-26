@@ -1,10 +1,10 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
-import me.cheracc.battlegameshungerroyale.types.MapData;
 import me.cheracc.battlegameshungerroyale.guis.ConfigureMapGui;
 import me.cheracc.battlegameshungerroyale.guis.SelectMapGui;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
@@ -28,19 +28,19 @@ public class MapConfig implements CommandExecutor {
                 if (args[0].equalsIgnoreCase("bordercenter")) {
                     map = MapManager.getInstance().getMapFromWorld(p.getWorld());
                     map.setBorderCenter(p.getLocation());
-                    p.sendMessage(Tools.componentalize("Border center set to your location"));
+                    p.sendMessage(Trans.lateToComponent("Border center set to your location"));
                 }
                 if (args[0].equalsIgnoreCase("spawncenter")) {
                     map = MapManager.getInstance().getMapFromWorld(p.getWorld());
                     map.setSpawnCenter(p.getLocation());
-                    p.sendMessage(Tools.componentalize("Spawn center set to your location"));
+                    p.sendMessage(Trans.lateToComponent("Spawn center set to your location"));
                 }
                 if (args[0].equalsIgnoreCase("spawn")) {
                     map = MapManager.getInstance().getMapFromWorld(p.getWorld());
                     Block b = p.getLocation().getBlock().getRelative(BlockFace.DOWN);
                     b.getType();
                     map.setSpawnBlockType(b.getType());
-                    p.sendMessage(Tools.componentalize("Set spawn block to " + b.getType().name().toLowerCase()));
+                    p.sendMessage(Trans.lateToComponent("Set spawn block to %s", b.getType().name().toLowerCase()));
                 }
                 if (args[0].equalsIgnoreCase("list")) {
                     new SelectMapGui(p, null, mapData -> new ConfigureMapGui(p, null, mapData));

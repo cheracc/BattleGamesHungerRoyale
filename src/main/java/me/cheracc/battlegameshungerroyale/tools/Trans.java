@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.tools;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
+import net.kyori.adventure.text.Component;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -35,6 +35,14 @@ public class Trans {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static String late(String string, Object... args) {
+        return String.format(late(string), args);
+    }
+
+    public static Component lateToComponent(String string, Object... args) {
+        return Tools.componentalize(late(string, args));
     }
 
     public static String late(String string) {

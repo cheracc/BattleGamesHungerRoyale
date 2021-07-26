@@ -47,7 +47,7 @@ public class AdminGui extends Gui {
     }
 
     private GuiItem kitsIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.STONE_SWORD).name(Tools.componentalize("&eManage Kits"));
+        ItemBuilder icon = ItemBuilder.from(Material.STONE_SWORD).name(Trans.lateToComponent("&eManage Kits"));
         icon.flags(ItemFlag.HIDE_ATTRIBUTES);
         icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("&7  Create or modify kits and their abilities"), ChatColor.GRAY)));
 
@@ -58,7 +58,7 @@ public class AdminGui extends Gui {
     }
 
     private GuiItem mapsIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.FILLED_MAP).name(Tools.componentalize(Trans.late("&eManage Maps")));
+        ItemBuilder icon = ItemBuilder.from(Material.FILLED_MAP).name(Trans.lateToComponent("&eManage Maps"));
         icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("&7  View and modify the configuration for the available game maps, or load a map for editing (like placing chests or fixing spots where players get stuck)"), ChatColor.GRAY)));
 
         return icon.asGuiItem(e -> {
@@ -78,7 +78,7 @@ public class AdminGui extends Gui {
     }
 
     private GuiItem mainConfigIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.componentalize(Trans.late("&eManage Plugin")));
+        ItemBuilder icon = ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Trans.lateToComponent("&eManage Plugin"));
         icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("&7  General Settings that effect how the plugin is loaded and what it does."), ChatColor.GRAY)));
 
         return icon.asGuiItem(e -> {
@@ -88,7 +88,7 @@ public class AdminGui extends Gui {
     }
 
     private GuiItem exitIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.BARRIER).name(Tools.componentalize(Trans.late("Close Menu")));
+        ItemBuilder icon = ItemBuilder.from(Material.BARRIER).name(Trans.lateToComponent("Close Menu"));
 
         return icon.asGuiItem(e -> e.getWhoClicked().closeInventory());
     }
@@ -101,7 +101,7 @@ public class AdminGui extends Gui {
 
         icons.add(slot -> {
             boolean value = config.getBoolean("use mysql instead of h2", false);
-            ItemBuilder icon = ItemBuilder.from(Material.NETHER_STAR).name(Tools.componentalize(Trans.late("&eUse Database: &f") +
+            ItemBuilder icon = ItemBuilder.from(Material.NETHER_STAR).name(Trans.lateToComponent("&eUse Database: &f%s",
                     (value ? "MySQL" : "Disk (H2)")));
             List<String> lore = new ArrayList<>(Tools.wrapText(Trans.late("  &7Which database to use for plugin and player data."), ChatColor.GRAY));
             lore.add("");
@@ -128,7 +128,7 @@ public class AdminGui extends Gui {
         icons.add(slot -> {
             String current = Bukkit.getDefaultGameMode().name().toLowerCase();
             GameMode value = GameMode.valueOf(config.getString("main world.gamemode", current).toUpperCase());
-            ItemBuilder icon = ItemBuilder.from(Material.WOODEN_PICKAXE).name(Tools.componentalize(Trans.late("&eDefault Game Mode: &f") +
+            ItemBuilder icon = ItemBuilder.from(Material.WOODEN_PICKAXE).name(Trans.lateToComponent("&eDefault Game Mode: &f%s",
                     value.name().toLowerCase()));
             icon.flags(ItemFlag.HIDE_ATTRIBUTES);
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Sets the default game mode for players in the main world. If using a waiting lobby and you do not want players to build in it, choose 'adventure'"), ChatColor.GRAY)));
@@ -148,7 +148,7 @@ public class AdminGui extends Gui {
         });
         icons.add(slot -> {
             boolean value = config.getBoolean("main world.place players at spawn on join", false);
-            ItemBuilder icon = ItemBuilder.from(Material.BEACON).name(Tools.componentalize(Trans.late("&eAlways Spawn Players at Main Spawn: &f") +
+            ItemBuilder icon = ItemBuilder.from(Material.BEACON).name(Trans.lateToComponent("&eAlways Spawn Players at Main Spawn: &f%s",
                     (value ? Trans.late("no") : Trans.late("yes"))));
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether players will always be sent to the spawn location when joining the server or teleporting back to the main world. If disabled, players will instead return to their last recorded location in the main world."), ChatColor.GRAY)));
 
@@ -160,7 +160,7 @@ public class AdminGui extends Gui {
         });
         icons.add(slot -> {
             boolean value = config.getBoolean("main world.kits useable in main world", false);
-            ItemBuilder icon = ItemBuilder.from(Material.STONE_SWORD).name(Tools.componentalize(Trans.late("&eAllow Kits to be used in main world: &f") +
+            ItemBuilder icon = ItemBuilder.from(Material.STONE_SWORD).name(Trans.lateToComponent("&eAllow Kits to be used in main world: &f%s",
                     (value ? Trans.late("yes") : Trans.late("no"))));
             icon.flags(ItemFlag.HIDE_ATTRIBUTES);
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether kits and kit abilities may be used in the main world. If disabled, players can still select a kit to use, but the kit will not be equipped on them until they join a game."), ChatColor.GRAY)));
@@ -183,7 +183,7 @@ public class AdminGui extends Gui {
         });
         icons.add(slot -> {
             boolean current = config.getBoolean("auto-update", true);
-            ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize(Trans.late("&eAuto-Update Plugin: &f") +
+            ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Trans.lateToComponent("&eAuto-Update Plugin: &f%s",
                     (current ? Trans.late("yes") : Trans.late("no"))));
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Turns the plugin auto-updater on or off. Plugin updates are installed when the server restarts."), ChatColor.GRAY)));
 
@@ -195,7 +195,7 @@ public class AdminGui extends Gui {
         });
         icons.add(slot -> {
             boolean current = config.getBoolean("show main scoreboard", true);
-            ItemBuilder icon = ItemBuilder.from(Material.PAINTING).name(Tools.componentalize(Trans.late("&eShow Main Scoreboard: &f") +
+            ItemBuilder icon = ItemBuilder.from(Material.PAINTING).name(Trans.lateToComponent("&eShow Main Scoreboard: &f%s",
                     (current ? Trans.late("yes") : Trans.late("no"))));
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Disable if you use another scoreboard plugin. If enabled, players can still disable it individually with /settings"), ChatColor.GRAY)));
 
@@ -232,7 +232,7 @@ public class AdminGui extends Gui {
                 lore.add(0, Component.text(""));
                 lore.add(Tools.BLANK_LINE);
                 if (!kit.getAbilities().isEmpty()) {
-                    lore.add(Tools.componentalize(Trans.late("&eKit Abilities:")));
+                    lore.add(Trans.lateToComponent("&eKit Abilities:"));
                     for (Ability a : kit.getAbilities()) {
                         String color = (a instanceof ActiveAbility) ? "&a" : "&6";
                         String abilityString = String.format("%s%s &f- &7%s", color, a.getCustomName() != null ? a.getCustomName() : a.getName(),
@@ -243,11 +243,11 @@ public class AdminGui extends Gui {
                 lore.addAll(kit.getEquipment().getDescription());
 
                 lore.add(Tools.BLANK_LINE);
-                lore.add(Tools.componentalize(Trans.late("&bClick here to modify this kit")));
+                lore.add(Trans.lateToComponent("&bClick here to modify this kit"));
                 if (kit.isEnabled())
-                    lore.add(Tools.componentalize(Trans.late("&cShift+Click to disable this kit")));
+                    lore.add(Trans.lateToComponent("&cShift+Click to disable this kit"));
                 else
-                    lore.add(Tools.componentalize(Trans.late("&aShift+Click to enable this kit")));
+                    lore.add(Trans.lateToComponent("&aShift+Click to enable this kit"));
                 icon.lore(lore);
                 return icon.asGuiItem(e -> {
                     if (!e.isShiftClick()) {
@@ -262,8 +262,8 @@ public class AdminGui extends Gui {
             });
         }
         icons.add(slot -> {
-            ItemBuilder icon = ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize(Trans.late("Create a New Kit")));
-            icon.lore(Tools.componentalize(Trans.late("&bClick here to create a new kit")));
+            ItemBuilder icon = ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Trans.lateToComponent("Create a New Kit"));
+            icon.lore(Trans.lateToComponent("&bClick here to create a new kit"));
             return icon.asGuiItem(e -> {
                 e.getWhoClicked().closeInventory();
                 e.getWhoClicked().sendMessage(Tools.formatInstructions(Trans.late("Enter a kit id for this kit. This id is just used by the plugin as an identifier and cannot be changed later. You can call it anything you want."), ""));
@@ -318,7 +318,7 @@ public class AdminGui extends Gui {
 
         for (GameOptions game : GameManager.getInstance().getAllConfigs())
             icons.add(slot -> {
-                ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize(Trans.late("&eGame: &f") + game.getConfigFile().getName().split("\\.")[0]));
+                ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Trans.lateToComponent("&eGame: &f%s", game.getConfigFile().getName().split("\\.")[0]));
                 List<String> lore = new ArrayList<>();
                 lore.add(Trans.late("&fMap: &7") + game.getMap().getMapName());
                 lore.add(Trans.late("&fPlayers needed to start: &7") + game.getPlayersNeededToStart());

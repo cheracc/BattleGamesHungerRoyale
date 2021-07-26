@@ -4,6 +4,7 @@ import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
@@ -130,7 +131,7 @@ public class Kit {
         PlayerData data = PlayerManager.getInstance().getPlayerData(p);
         Kit kit = data.getKit();
         if (!this.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Tools.componentalize("That kit is disabled"));
+            p.sendMessage(Trans.lateToComponent("That kit is disabled"));
             return;
         }
 
@@ -154,7 +155,7 @@ public class Kit {
         if (equipment.isNotEmpty()) {
             equipment.equip(p);
         }
-        p.sendMessage(Tools.componentalize("You have been equipped with kit &e" + getName()));
+        p.sendMessage(Trans.lateToComponent("You have been equipped with kit &e" + getName()));
     }
 
     public Material getIcon() {

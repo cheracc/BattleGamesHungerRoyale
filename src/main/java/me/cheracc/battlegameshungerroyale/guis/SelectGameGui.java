@@ -1,11 +1,11 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -33,7 +33,7 @@ public class SelectGameGui extends Gui {
     }
 
     private GuiItem gameIcon(HumanEntity viewer, Game game) {
-        ItemBuilder item = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize("&eMap: &f" + game.getMap().getMapName()));
+        ItemBuilder item = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Trans.lateToComponent("&eMap: &f%s", game.getMap().getMapName()));
         List<String> lore = new ArrayList<>();
         boolean hasPermission = viewer.hasPermission("bghr.admin.games");
 
@@ -57,7 +57,7 @@ public class SelectGameGui extends Gui {
         return item.asGuiItem(e -> {
             Player p = (Player) e.getWhoClicked();
             if (game.isPlaying(p) || game.isSpectating(p)) {
-                p.sendMessage(Tools.componentalize("You are already in that game"));
+                p.sendMessage(Trans.lateToComponent("You are already in that game"));
                 return;
             }
             Game current = GameManager.getInstance().getPlayersCurrentGame(p);

@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.managers;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import net.kyori.adventure.text.Component;
@@ -164,7 +164,7 @@ public class GameManager {
     }
 
     private void setupScoreboard() {
-        Objective mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Tools.componentalize("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Tools.componentalize("Test"))));
+        Objective mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Trans.lateToComponent("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Trans.lateToComponent("Test"))));
         mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
         mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
         mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
@@ -210,8 +210,8 @@ public class GameManager {
             for (; lineNumber > 0; lineNumber--) {
                 mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Component.space());
             }
-        mainScoreboard.getTeam("line2").prefix(Tools.componentalize(" &e/games &7to join or watch a game").hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Tools.componentalize("/games"))));
-        mainScoreboard.getTeam("line1").prefix(Tools.componentalize(" &e/settings &7to turn this off"));
+        mainScoreboard.getTeam("line2").prefix(Trans.lateToComponent(" &e/games &7to join or watch a game").hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Trans.lateToComponent("/games"))));
+        mainScoreboard.getTeam("line1").prefix(Trans.lateToComponent(" &e/settings &7to turn this off"));
     }
 
     public void setupScoreboardTeams() {
@@ -247,9 +247,9 @@ public class GameManager {
 
         public void addVote(Player player, String mapName) {
             if (outstandingVotes.containsKey(player.getUniqueId()))
-                player.sendMessage(Tools.componentalize("Your vote has been changed to " + mapName));
+                player.sendMessage(Trans.lateToComponent("Your vote has been changed to " + mapName));
             else
-                player.sendMessage(Tools.componentalize("Your vote has been cast for " + mapName));
+                player.sendMessage(Trans.lateToComponent("Your vote has been cast for " + mapName));
             outstandingVotes.put(player.getUniqueId(), mapName);
         }
 

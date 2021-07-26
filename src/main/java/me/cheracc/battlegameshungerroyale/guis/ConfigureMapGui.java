@@ -105,8 +105,8 @@ public class ConfigureMapGui extends Gui {
     }
 
     public GuiItem iconIcon() {
-        ItemBuilder icon = ItemBuilder.from(map.getIcon()).name(Tools.componentalize(Trans.late("&eMap Icon")));
-        icon.lore(Tools.componentalize(Trans.late("&bClick to change the icon for this map")));
+        ItemBuilder icon = ItemBuilder.from(map.getIcon()).name(Trans.lateToComponent("&eMap Icon"));
+        icon.lore(Trans.lateToComponent("&bClick to change the icon for this map"));
 
         return icon.asGuiItem(e -> {
            e.getWhoClicked().closeInventory();
@@ -119,7 +119,7 @@ public class ConfigureMapGui extends Gui {
     }
 
     public GuiItem borderIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.GLASS).name(Tools.componentalize(Trans.late("&eBorder: &f") + (map.isUseBorder() ? Trans.late("on") : Trans.late("off"))));
+        ItemBuilder icon = ItemBuilder.from(Material.GLASS).name(Trans.lateToComponent("&eBorder: &f%s", (map.isUseBorder() ? Trans.late("on") : Trans.late("off"))));
         List<String> lore = new ArrayList<>();
         boolean editable = false;
 
@@ -167,7 +167,7 @@ public class ConfigureMapGui extends Gui {
     }
 
     public GuiItem centerIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.CONDUIT).name(Tools.componentalize(Trans.late("&eBorder Center")));
+        ItemBuilder icon = ItemBuilder.from(Material.CONDUIT).name(Trans.lateToComponent("&eBorder Center"));
         boolean editable = false;
         MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(this.map)) {
@@ -186,7 +186,7 @@ public class ConfigureMapGui extends Gui {
                     return;
                 }
                 map.setBorderCenter(e.getWhoClicked().getLocation());
-                e.getWhoClicked().sendMessage(Tools.componentalize(Trans.late("Center of border set to your location.")));
+                e.getWhoClicked().sendMessage(Trans.lateToComponent("Center of border set to your location."));
             }
         });
     }
@@ -198,7 +198,7 @@ public class ConfigureMapGui extends Gui {
             type = map.getSpawnBlockType();
         if (type == null || type.isAir() || !type.isItem())
             type = Material.DIRT;
-        ItemBuilder icon = ItemBuilder.from(type).name(Tools.componentalize(Trans.late("&eSpawn Point Block")));
+        ItemBuilder icon = ItemBuilder.from(type).name(Trans.lateToComponent("&eSpawn Point Block"));
         MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(map)) {
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("Games will look for this block type to spawn players on. Click to open a gui and select a new block type. You can also stand on a spawn point and type /mapconfig spawn"), ChatColor.GRAY)));
@@ -221,7 +221,7 @@ public class ConfigureMapGui extends Gui {
     }
 
     public GuiItem spawnRadiusIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.ENDER_EYE).name(Tools.componentalize(Trans.late("&eSpawn Radius: &f") + map.getSpawnRadius()));
+        ItemBuilder icon = ItemBuilder.from(Material.ENDER_EYE).name(Trans.lateToComponent("&eSpawn Radius: &f%s", map.getSpawnRadius()));
         boolean editable = false;
         MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(map)) {
@@ -249,7 +249,7 @@ public class ConfigureMapGui extends Gui {
     }
 
     public GuiItem spawnCenterIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Tools.componentalize(Trans.late("&eSpawn Center")));
+        ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Trans.lateToComponent("&eSpawn Center"));
         boolean editable = false;
         MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(map)) {
@@ -268,7 +268,7 @@ public class ConfigureMapGui extends Gui {
                     return;
                 }
                 map.setSpawnCenter(e.getWhoClicked().getLocation());
-                e.getWhoClicked().sendMessage(Tools.componentalize(Trans.late("Center of spawn set to your location.")));
+                e.getWhoClicked().sendMessage(Trans.lateToComponent("Center of spawn set to your location."));
             }
         });
     }
@@ -285,8 +285,8 @@ public class ConfigureMapGui extends Gui {
     }
 
     public GuiItem saveQuitIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("Save this Map Configuration")));
-        icon.lore(Tools.componentalize(Trans.late("&bRight click to close without saving")));
+        ItemBuilder icon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("Save this Map Configuration"));
+        icon.lore(Trans.lateToComponent("&bRight click to close without saving"));
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();

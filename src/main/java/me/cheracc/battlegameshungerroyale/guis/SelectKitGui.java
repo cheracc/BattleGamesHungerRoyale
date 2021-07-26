@@ -1,5 +1,4 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.components.ScrollType;
@@ -8,6 +7,7 @@ import dev.triumphteam.gui.guis.GuiItem;
 import dev.triumphteam.gui.guis.ScrollingGui;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -52,7 +52,7 @@ public class SelectKitGui extends ScrollingGui {
         lore.add(0, Component.text(""));
         lore.add(Tools.BLANK_LINE);
         if (!kit.getAbilities().isEmpty()) {
-            lore.add(Tools.componentalize("&eKit Abilities:"));
+            lore.add(Trans.lateToComponent("&eKit Abilities:"));
             for (Ability a : kit.getAbilities()) {
                 String color = (a instanceof ActiveAbility) ? "&a" : (a instanceof PassiveAbility) ? "&6" : "&b";
                 String abilityString = String.format("%s%s &f- &7%s", color, a.getCustomName() != null ? a.getCustomName() : a.getName(),

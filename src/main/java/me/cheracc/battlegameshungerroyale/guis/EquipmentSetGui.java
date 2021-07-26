@@ -1,12 +1,12 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.types.EquipmentSet;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.EquipmentSet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
@@ -44,7 +44,7 @@ public class EquipmentSetGui extends Gui {
         setOutsideClickAction(e -> sendingGui.open(e.getWhoClicked()));
         fillArmorSlots();
         fillOtherSlots();
-        setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("Save this Equipment")).asGuiItem(e -> {
+        setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("Save this Equipment")).asGuiItem(e -> {
             Tools.saveObjectToPlayer("equipment", this.set, (Player) e.getWhoClicked());
             e.getWhoClicked().closeInventory();
             callback.accept(this.set);
@@ -62,7 +62,7 @@ public class EquipmentSetGui extends Gui {
 
         for (ItemStack item : set.getOtherItems()) {
             if (item == null || item.getType() == Material.AIR) {
-                Component name = Tools.componentalize("Empty Hotbar Item Slot");
+                Component name = Trans.lateToComponent("Empty Hotbar Item Slot");
                 List<Component> lore = Tools.componentalize(Tools.wrapText(emptyInstructions, ChatColor.AQUA));
                 lore.addAll(Tools.componentalize(Tools.wrapText(hotbarWarning, ChatColor.GOLD)));
                 lore.add(0, Tools.BLANK_LINE);
@@ -95,7 +95,7 @@ public class EquipmentSetGui extends Gui {
 
         for (int i = 0; i < SLOTS.length; i++) {
             if (set.getArmor().get(SLOTS[i]) == null || set.getArmor().get(SLOTS[i]).getType().isAir()) {
-                Component name = Tools.componentalize("&eEmpty Armor Slot");
+                Component name = Trans.lateToComponent("&eEmpty Armor Slot");
                 List<Component> lore = Tools.componentalize(Tools.wrapText(String.format(instructions, slotArmorNames[i]), ChatColor.AQUA));
 
                 if (SLOTS[i] == EquipmentSlot.OFF_HAND) {

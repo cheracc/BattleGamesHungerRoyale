@@ -229,7 +229,7 @@ public class Game implements Listener {
             player.setInvulnerable(true);
 
         if (PlayerManager.getInstance().getPlayerData(player).getKit() == null) {
-            player.sendMessage(Tools.componentalize(Trans.late("&fYou haven't selected a kit! Type &e/kit &for let the gods of randomness have their say!")));
+            player.sendMessage(Trans.lateToComponent("&fYou haven't selected a kit! Type &e/kit &for let the gods of randomness have their say!"));
         } else {
             PlayerManager.getInstance().getPlayerData(player).getKit().outfitPlayer(player);
         }
@@ -815,7 +815,7 @@ public class Game implements Listener {
 
                 participants.replace(dead.getUniqueId(), livesLeft);
                 if (livesLeft > 0)
-                    dead.sendMessage(Tools.componentalize("&cYou died! &fYou may respawn &e" + livesLeft + " &fmore time" + ((livesLeft > 1) ? "s" : "") + ". &eYou will be &aautomatically respawned &ein &a5 &eseconds."));
+                    dead.sendMessage(Trans.lateToComponent("&cYou died! &fYou may respawn &e%s &fmore time%s. You will be &eautomatically respawned &e in &a5 &eseconds.", livesLeft, livesLeft > 1 ? "s" : ""));
                 else
                     dead.sendMessage(Tools.componentalize("&cYou died! &fYou have no respawns left."));
             }

@@ -1,5 +1,4 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
@@ -8,6 +7,7 @@ import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
@@ -43,8 +43,8 @@ public class SettingsGui extends Gui {
     }
 
     private GuiItem mainScoreboardIcon(int slot) {
-        ItemBuilder item = ItemBuilder.from(Material.PAINTING).name(Tools.componentalize("&eMain Scoreboard: &f" + (settings.isShowMainScoreboard() ? "&aON" : "&cOFF")));
-        item.lore(Tools.componentalize("&bClick to toggle"));
+        ItemBuilder item = ItemBuilder.from(Material.PAINTING).name(Trans.lateToComponent("&eMain Scoreboard: &f%s", (settings.isShowMainScoreboard() ? "&aON" : "&cOFF")));
+        item.lore(Trans.lateToComponent("&bClick to toggle"));
         return item.asGuiItem(e -> {
             Player p = (Player) e.getWhoClicked();
             settings.toggleMainScoreboard();
@@ -59,8 +59,8 @@ public class SettingsGui extends Gui {
     }
 
     private GuiItem gameScoreboardIcon(int slot) {
-        ItemBuilder item = ItemBuilder.from(Material.ITEM_FRAME).name(Tools.componentalize("&eIn-Game Scoreboard: &f" + (settings.isShowGameScoreboard() ? "&aON" : "&cOFF")));
-        item.lore(Tools.componentalize("&bClick to toggle"));
+        ItemBuilder item = ItemBuilder.from(Material.ITEM_FRAME).name(Trans.lateToComponent("&eIn-Game Scoreboard: &f%s", settings.isShowGameScoreboard() ? "&aON" : "&cOFF"));
+        item.lore(Trans.lateToComponent("&bClick to toggle"));
         return item.asGuiItem(e -> {
             Player p = (Player) e.getWhoClicked();
             settings.toggleGameScoreboard();
@@ -76,8 +76,8 @@ public class SettingsGui extends Gui {
     }
 
     private GuiItem showHelpIcon(int slot) {
-        ItemBuilder item = ItemBuilder.from(Material.PLAYER_HEAD).name(Tools.componentalize("&eShow Hint/Help Messages: &f" + (settings.isShowHelp() ? "&aON" : "&cOFF")));
-        item.lore(Tools.componentalize("&bClick to toggle"));
+        ItemBuilder item = ItemBuilder.from(Material.PLAYER_HEAD).name(Trans.lateToComponent("&eShow Hint/Help Messages: &f%s", settings.isShowHelp() ? "&aON" : "&cOFF"));
+        item.lore(Trans.lateToComponent("&bClick to toggle"));
         return item.asGuiItem(e -> {
             settings.setShowHelp(!settings.isShowHelp());
             updateItem(slot, showHelpIcon(slot));
@@ -92,7 +92,7 @@ public class SettingsGui extends Gui {
                 kitName = kit.getName();
         }
 
-        ItemBuilder item = ItemBuilder.from(Material.GOLDEN_SWORD).name(Tools.componentalize("&eFavorite Kit: &f" + kitName));
+        ItemBuilder item = ItemBuilder.from(Material.GOLDEN_SWORD).name(Trans.lateToComponent("&eFavorite Kit: &f%s", kitName));
         item.lore(Tools.componentalize(Tools.wrapText("&bThis is the default kit you will use when joining a game unless you have already selected a different kit. You can change your kit from the kit menu.", ChatColor.AQUA)));
         item.flags(ItemFlag.HIDE_ATTRIBUTES);
         return item.asGuiItem(e -> {
@@ -108,7 +108,7 @@ public class SettingsGui extends Gui {
     }
 
     private GuiItem saveIcon() {
-        ItemBuilder item = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave Settings"));
+        ItemBuilder item = ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("&eSave Settings"));
         return item.asGuiItem(e -> {
             PlayerManager.getInstance().getPlayerData((Player) e.getWhoClicked()).setModified(true);
             e.getWhoClicked().closeInventory();

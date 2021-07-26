@@ -43,8 +43,8 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem soundItem() {
-        return ItemBuilder.from(Material.MUSIC_DISC_CAT).name(Tools.componentalize(Trans.late("Sound: ") + soundEffect.getSound().name().toLowerCase()))
-            .lore(Tools.BLANK_LINE, Tools.componentalize(Trans.late("&bClick to change"))).asGuiItem(e -> {
+        return ItemBuilder.from(Material.MUSIC_DISC_CAT).name(Trans.lateToComponent("Sound: %s", soundEffect.getSound().name().toLowerCase()))
+            .lore(Tools.BLANK_LINE, Trans.lateToComponent("&bClick to change")).asGuiItem(e -> {
                 e.getWhoClicked().closeInventory();
 
                 new SelectSoundGui(e.getWhoClicked(), this, null, sound -> {
@@ -56,7 +56,7 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem volumeItem() {
-        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize(Trans.late("&eCurrent Volume: ") + soundEffect.getVolume())).asGuiItem(event -> {
+        return ItemBuilder.from(Material.JUKEBOX).name(Trans.lateToComponent("&eCurrent Volume: %s", soundEffect.getVolume())).asGuiItem(event -> {
             float newValue = soundEffect.getVolume() * 10;
 
             switch (event.getClick()) {
@@ -83,7 +83,7 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem pitchItem() {
-        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize(Trans.late("&eCurrent Pitch: ") + soundEffect.getPitch())).asGuiItem(event -> {
+        return ItemBuilder.from(Material.JUKEBOX).name(Trans.lateToComponent("&eCurrent Pitch: %s", soundEffect.getPitch())).asGuiItem(event -> {
             float newValue = soundEffect.getPitch() * 10;
 
             switch (event.getClick()) {
@@ -110,13 +110,13 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem playSoundItem() {
-        return ItemBuilder.from(Material.NOTE_BLOCK).name(Tools.componentalize(Trans.late("Play Sound"))).asGuiItem(e -> {
+        return ItemBuilder.from(Material.NOTE_BLOCK).name(Trans.lateToComponent("Play Sound")).asGuiItem(e -> {
             soundEffect.play((Player) e.getWhoClicked(), e.getWhoClicked().getLocation());
         });
     }
 
     private GuiItem saveItem() {
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("Save this Sound Effect"))).asGuiItem(e -> {
+        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("Save this Sound Effect")).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
             callback.accept(soundEffect);
         });

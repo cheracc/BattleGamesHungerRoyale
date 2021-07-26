@@ -1,12 +1,11 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.types.Kit;
-import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import net.kyori.adventure.text.Component;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,12 +27,12 @@ public class KitCommand implements CommandExecutor {
                     PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
                     if (data.getKit() != null && data.getKit().equals(kit)) {
-                        p.sendMessage(Component.text("You are already using kit " + kit.getName()));
+                        p.sendMessage(Trans.lateToComponent("You are already using kit ", kit.getName()));
                         return true;
                     }
 
                     if (GameManager.getInstance().isActivelyPlayingAGame(p) && !p.isOp()) {
-                        p.sendMessage(Tools.componentalize("You cannot change your kit while playing a game"));
+                        p.sendMessage(Trans.lateToComponent("You cannot change your kit while playing a game"));
                         return true;
                     }
 

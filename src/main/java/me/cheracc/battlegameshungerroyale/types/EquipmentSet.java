@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.types;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
@@ -162,7 +162,7 @@ public class EquipmentSet {
                 ItemStack current = p.getInventory().getItem(EquipmentSlot.valueOf(e.getKey().name()));
                 if (current != null) {
                     if (!p.getInventory().addItem(current).isEmpty()) {
-                        p.sendMessage(Tools.componentalize("This kit cannot be equipped because you do not have enough empty inventory slots to hold your currently equipped armor."));
+                        p.sendMessage(Trans.lateToComponent("This kit cannot be equipped because you do not have enough empty inventory slots to hold your currently equipped armor."));
                         unequip(p);
                         return false;
                     }

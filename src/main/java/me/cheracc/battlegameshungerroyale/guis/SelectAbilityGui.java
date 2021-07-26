@@ -1,11 +1,11 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang.WordUtils;
@@ -49,9 +49,9 @@ public class SelectAbilityGui extends Gui {
             lore.addAll(Tools.componentalize(Tools.wrapText(ability.getDescription(), ChatColor.GRAY)));
         }
         lore.add(Tools.BLANK_LINE);
-        lore.add(Tools.componentalize("&fAbility Type:" + ((ability.isActive()) ? " &aActive" : "") + (ability.isPassive() ? " &6Passive" : "")));
+        lore.add(Trans.lateToComponent("&fAbility Type: %s", ability.isActive() ? " &aActive" : " &6Passive"));
         lore.add(Tools.BLANK_LINE);
-        lore.add(Tools.componentalize("&fConfigurable Options/Defaults:"));
+        lore.add(Trans.lateToComponent("&fConfigurable Options/Defaults:"));
 
         for (String s : ability.getConfig().getKeys(false)) {
             Object o = ability.getConfig().get(s);
@@ -69,7 +69,7 @@ public class SelectAbilityGui extends Gui {
             lore.addAll(Tools.componentalize(Tools.wrapText(String.format("&6%s: &e%s", s, value), ChatColor.YELLOW)));
         }
         lore.add(Tools.BLANK_LINE);
-        lore.add(Tools.componentalize("&bClick here to add this ability"));
+        lore.add(Trans.lateToComponent("&bClick here to add this ability"));
 
         return ItemBuilder.from(icon).name(name).lore(lore).flags(ItemFlag.HIDE_ATTRIBUTES).asGuiItem(e -> {
             if (e.getWhoClicked() instanceof Player) {

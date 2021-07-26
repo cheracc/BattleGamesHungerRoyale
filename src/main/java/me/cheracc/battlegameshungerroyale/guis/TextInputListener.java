@@ -1,9 +1,9 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import io.papermc.paper.event.player.AsyncChatEvent;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -84,7 +84,7 @@ public class TextInputListener implements Listener {
 
     private void sendMissedChatMessages(Player p) {
         if (missedMessages.containsKey(p.getUniqueId())) {
-            p.sendMessage(Tools.componentalize("These came in while you were typing:"));
+            p.sendMessage(Trans.lateToComponent("These came in while you were typing:"));
             for (Component c : missedMessages.get(p.getUniqueId())) {
                 p.sendMessage(c);
             }
@@ -148,7 +148,7 @@ public class TextInputListener implements Listener {
 
                 }
                 if (hostname == null || port == null || database == null || user == null || pass == null) {
-                    p.sendMessage(Tools.componentalize("Missing one or more required values. Could not connect. Please try again."));
+                    p.sendMessage(Trans.lateToComponent("Missing one or more required values. Could not connect. Please try again."));
 
                     event.setCancelled(true);
                     return;
@@ -160,8 +160,8 @@ public class TextInputListener implements Listener {
                      ResultSet result = stmt.executeQuery())   {
                     Logr.info(result.getCursorName());
                 } catch (SQLException e) {
-                    p.sendMessage(Tools.componentalize("Could not connect. Error: &c" + e.getMessage()));
-                    p.sendMessage(Tools.componentalize("Re-open the book and try again."));
+                    p.sendMessage(Trans.lateToComponent("Could not connect. Error: &c%s", e.getMessage()));
+                    p.sendMessage(Trans.lateToComponent("Re-open the book and try again."));
                     event.setCancelled(true);
                     return;
                 }
@@ -176,7 +176,7 @@ public class TextInputListener implements Listener {
                 config.set("mysql.arguments", " ");
                 plugin.saveConfig();
 
-                p.sendMessage(Tools.componentalize("Connection Successful! You will need to restart for this change to take effect."));
+                p.sendMessage(Trans.lateToComponent("Connection Successful! You will need to restart for this change to take effect."));
                 new AdminGui(p).sendPluginAdminGui(p);
             }
         }

@@ -93,7 +93,7 @@ public class PlayerData {
         if (p == null) return;
 
         if (!kit.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Tools.componentalize(Trans.late("That kit is disabled")));
+            p.sendMessage(Trans.lateToComponent("That kit is disabled"));
             return;
         }
 

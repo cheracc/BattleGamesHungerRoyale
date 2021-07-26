@@ -45,7 +45,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem generateChestsIcon() {
-        ItemBuilder genChestsIcon = ItemBuilder.from(Material.CHEST).name(Tools.componentalize(Trans.late("&eGenerate Random Chests: &f") +
+        ItemBuilder genChestsIcon = ItemBuilder.from(Material.CHEST).name(Trans.lateToComponent("&eGenerate Random Chests: &f" +
                 (options.isGenerateChests() ? Trans.late("on") : Trans.late("off"))));
         genChestsIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether or not the plugin will search the map for locations to place loot chests. If disabled, no additional chests will be placed on the map."), ChatColor.GRAY)));
 
@@ -57,7 +57,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem fillChestsIcon() {
-        ItemBuilder fillChestsIcon = ItemBuilder.from(Material.CHEST_MINECART).name(Tools.componentalize(Trans.late("&eFill all chests: &f") +
+        ItemBuilder fillChestsIcon = ItemBuilder.from(Material.CHEST_MINECART).name(Trans.lateToComponent("&eFill all chests: &f" +
                 (options.isFillAllChests() ? Trans.late("on") : Trans.late("off"))));
         fillChestsIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether or not the plugin will fill chests with loot from the selected loot table. If disabled, the plugin will not place any loot in any chests - this is useful for maps that have pre-filled loot chests"), ChatColor.GRAY)));
 
@@ -68,7 +68,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem lenientSearchingIcon() {
-        ItemBuilder loosenSearchIcon = ItemBuilder.from(Material.GRASS_BLOCK).name(Tools.componentalize(Trans.late("&eLoosen Chest Search Restrictions: &f") +
+        ItemBuilder loosenSearchIcon = ItemBuilder.from(Material.GRASS_BLOCK).name(Trans.lateToComponent("&eLoosen Chest Search Restrictions: &f" +
                 (options.isLoosenSearchRestrictions() ? Trans.late("on") : Trans.late("off"))));
         loosenSearchIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Determines how strictly the plugin searches for loot chest locations. If enabled, chests will be more 'tucked-away' - if disabled, chests will spawn in more obvious/open areas. Enable this for small maps or maps with little to no below-surface areas. Disable this for larger maps or maps with lots of caves and structures."), ChatColor.GRAY)));
 
@@ -79,7 +79,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem densityIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.PAINTING).name(Tools.componentalize(Trans.late("&eMax Chest Spawns Per Chunk: &f") + options.getMaxChestsPerChunk()));
+        ItemBuilder icon = ItemBuilder.from(Material.PAINTING).name(Trans.lateToComponent("&eMax Chest Spawns Per Chunk: &f%s", options.getMaxChestsPerChunk()));
         icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7How many chest locations to look for in each chunk. The plugin will stop searching a chunk when it finds this many locations. This does not guarantee that this many locations will be found. Increase this for smaller maps."), ChatColor.GRAY)));
 
 
@@ -101,7 +101,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem respawnTimeIcon() {
-        GuiItem icon = ItemBuilder.from(Material.BARREL).name(Tools.componentalize(Trans.late("&eTime Between Chest Respawns: &f") + options.getChestRespawnTime())).asGuiItem();
+        GuiItem icon = ItemBuilder.from(Material.BARREL).name(Trans.lateToComponent("&eTime Between Chest Respawns: &f%s", options.getChestRespawnTime())).asGuiItem();
         icon.setAction(e -> {
             int value = options.getChestRespawnTime();
             int change = 1;
@@ -124,9 +124,9 @@ public class ConfigureLootGui extends Gui {
     private GuiItem lootTableIcon() {
         ItemBuilder lootTableIcon = ItemBuilder.from(Material.ENDER_CHEST);
         String[] split = options.getLootTable().getKey().getKey().split("/");
-        lootTableIcon.name(Tools.componentalize(Trans.late("&eLoot Table: &f") + split[split.length - 1]));
+        lootTableIcon.name(Trans.lateToComponent("&eLoot Table: &f%s", split[split.length - 1]));
 
-        lootTableIcon.lore(Tools.componentalize(Trans.late("&bClick to cycle through loot tables")), Tools.componentalize(Trans.late("&bRight click to cycle backwards")));
+        lootTableIcon.lore(Trans.lateToComponent("&bClick to cycle through loot tables"), Trans.lateToComponent("&bRight click to cycle backwards"));
         List<LootTable> allLootTables = LootManager.getLootTables();
 
         GuiAction<InventoryClickEvent> action = (e -> {
@@ -154,7 +154,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem saveIcon() {
-        GuiItem saveIcon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("&eSave Loot Settings&f"))).asGuiItem();
+        GuiItem saveIcon = ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("&eSave Loot Settings&f")).asGuiItem();
         saveIcon.setAction(e -> {
             e.getWhoClicked().closeInventory();
             if (options.getConfigFile() != null) {

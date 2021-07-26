@@ -68,14 +68,14 @@ public class ConfigureKitGui extends Gui {
     }
 
     private GuiItem nameAndDescriptionIcon() {
-        Component name = Tools.componentalize("&eKit Name: &f" + kit.getName());
+        Component name = Trans.lateToComponent("&eKit Name: &f%s", kit.getName());
         List<Component> lore = new ArrayList<>();
 
         lore.add(Component.text(Trans.late("")));
         lore.addAll(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
         lore.add(Component.text(""));
-        lore.add(Tools.componentalize(Trans.late("&bLeft Click to change the name of this kit")));
-        lore.add(Tools.componentalize(Trans.late("&bRight Click to change the description of this kit")));
+        lore.add(Trans.lateToComponent("&bLeft Click to change the name of this kit"));
+        lore.add(Trans.lateToComponent("&bRight Click to change the description of this kit"));
 
         return ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(name).lore(lore).flags(ItemFlag.HIDE_ATTRIBUTES)
             .asGuiItem(e -> {
@@ -110,7 +110,7 @@ public class ConfigureKitGui extends Gui {
         lore.add("");
         lore.add(Trans.late("&bClick here to change this kit's icon"));
 
-        return ItemBuilder.from(kit.getIcon()).name(Tools.componentalize(Trans.late("&eKit Icon")))
+        return ItemBuilder.from(kit.getIcon()).name(Trans.lateToComponent("&eKit Icon"))
             .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                 if (e.getWhoClicked() instanceof Player) {
                     Player p = (Player) e.getWhoClicked();
@@ -131,12 +131,12 @@ public class ConfigureKitGui extends Gui {
         lore.addAll(kit.getEquipment().getDescription());
 
         if (lore.size() <= 1)
-            lore.add(Tools.componentalize(Trans.late("  &7None")));
+            lore.add(Trans.lateToComponent("  &7None"));
 
         lore.add(Tools.BLANK_LINE);
-        lore.add(Tools.componentalize(Trans.late("&bClick to modify equipment")));
+        lore.add(Trans.lateToComponent("&bClick to modify equipment"));
 
-        return ItemBuilder.from(Material.ARMOR_STAND).name(Tools.componentalize(Trans.late("Kit Equipment:"))).lore(lore)
+        return ItemBuilder.from(Material.ARMOR_STAND).name(Trans.lateToComponent("Kit Equipment:")).lore(lore)
                 .asGuiItem(e -> {
                     e.getWhoClicked().closeInventory();
                     new EquipmentSetGui(e.getWhoClicked(), kit.getEquipment(), this, equipment -> {
@@ -209,7 +209,7 @@ public class ConfigureKitGui extends Gui {
         lore.add("");
         lore.add(Trans.late("&bClick here to cancel and discard all changes"));
 
-        return ItemBuilder.from(Material.BARRIER).name(Tools.componentalize(Trans.late("&eCancel and Exit")))
+        return ItemBuilder.from(Material.BARRIER).name(Trans.lateToComponent("&eCancel and Exit"))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> e.getWhoClicked().closeInventory());
     }
 
@@ -218,7 +218,7 @@ public class ConfigureKitGui extends Gui {
         lore.add("");
         lore.add(Trans.late("&bClick here to save these changes and update this kit"));
 
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("&eSave and Exit")))
+        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("&eSave and Exit"))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         KitManager kitManager = KitManager.getInstance();
@@ -226,7 +226,7 @@ public class ConfigureKitGui extends Gui {
                         p.closeInventory();
 
                         kitManager.replaceKit(kit);
-                        p.sendMessage(Tools.componentalize(Trans.late("&fYour changes to &e") + kit.getName() + Trans.late(" &fhave been saved and reloaded.")));
+                        p.sendMessage(Trans.lateToComponent("&fYour changes to &e%s &fhave been saved and reloaded.", kit.getName()));
                         if (sendingGui != null)
                             sendingGui.open(p);
                     }

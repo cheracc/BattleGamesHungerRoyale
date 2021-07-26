@@ -1,9 +1,8 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
-import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,7 +27,7 @@ public class QuitCommand implements CommandExecutor {
                 World world = p.getWorld();
                 p.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                 MapManager.getInstance().unloadWorld(world);
-                p.sendMessage(Tools.componentalize("Finished editing, world unloaded."));
+                p.sendMessage(Trans.lateToComponent("Finished editing, world unloaded."));
             }
         }
         return true;

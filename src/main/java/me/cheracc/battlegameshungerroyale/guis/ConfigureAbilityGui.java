@@ -176,7 +176,7 @@ public class ConfigureAbilityGui extends Gui {
         SoundEffect effect = ability.getSound();
 
         if (effect == null)
-            return ItemBuilder.from(Material.MUSIC_DISC_11).name(Tools.componentalize(Trans.late("&eAdd a Sound Effect"))).asGuiItem(e -> {
+            return ItemBuilder.from(Material.MUSIC_DISC_11).name(Trans.lateToComponent("&eAdd a Sound Effect")).asGuiItem(e -> {
                 e.getWhoClicked().closeInventory();
                 new ConfigureSoundGui(e.getWhoClicked(), this, new SoundEffect(), soundEffect -> {
                     ability.setSound(soundEffect);
@@ -185,8 +185,8 @@ public class ConfigureAbilityGui extends Gui {
                 });
             });
 
-        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize(Trans.late("&eCurrent Sound Effect:"))).lore(Tools.componentalize("  " + effect.getSound().name().toLowerCase()),
-            Tools.BLANK_LINE, Tools.componentalize(Trans.late("&bClick to modify")), Tools.componentalize(Trans.late("&bRight click to remove")))
+        return ItemBuilder.from(Material.JUKEBOX).name(Trans.lateToComponent("&eCurrent Sound Effect:")).lore(Tools.componentalize("  " + effect.getSound().name().toLowerCase()),
+            Tools.BLANK_LINE, Trans.lateToComponent("&bClick to modify"), Trans.lateToComponent("&bRight click to remove"))
             .asGuiItem(e -> {
                 if (e.getClick().isRightClick()) {
                     ability.setSound(null);
@@ -207,7 +207,7 @@ public class ConfigureAbilityGui extends Gui {
         lore.add("");
         lore.add(Trans.late("&bClick here to save this ability"));
 
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("&eSave and Return to Kit Configuration")))
+        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("&eSave and Return to Kit Configuration"))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
@@ -222,7 +222,7 @@ public class ConfigureAbilityGui extends Gui {
         lore.add("");
         lore.add(Trans.late("&bClick here to cancel and go back"));
 
-        return ItemBuilder.from(Material.BARRIER).name(Tools.componentalize(Trans.late("&eCancel and Go Back")))
+        return ItemBuilder.from(Material.BARRIER).name(Trans.lateToComponent("&eCancel and Go Back"))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         Player p = (Player) e.getWhoClicked();
@@ -345,7 +345,7 @@ public class ConfigureAbilityGui extends Gui {
     }
 
     private Gui inputItem(ItemStack currentItem, String configOption, int slot, Consumer<ItemStack> callback) {
-        Gui gui = Gui.gui().type(GuiType.DISPENSER).title(Tools.componentalize(Trans.late("&0Change Item"))).create();
+        Gui gui = Gui.gui().type(GuiType.DISPENSER).title(Trans.lateToComponent("&0Change Item")).create();
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();

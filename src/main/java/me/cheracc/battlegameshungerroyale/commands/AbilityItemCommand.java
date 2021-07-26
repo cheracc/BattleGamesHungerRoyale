@@ -1,9 +1,8 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.guis.ConfigureAbilityGui;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -38,11 +37,11 @@ public class AbilityItemCommand implements CommandExecutor {
                     gui.open(p);
                     p.removeMetadata("ability_config", plugin);
                 } else {
-                    p.sendMessage(Tools.componentalize("Hold the item you wish to add in your main hand, then try typing &e/abilityitem &fagain"));
+                    p.sendMessage(Trans.lateToComponent("Hold the item you wish to add in your main hand, then try typing &e/abilityitem &fagain"));
                 }
             } else {
                 Logr.info(slot + " " + gui.getClass().getSimpleName() + " " + configOption);
-                p.sendMessage(Tools.componentalize("You don't seem to be editing a kit or ability item"));
+                p.sendMessage(Trans.lateToComponent("You don't seem to be editing a kit or ability item"));
             }
             p.removeMetadata("ability_config_gui", plugin);
             p.removeMetadata("ability_config_option", plugin);
