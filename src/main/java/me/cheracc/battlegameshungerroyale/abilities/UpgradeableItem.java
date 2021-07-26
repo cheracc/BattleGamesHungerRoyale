@@ -99,7 +99,7 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
 
     private void enchantItem(ItemStack item, int level) {
         item.removeEnchantment(enchantment.getEnchantment());
-        item.addEnchantment(enchantment.getEnchantment(), level + 1);
+        item.addUnsafeEnchantment(enchantment.getEnchantment(), level + 1);
     }
 
     private void upgradeItemType(ItemStack item) {
