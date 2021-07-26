@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.managers;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.MapData;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -63,11 +63,11 @@ public class MapManager implements Listener {
     }
 
     public boolean isThisAGameWorld(World world) {
-        Set<UUID> worldIds = new HashSet<>();
-        for (Collection<UUID> ids : maps.values())
-            worldIds.addAll(ids);
-
-        return worldIds.contains(world.getUID());
+        for (Game game : GameManager.getInstance().getActiveGames()) {
+            if (game.getWorld().equals(world))
+                return true;
+        }
+        return false;
     }
 
     public Set<String> getLootTableNames() {
@@ -232,7 +232,7 @@ public class MapManager implements Listener {
             }
         }
         if (destination.mkdirs())
-            Logr.info("Making a fresh copy of " + mapSourceDirectory.getName() + "...");
+            Logr.info("Making a fresh copy of %s%s", mapSourceDirectory.getName(), "...");
 
         if (mapSourceDirectory.listFiles() == null)
             return;

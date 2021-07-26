@@ -90,7 +90,7 @@ public class KitManager {
                 loadedKits.add(kit);
             }
         }
-        Logr.info("Loaded " + loadedKits.size() + " kits and " + defaultAbilities.size() + " abilities");
+        Logr.info("Loaded %s kits and %s abilities", loadedKits.size(), defaultAbilities.size());
     }
 
     public List<Ability> getDefaultAbilities() {

@@ -124,8 +124,8 @@ public class LootManager implements Listener {
             public void run() {
                 if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0 && System.currentTimeMillis() - startTime > 1000*10)) {
                     cancel();
-                    Logr.info(String.format("Finished searching, found %s loot chest locations.",
-                            unusedChestLocations.size() + usedChestLocations.size()));
+                    Logr.info("Finished searching, found %s loot chest locations.",
+                            unusedChestLocations.size() + usedChestLocations.size());
                     return;
                 }
 
@@ -369,7 +369,7 @@ public class LootManager implements Listener {
                 names.append(t.getKey().getKey());
                 names.append(" ");
             }
-            Logr.info(String.format("Loaded custom loot tables: [%s]", names));
+            Logr.info("Loaded custom loot tables: [%s]", names);
         }
         else {
             // default loot tables

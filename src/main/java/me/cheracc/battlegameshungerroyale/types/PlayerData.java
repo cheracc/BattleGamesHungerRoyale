@@ -39,7 +39,7 @@ public class PlayerData {
         // load the stats and if new, mark as modified so they can be saved on the next update
         loadAsynchronously(foundRecords -> {
             if (foundRecords)
-                Logr.info("Finished loading playerdata for " + uuid);
+                Logr.info("Finished loading playerdata for %s", uuid);
             else {
                 Logr.info("Creating new playerdata for " + uuid);
                 lastLocation = Bukkit.getWorlds().get(0).getSpawnLocation();

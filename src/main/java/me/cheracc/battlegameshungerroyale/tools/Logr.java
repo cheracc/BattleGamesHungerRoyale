@@ -30,7 +30,15 @@ public class Logr {
         log().getLogger().info(Trans.late(message));
     }
 
+    public static void info(String message, Object... args) {
+        log().getLogger().info(String.format(Trans.late(message), args));
+    }
+
     public static void warn(String message) {
         log().getLogger().warning(Trans.late(message));
+    }
+
+    public static void warn(String message, Object args) {
+        log().getLogger().warning(String.format(Trans.late(message), args));
     }
 }
