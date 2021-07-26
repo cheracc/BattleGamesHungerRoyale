@@ -1,24 +1,21 @@
 package me.cheracc.battlegameshungerroyale.tools;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class Trans {
-    private static final Map<String, Map<String, Map<String, String>>> translatables = new HashMap<>();
+    private static FileConfiguration config;
     private static BGHR plugin;
 
     public static void load(BGHR plugin) {
         Trans.plugin = plugin;
         File file = new File(plugin.getDataFolder(), "translations.yml");
-        FileConfiguration config = new YamlConfiguration();
+        config = new YamlConfiguration();
 
         try {
             if (file.exists())
@@ -26,76 +23,33 @@ public class Trans {
         } catch (IOException | InvalidConfigurationException e) {
             e.printStackTrace();
         }
-        for (String classKey : config.getKeys(false)) {
-            ConfigurationSection classSection = config.getConfigurationSection(classKey);
-            Map<String, Map<String, String>> classMap = new HashMap<>();
-            for (String methodKey : classSection.getKeys(false)) {
-                ConfigurationSection methodSection = config.getConfigurationSection(methodKey);
-                Map<String, String> methodMap = new HashMap<>();
-                for (String stringKey : methodSection.getKeys(false))
-                    methodMap.put(stringKey, methodSection.getString(stringKey));
-                classMap.put(methodKey, methodMap);
-            }
-            translatables.put(classKey, classMap);
-        }
+
+
     }
 
     private static void saveFile() {
         File file = new File(plugin.getDataFolder(), "translations.yml");
-        FileConfiguration config = new YamlConfiguration();
 
         try {
-            if (file.exists())
-                config.load(file);
-
-            for (String className : translatables.keySet()) {
-                Map<String, Map<String, String>> classMap = translatables.get(className);
-                ConfigurationSection classSection = config.getConfigurationSection(className);
-                if (classSection == null)
-                    classSection = config.createSection(className, classMap);
-                for (String methodName : classMap.keySet()) {
-                    ConfigurationSection methodSection = classSection.getConfigurationSection(methodName);
-                    Map<String, String> methodMap = classMap.get(methodName);
-                    if (methodSection == null)
-                        methodSection = classSection.createSection(methodName, methodMap);
-                    for (String string : methodMap.keySet()) {
-                        methodSection.set(string, methodMap.get(string));
-                    }
-                }
-            }
             config.save(file);
-        } catch (IOException | InvalidConfigurationException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static String late(String string) {
+        if (string == null || string.isEmpty() || string.equals(""))
+            return string;
+        int stringAsKey = string.hashCode();
         String callingClass = getCaller()[0];
         String callingMethod = getCaller()[1];
 
-        if (translatables.containsKey(callingClass)) {
-            Map<String, Map<String, String>> classMap = translatables.get(callingClass);
-            if (classMap.containsKey(callingMethod)) {
-                Map<String, String> methodMap = classMap.get(callingMethod);
-                if (methodMap.containsKey(string))
-                    return methodMap.get(string);
-                else
-                    methodMap.put(string, string);
-            }
-            else {
-                Map<String, String> newMethodMap = new HashMap<>();
-                newMethodMap.put(string, string);
-                classMap.put(callingMethod, newMethodMap);
-                translatables.put(callingClass, classMap);
-                saveFile();
-            }
-        }
+        if (config.contains(callingClass + "." + callingMethod + "." + stringAsKey))
+            return config.getString(callingClass + "." + callingMethod + "." + stringAsKey);
         else {
-            Map<String, Map<String, String>> newClassMap = new HashMap<>();
-            newClassMap.put(callingMethod, new HashMap<>());
-            translatables.put(callingClass, newClassMap);
-            saveFile();
+            config.set(callingClass + "." + callingMethod + "." + stringAsKey, string);
         }
+        saveFile();
         return string;
     }
 
