@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.events;
 
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -22,8 +21,6 @@ public class GameDeathEvent extends Event implements GameEvent {
         this.killingBlowDamage = damage;
         this.killingBlowCause = type;
         this.game = game;
-        Logr.info(String.format("new DeathEvent: agg:%s vic:%s dam:%s type:%s", killer == null ? "null" : killer.getName(),
-                dead == null ? "null" : dead.getName(), damage, type.name()));
     }
 
     @Override
