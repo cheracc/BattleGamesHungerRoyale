@@ -4,6 +4,7 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,10 +38,12 @@ public class GameLog implements Listener {
 
     @EventHandler
     public void addJoinEntry(PlayerJoinedGameEvent event) {
+        String message = Trans.late("%s joined the game %s");
+        String asSpec = Trans.late(" as a spectator");
         if (!isMyGame(event.getGame()))
             return;
 
-        insertEntry(event.getPlayer() + " joined the game" + (event.isJoiningAsSpectator() ? " as a spectator" : ""));
+        insertEntry(String.format(message, event.getPlayer(), (event.isJoiningAsSpectator() ? asSpec : "")));
     }
 
     @EventHandler

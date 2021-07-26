@@ -9,6 +9,7 @@ import me.cheracc.battlegameshungerroyale.listeners.StatsListeners;
 import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.*;
@@ -31,6 +32,7 @@ public class BGHR extends JavaPlugin implements Listener {
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onEnable() {
+        Trans.load(this);
         Logr.initialize(this);
         @SuppressWarnings("unused")
         Metrics metrics = new Metrics(this, 12102);
