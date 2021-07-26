@@ -144,26 +144,26 @@ public class Tools {
         int i = Math.abs(timeInSeconds);
         int remainder = i % 3600, minutes = remainder / 60, seconds = remainder % 60;
         if (seconds == 0 && minutes == 0)
-            return "No time at all";
+            return Trans.late("No time at all");
         if (minutes == 0) {
             if (seconds == 1)
-                return String.format("%s second", seconds);
-            return String.format("%s seconds", seconds);
+                return String.format(Trans.late("%s second"), seconds);
+            return String.format(Trans.late("%s seconds"), seconds);
         }
         if (seconds == 0) {
             if (minutes == 1)
-                return String.format("%s minute", minutes);
-            return String.format("%s minutes", minutes);
+                return String.format(Trans.late("%s minute"), minutes);
+            return String.format(Trans.late("%s minutes"), minutes);
         }
         if (seconds == 1) {
             if (minutes == 1)
-                return String.format("%s minute, %s second", minutes, seconds);
-            return String.format("%s minutes, %s second", minutes, seconds);
+                return String.format(Trans.late("%s minute, %s second"), minutes, seconds);
+            return String.format(Trans.late("%s minutes, %s second"), minutes, seconds);
         }
         if (minutes == 1) {
-            return String.format("%s minute, %s seconds", minutes, seconds);
+            return String.format(Trans.late("%s minute, %s seconds"), minutes, seconds);
         }
-        return String.format("%s minutes, %s seconds", minutes, seconds);
+        return String.format(Trans.late("%s minutes, %s seconds"), minutes, seconds);
 
     }
 
@@ -171,14 +171,14 @@ public class Tools {
         int i = Math.abs(timeInSeconds);
         int remainder = i % 3600, minutes = remainder / 60, seconds = remainder % 60;
         if (seconds == 0 && minutes == 0)
-            return "No time at all";
+            return Trans.late("No time at all");
         if (minutes == 0) {
             if (seconds == 1)
-                return String.format("%s second", seconds);
-            return String.format("%s seconds", seconds);
+                return String.format(Trans.late("%s second"), seconds);
+            return String.format(Trans.late("%s seconds"), seconds);
         }
         else {
-            return String.format("%s:%02d", minutes, seconds);
+            return String.format(Trans.late("%s:%02d"), minutes, seconds);
         }
 
     }
@@ -202,7 +202,7 @@ public class Tools {
         TextComponent formattedInstructions = LegacyComponentSerializer.legacyAmpersand().deserialize(instructions);
         TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255,0,0));
         TextComponent instComp = formattedInstructions.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255,255,255))
-                                          .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text("Click here to copy the current text into the chat input box")));
+                                          .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text(Trans.late("Click here to copy the current text into the chat input box"))));
 
         return borderBar.append(Component.newline()).append(instComp).append(Component.newline()).append(borderBar);
 
@@ -290,7 +290,7 @@ public class Tools {
                     // Directory, recreate if not present
                     if (!destFile.exists() && !destFile.mkdirs())
                     {
-                        Bukkit.getLogger().warning("extractZipResource() can't create destination folder : " + destFile.getAbsolutePath());
+                        Logr.warn("extractZipResource() can't create destination folder : " + destFile.getAbsolutePath());
                     }
                     continue;
                 }
@@ -308,7 +308,7 @@ public class Tools {
         } catch (IOException ex)
         {
             ex.printStackTrace();
-            Bukkit.getLogger().warning("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
+            Logr.warn("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
     }
 

@@ -1,10 +1,10 @@
 package me.cheracc.battlegameshungerroyale.types;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -229,7 +229,7 @@ public class Game implements Listener {
             player.setInvulnerable(true);
 
         if (PlayerManager.getInstance().getPlayerData(player).getKit() == null) {
-            player.sendMessage(Tools.componentalize("&fYou haven't selected a kit! Type &e/kit &for let the gods of randomness have their say!"));
+            player.sendMessage(Tools.componentalize(Trans.late("&fYou haven't selected a kit! Type &e/kit &for let the gods of randomness have their say!")));
         } else {
             PlayerManager.getInstance().getPlayerData(player).getKit().outfitPlayer(player);
         }
@@ -392,7 +392,7 @@ public class Game implements Listener {
         Vector boost = new Vector(0, 1, 0);
 
         if (spawnPoints.size() < getActivePlayers().size()) {
-            Bukkit.getLogger().warning("not enough spawns");
+            Logr.warn("not enough spawns");
             getSpawnPoints(getActivePlayers().size());
         }
 
@@ -442,7 +442,7 @@ public class Game implements Listener {
         List<Location> spawns = getSpawnPoints(getActivePlayers().size());
 
         if (spawns.size() < getActivePlayers().size()) {
-            Bukkit.getLogger().warning("not enough spawns");
+            Logr.warn("not enough spawns");
             getSpawnPoints(getActivePlayers().size());
         }
 

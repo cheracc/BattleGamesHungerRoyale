@@ -52,7 +52,7 @@ public class DatabaseManager {
             try {
                 h2Server = Server.createTcpServer("-ifNotExists").start();
             } catch (SQLException e) {
-                Bukkit.getLogger().warning("could not create h2 server. is it open elsewhere?");
+                Logr.warn("could not create h2 server. is it open elsewhere?");
                 e.printStackTrace();
             }
             if (h2Server != null) {

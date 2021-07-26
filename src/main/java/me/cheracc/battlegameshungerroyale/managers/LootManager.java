@@ -389,7 +389,7 @@ public class LootManager implements Listener {
     public static LootTable getDefaultLootTable() {
         LootTable lt = Bukkit.getLootTable(new NamespacedKey(BGHR.getPlugin(), "default"));
         if (lt == null) {
-            Bukkit.getLogger().warning("Could not find default loot table");
+            Logr.warn("Could not find default loot table");
         }
         return lt;
     }

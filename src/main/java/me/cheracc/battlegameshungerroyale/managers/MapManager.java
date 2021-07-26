@@ -114,7 +114,7 @@ public class MapManager implements Listener {
                 return;
             World world = Bukkit.createWorld(new WorldCreator(activeMapsDirectory.getName() + "/" + loadedMap.getName()));
             if (world == null) {
-                Bukkit.getLogger().warning("could not load world " + activeMapsDirectory.getName());
+                Logr.warn("could not load world " + activeMapsDirectory.getName());
                 return;
             }
             world.setAutoSave(false);
@@ -166,7 +166,7 @@ public class MapManager implements Listener {
             }
         }
         else
-            Bukkit.getLogger().warning("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
+            Logr.warn("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
     }
 
     // private methods
@@ -201,7 +201,7 @@ public class MapManager implements Listener {
                         config.load(configFile);
                         saveNewConfig = false;
                     } catch (IOException | InvalidConfigurationException e) {
-                        Bukkit.getLogger().warning("could not load config file " + configFile.getAbsolutePath());
+                        Logr.warn("could not load config file " + configFile.getAbsolutePath());
                     }
                 }
                 MapData mapData = MapData.createFromConfig(config, file);
@@ -257,7 +257,7 @@ public class MapManager implements Listener {
                         File playerdataDirectory = new File(destination, "playerdata");
                         if (!playerdataDirectory.exists())
                             if (!playerdataDirectory.mkdirs())
-                                Bukkit.getLogger().warning("could not create empty playerdata directory");
+                                Logr.warn("could not create empty playerdata directory");
                     }
                     new BukkitRunnable() {
                         @Override

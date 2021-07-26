@@ -1,13 +1,12 @@
 package me.cheracc.battlegameshungerroyale.types;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -95,7 +94,7 @@ public class Kit {
 
     public void removeAbility(Ability ability) {
         if (!abilities.contains(ability)) {
-            Bukkit.getLogger().warning("Tried to remove " + ability.getName() + " from kit " + getName() + " but it isn't there");
+            Logr.warn("Tried to remove " + ability.getName() + " from kit " + getName() + " but it isn't there");
             return;
         }
         abilities.remove(ability);

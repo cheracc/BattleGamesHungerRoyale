@@ -147,7 +147,7 @@ public class GameManager {
                     FileUtils.copyToFile(in, defaultConfig);
                     in.close();
                 } catch (IOException e) {
-                    Bukkit.getLogger().warning("couldn't create file " + defaultConfig.getAbsolutePath());
+                    Logr.warn("couldn't create file " + defaultConfig.getAbsolutePath());
                 }
             }
 

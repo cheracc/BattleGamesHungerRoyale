@@ -73,7 +73,7 @@ public class PluginUpdater {
             currentBuildNumber = pluginYml.getInt("build-number", 0);
             isSnapshotBuild = pluginYml.getString("version", "").contains("SNAPSHOT");
             if (isSnapshotBuild)
-                Logr.info("[WARNING]: Using a snapshot build - expect errors or bugs! Please report them if you find them!");
+                Logr.warn("Using a snapshot build - expect errors or bugs! Please report them if you find them!");
         }
     }
 
@@ -92,12 +92,12 @@ public class PluginUpdater {
             JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
 
             if (jsonObject == null) {
-                Bukkit.getLogger().warning("could not read json string");
+                Logr.warn("could not read json string");
                 return;
             }
             JsonObject buildInfo = jsonObject.getAsJsonObject("lastStableBuild");
             if (buildInfo == null) {
-                Bukkit.getLogger().warning("json object did not contain lastStableBuild");
+                Logr.warn("json object did not contain lastStableBuild");
                 return;
             }
             if (buildInfo.has("number"))

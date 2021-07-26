@@ -1,9 +1,8 @@
 package me.cheracc.battlegameshungerroyale.types;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import org.bukkit.Bukkit;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -85,7 +84,7 @@ public class GameOptions {
 
         if (!configFile.exists()) {
             if (configFile.getParentFile().mkdirs())
-                Bukkit.getLogger().warning("creating directory: " + configFile.getAbsolutePath());
+                Logr.warn("creating directory: " + configFile.getAbsolutePath());
         }
 
         FileConfiguration config = new YamlConfiguration();

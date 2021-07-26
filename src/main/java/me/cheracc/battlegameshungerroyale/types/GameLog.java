@@ -89,7 +89,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
+            Logr.warn("couldn't save gamelog file");
         }
     }
 
@@ -101,7 +101,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
+            Logr.warn("couldn't save gamelog file");
         }
     }
 
@@ -114,7 +114,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
+            Logr.warn("couldn't save gamelog file");
         }
     }
 
@@ -122,7 +122,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
+            Logr.warn("couldn't save gamelog file");
         }
         HandlerList.unregisterAll(this);
     }
@@ -130,7 +130,7 @@ public class GameLog implements Listener {
     private void saveLogFile() throws IOException {
         if (!logFile.exists())
             if (logFile.getParentFile().mkdirs())
-                Logr.info(Trans.late("Creating directory for game log files: ") + logFile.getParentFile().getAbsolutePath());
+                Logr.info("Creating directory for game log files: " + logFile.getParentFile().getAbsolutePath());
 
         FileWriter writer = new FileWriter(logFile);
         PrintWriter printer = new PrintWriter(writer);

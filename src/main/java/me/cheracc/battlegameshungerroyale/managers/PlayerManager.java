@@ -1,8 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -58,7 +57,7 @@ public class PlayerManager {
         if (!isPlayerDataLoaded(data.getUuid()))
             loadedPlayers.add(data);
         else
-            Bukkit.getLogger().warning("data for " + data.getPlayer().getName() + " is already loaded");
+            Logr.warn("data for " + data.getPlayer().getName() + " is already loaded");
     }
 
     public static PlayerManager getInstance() {

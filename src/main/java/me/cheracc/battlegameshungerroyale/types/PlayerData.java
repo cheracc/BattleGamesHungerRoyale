@@ -1,10 +1,10 @@
 package me.cheracc.battlegameshungerroyale.types;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -93,7 +93,7 @@ public class PlayerData {
         if (p == null) return;
 
         if (!kit.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Tools.componentalize("That kit is disabled"));
+            p.sendMessage(Tools.componentalize(Trans.late("That kit is disabled")));
             return;
         }
 
@@ -219,7 +219,7 @@ public class PlayerData {
                 result.next();
 
                 if (!result.isLast()) {
-                    Bukkit.getLogger().warning("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
+                    Logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
                     return false;
                 }
                 found = true;
@@ -249,7 +249,7 @@ public class PlayerData {
                 result.next();
 
                 if (!result.isLast()) {
-                    Bukkit.getLogger().warning("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
+                    Logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
                     return false;
                 }
 
@@ -266,7 +266,7 @@ public class PlayerData {
                 result.next();
 
                 if (!result.isLast()) {
-                    Bukkit.getLogger().warning("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
+                    Logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
                     return false;
                 }
 

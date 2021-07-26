@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
@@ -103,7 +103,7 @@ public abstract class Ability implements Cloneable {
                             f.setAccessible(true);
                             f.set(this, value);
                         } catch (NoSuchFieldException | IllegalAccessException exc) {
-                            Bukkit.getLogger().warning("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + key);
+                            Logr.warn("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + key);
                         }
                     }
                 }
@@ -255,7 +255,7 @@ public abstract class Ability implements Cloneable {
             if (a.getId().toString().equals(id))
                 return a;
         }
-        Bukkit.getLogger().warning("couldn't find ability with id " + id);
+        Logr.warn("couldn't find ability with id " + id);
         return null;
     }
 
