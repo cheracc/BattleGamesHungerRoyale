@@ -83,7 +83,11 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
 
         switch (upgradeType) {
             case ENCHANT_ITEM:
-                enchantItem(item, Math.max(getUpgradeLevel(player), enchantment.getEnchantment().getMaxLevel()));
+                if (item.getEnchantments().containsKey(enchantment.getEnchantment())) {
+                    int enchantLevel = item.getEnchantmentLevel(enchantment.getEnchantment());
+                    enchantItem(item, Math.max(enchantLevel + 1, enchantment.getEnchantment().getMaxLevel()));
+                }
+                enchantItem(item, 1);
                 player.updateInventory();
                 break;
             case NEXT_BETTER_TYPE:
