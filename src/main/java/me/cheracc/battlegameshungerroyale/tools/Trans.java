@@ -53,8 +53,8 @@ public class Trans {
     }
 
     public static String late(String string) {
-        String callingClass = getCallingClassName();
-        String callingMethod = getCallingMethodName();
+        String callingClass = getCaller()[0];
+        String callingMethod = getCaller()[1];
 
         if (translatables.containsKey(callingClass)) {
             Map<String, String> classStrings = translatables.get(callingClass);
@@ -75,12 +75,15 @@ public class Trans {
         return string;
     }
 
-    private static String getCallingClassName() {
-        String[] fullClassName = Thread.currentThread().getStackTrace()[2].getClassName().split("\\.");
-        return fullClassName[fullClassName.length - 1];
-    }
+    private static String[] getCaller() {
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        int i = 1;
 
-    private static String getCallingMethodName() {
-        return Thread.currentThread().getStackTrace()[2].getMethodName();
+        for (; i < elements.length; i++) {
+            StackTraceElement e = elements[i];
+            if (!e.getClassName().equals(Trans.class.getName()))
+                break;
+        }
+        return new String[] {elements[i].getClassName(), elements[i].getMethodName()};
     }
 }
