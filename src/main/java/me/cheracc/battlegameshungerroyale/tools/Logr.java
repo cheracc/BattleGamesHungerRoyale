@@ -18,7 +18,7 @@ public class Logr {
 
     public static Logr log() {
         if (singleton == null)
-            throw new InstantiationError("this must be initialized first using Logr.initialize(plugin)");
+            throw new InstantiationError(Trans.late("this must be initialized first using Logr.initialize(plugin)"));
         return singleton;
     }
 
@@ -27,10 +27,10 @@ public class Logr {
     }
 
     public static void info(String message) {
-        log().getLogger().info(message);
+        log().getLogger().info(Trans.late(message));
     }
 
     public static void warn(String message) {
-        log().getLogger().warning(message);
+        log().getLogger().warning(Trans.late(message));
     }
 }
