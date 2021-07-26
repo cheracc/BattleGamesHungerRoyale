@@ -50,9 +50,17 @@ public class Trans {
 
             for (String className : translatables.keySet()) {
                 Map<String, Map<String, String>> classMap = translatables.get(className);
+                ConfigurationSection classSection = config.getConfigurationSection(className);
+                if (classSection == null)
+                    classSection = config.createSection(className, classMap);
                 for (String methodName : classMap.keySet()) {
+                    ConfigurationSection methodSection = classSection.getConfigurationSection(methodName);
                     Map<String, String> methodMap = classMap.get(methodName);
-                        config.createSection(className + "." + methodName, methodMap);
+                    if (methodSection == null)
+                        methodSection = classSection.createSection(methodName, methodMap);
+                    for (String string : methodMap.keySet()) {
+                        methodSection.set(string, methodMap.get(string));
+                    }
                 }
             }
             config.save(file);
