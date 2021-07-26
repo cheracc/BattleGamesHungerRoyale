@@ -574,7 +574,8 @@ public class Game implements Listener {
             respawner = null;
         }
 
-        lootManager.close();
+        if (lootManager != null)
+            lootManager.close();
         gameLog.finalizeLog();
         for (Player p : getCurrentPlayersAndSpectators())
             quit(p);
