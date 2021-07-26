@@ -1,11 +1,11 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -32,7 +32,7 @@ public class ConfigureKitGui extends Gui {
     Gui sendingGui;
 
     public ConfigureKitGui(Kit kit, @Nullable Gui sendingGui, HumanEntity player) {
-        super(1, "Configuring Kit: " + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, Trans.late("Configuring Kit: ") + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.kit = kit;
         this.sendingGui = sendingGui;
 
@@ -71,27 +71,27 @@ public class ConfigureKitGui extends Gui {
         Component name = Tools.componentalize("&eKit Name: &f" + kit.getName());
         List<Component> lore = new ArrayList<>();
 
-        lore.add(Component.text(""));
+        lore.add(Component.text(Trans.late("")));
         lore.addAll(Tools.componentalize(Tools.wrapText(kit.getDescription(), ChatColor.GRAY)));
         lore.add(Component.text(""));
-        lore.add(Tools.componentalize("&bLeft Click to change the name of this kit"));
-        lore.add(Tools.componentalize("&bRight Click to change the description of this kit"));
+        lore.add(Tools.componentalize(Trans.late("&bLeft Click to change the name of this kit")));
+        lore.add(Tools.componentalize(Trans.late("&bRight Click to change the description of this kit")));
 
         return ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(name).lore(lore).flags(ItemFlag.HIDE_ATTRIBUTES)
             .asGuiItem(e -> {
                 if (e.getWhoClicked() instanceof Player) {
                     Player p = (Player) e.getWhoClicked();
                     if (e.getClick().isLeftClick()) {
-                        p.sendMessage(Tools.formatInstructions("    Enter a new name for this kit:", kit.getName()));
+                        p.sendMessage(Tools.formatInstructions(Trans.late("    Enter a new name for this kit:"), kit.getName()));
                         TextInputListener.getInstance().getNextInputFrom(p, text -> {
                             kit.setName(text);
-                            updateTitle("Configuring Kit: " + kit.getName());
+                            updateTitle(Trans.late("Configuring Kit: ") + kit.getName());
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
                             open(p);
                         });
                     }
                     else if (e.getClick().isRightClick()) {
-                        p.sendMessage(Tools.formatInstructions("Enter a new description for this kit. If you want to edit the current description, you can click on this message to enter it into the chat box", kit.getDescription()));
+                        p.sendMessage(Tools.formatInstructions(Trans.late("Enter a new description for this kit. If you want to edit the current description, you can click on this message to enter it into the chat box"), kit.getDescription()));
                         TextInputListener.getInstance().getNextInputFrom(p, text -> {
                             kit.setDescription(text);
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
@@ -108,9 +108,9 @@ public class ConfigureKitGui extends Gui {
     private GuiItem kitIcon() {
         List<String> lore = new ArrayList<>();
         lore.add("");
-        lore.add("&bClick here to change this kit's icon");
+        lore.add(Trans.late("&bClick here to change this kit's icon"));
 
-        return ItemBuilder.from(kit.getIcon()).name(Tools.componentalize("&eKit Icon"))
+        return ItemBuilder.from(kit.getIcon()).name(Tools.componentalize(Trans.late("&eKit Icon")))
             .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                 if (e.getWhoClicked() instanceof Player) {
                     Player p = (Player) e.getWhoClicked();
@@ -131,12 +131,12 @@ public class ConfigureKitGui extends Gui {
         lore.addAll(kit.getEquipment().getDescription());
 
         if (lore.size() <= 1)
-            lore.add(Tools.componentalize("  &7None"));
+            lore.add(Tools.componentalize(Trans.late("  &7None")));
 
         lore.add(Tools.BLANK_LINE);
-        lore.add(Tools.componentalize("&bClick to modify equipment"));
+        lore.add(Tools.componentalize(Trans.late("&bClick to modify equipment")));
 
-        return ItemBuilder.from(Material.ARMOR_STAND).name(Tools.componentalize("Kit Equipment:")).lore(lore)
+        return ItemBuilder.from(Material.ARMOR_STAND).name(Tools.componentalize(Trans.late("Kit Equipment:"))).lore(lore)
                 .asGuiItem(e -> {
                     e.getWhoClicked().closeInventory();
                     new EquipmentSetGui(e.getWhoClicked(), kit.getEquipment(), this, equipment -> {
@@ -148,17 +148,17 @@ public class ConfigureKitGui extends Gui {
     }
 
     private GuiItem existingAbilityIcon(Ability ability) {
-        String iconName = "&eAbility: &f" + ability.getName();
-        String abilityType = (ability instanceof ActiveAbility) ? "&aActive" : (ability instanceof PassiveAbility) ? "&6Passive" : "&bTriggered";
+        String iconName = Trans.late("&eAbility: &f") + ability.getName();
+        String abilityType = (ability instanceof ActiveAbility) ? Trans.late("&aActive") : (ability instanceof PassiveAbility) ? Trans.late("&6Passive") : Trans.late("&bTriggered");
         Material icon = (ability instanceof ActiveAbility) ? Material.LIME_BANNER : Material.YELLOW_BANNER;
         List<String> lore = new ArrayList<>();
         if (ability.getCustomName() != null)
-            lore.add("&eCustom Name: &f" + ability.getCustomName());
-        lore.add("&eAbility Type: &f" + abilityType);
+            lore.add(Trans.late("&eCustom Name: &f") + ability.getCustomName());
+        lore.add(Trans.late("&eAbility Type: &f") + abilityType);
         lore.add("");
         lore.addAll(Tools.wrapText(ability.getDescription(), ChatColor.GRAY));
         lore.add("");
-        lore.add("Ability Options:");
+        lore.add(Trans.late("Ability Options:"));
 
         for (String s : ability.getConfig().getKeys(false)) {
             Object o = ability.getConfig().get(s);
@@ -178,8 +178,8 @@ public class ConfigureKitGui extends Gui {
         }
 
         lore.add("");
-        lore.add("&bClick to MODIFY this ability");
-        lore.add("&bShift+Click to REMOVE this ability");
+        lore.add(Trans.late("&bClick to MODIFY this ability"));
+        lore.add(Trans.late("&bShift+Click to REMOVE this ability"));
 
         return ItemBuilder.from(icon).name(Tools.componentalize(iconName)).lore(Tools.componentalize(lore)).asGuiItem(e -> {
             if (e.getWhoClicked() instanceof Player) {
@@ -207,18 +207,18 @@ public class ConfigureKitGui extends Gui {
     private GuiItem cancelIcon() {
         List<String> lore = new ArrayList<>();
         lore.add("");
-        lore.add("&bClick here to cancel and discard all changes");
+        lore.add(Trans.late("&bClick here to cancel and discard all changes"));
 
-        return ItemBuilder.from(Material.BARRIER).name(Tools.componentalize("&eCancel and Exit"))
+        return ItemBuilder.from(Material.BARRIER).name(Tools.componentalize(Trans.late("&eCancel and Exit")))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> e.getWhoClicked().closeInventory());
     }
 
     private GuiItem saveIcon() {
         List<String> lore = new ArrayList<>();
         lore.add("");
-        lore.add("&bClick here to save these changes and update this kit");
+        lore.add(Trans.late("&bClick here to save these changes and update this kit"));
 
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave and Exit"))
+        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("&eSave and Exit")))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
                         KitManager kitManager = KitManager.getInstance();
@@ -226,7 +226,7 @@ public class ConfigureKitGui extends Gui {
                         p.closeInventory();
 
                         kitManager.replaceKit(kit);
-                        p.sendMessage(Tools.componentalize("&fYour changes to &e" + kit.getName() + " &fhave been saved and reloaded."));
+                        p.sendMessage(Tools.componentalize(Trans.late("&fYour changes to &e") + kit.getName() + Trans.late(" &fhave been saved and reloaded.")));
                         if (sendingGui != null)
                             sendingGui.open(p);
                     }
@@ -234,9 +234,9 @@ public class ConfigureKitGui extends Gui {
     }
 
     private GuiItem newAbilityIcon() {
-        String instructions = "&bClick here to customize a new ability for this kit";
+        String instructions = Trans.late("&bClick here to customize a new ability for this kit");
 
-        return ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize("&eAdd an Ability"))
+        return ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize(Trans.late("&eAdd an Ability")))
             .lore(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA))).asGuiItem(e ->
                 new SelectAbilityGui(e.getWhoClicked(), this, ability -> new ConfigureAbilityGui(e.getWhoClicked(), ability, this, finalAbility -> {
                     kit.addAbility(finalAbility);

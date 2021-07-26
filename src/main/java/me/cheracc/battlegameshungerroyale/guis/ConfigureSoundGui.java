@@ -1,11 +1,11 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -19,7 +19,7 @@ public class ConfigureSoundGui extends Gui {
     Consumer<SoundEffect> callback;
 
     public ConfigureSoundGui(HumanEntity player, Gui sendingGui, SoundEffect currentSound, Consumer<SoundEffect> callback) {
-        super(1, "Configuring Sound Effect:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, Trans.late("Configuring Sound Effect:"), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.soundEffect = currentSound;
         if (soundEffect == null)
             soundEffect = new SoundEffect();
@@ -43,8 +43,8 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem soundItem() {
-        return ItemBuilder.from(Material.MUSIC_DISC_CAT).name(Tools.componentalize("Sound: " + soundEffect.getSound().name().toLowerCase()))
-            .lore(Tools.BLANK_LINE, Tools.componentalize("&bClick to change")).asGuiItem(e -> {
+        return ItemBuilder.from(Material.MUSIC_DISC_CAT).name(Tools.componentalize(Trans.late("Sound: ") + soundEffect.getSound().name().toLowerCase()))
+            .lore(Tools.BLANK_LINE, Tools.componentalize(Trans.late("&bClick to change"))).asGuiItem(e -> {
                 e.getWhoClicked().closeInventory();
 
                 new SelectSoundGui(e.getWhoClicked(), this, null, sound -> {
@@ -56,7 +56,7 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem volumeItem() {
-        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize("&eCurrent Volume: " + soundEffect.getVolume())).asGuiItem(event -> {
+        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize(Trans.late("&eCurrent Volume: ") + soundEffect.getVolume())).asGuiItem(event -> {
             float newValue = soundEffect.getVolume() * 10;
 
             switch (event.getClick()) {
@@ -83,7 +83,7 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem pitchItem() {
-        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize("&eCurrent Pitch: " + soundEffect.getPitch())).asGuiItem(event -> {
+        return ItemBuilder.from(Material.JUKEBOX).name(Tools.componentalize(Trans.late("&eCurrent Pitch: ") + soundEffect.getPitch())).asGuiItem(event -> {
             float newValue = soundEffect.getPitch() * 10;
 
             switch (event.getClick()) {
@@ -110,13 +110,13 @@ public class ConfigureSoundGui extends Gui {
     }
 
     private GuiItem playSoundItem() {
-        return ItemBuilder.from(Material.NOTE_BLOCK).name(Tools.componentalize("Play Sound")).asGuiItem(e -> {
+        return ItemBuilder.from(Material.NOTE_BLOCK).name(Tools.componentalize(Trans.late("Play Sound"))).asGuiItem(e -> {
             soundEffect.play((Player) e.getWhoClicked(), e.getWhoClicked().getLocation());
         });
     }
 
     private GuiItem saveItem() {
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("Save this Sound Effect")).asGuiItem(e -> {
+        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("Save this Sound Effect"))).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
             callback.accept(soundEffect);
         });

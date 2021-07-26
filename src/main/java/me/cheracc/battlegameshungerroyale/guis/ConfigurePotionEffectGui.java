@@ -1,10 +1,10 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -21,7 +21,7 @@ public class ConfigurePotionEffectGui extends Gui {
     Consumer<PotionEffect> callback;
 
     public ConfigurePotionEffectGui(HumanEntity player, PotionEffect effect, Gui sendingGui, Consumer<PotionEffect> callback) {
-        super(1, "Customize Potion Effect", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        super(1, Trans.late("Customize Potion Effect"), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         if (effect != null)
             this.effect = effect;
         else
@@ -52,9 +52,9 @@ public class ConfigurePotionEffectGui extends Gui {
         PotionEffectType type = effect.getType();
         int amplifier = effect.getAmplifier();
 
-        name = Tools.componentalize("&eEffect: &f" + type.getName().toLowerCase());
+        name = Tools.componentalize(Trans.late("&eEffect: &f") + type.getName().toLowerCase());
 
-        return ItemBuilder.from(Material.SPLASH_POTION).name(name).lore(Tools.componentalize("&bClick here to change the effect")).asGuiItem(e -> {
+        return ItemBuilder.from(Material.SPLASH_POTION).name(name).lore(Tools.componentalize(Trans.late("&bClick here to change the effect"))).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
             new SelectPotionEffectTypeGui(e.getWhoClicked(), this, returnedType -> {
                 int duration = effect.getDuration();
@@ -68,8 +68,8 @@ public class ConfigurePotionEffectGui extends Gui {
     }
 
     private GuiItem amplifierIcon() {
-        return ItemBuilder.from(Material.COMPARATOR).name(Tools.componentalize("&eCurrent Amplifier: &f" + effect.getAmplifier()))
-                .lore(Tools.componentalize(""),Tools.componentalize("&bClick to increase amplifier"), Tools.componentalize("&bRight Click to decrease amplifier"))
+        return ItemBuilder.from(Material.COMPARATOR).name(Tools.componentalize(Trans.late("&eCurrent Amplifier: &f") + effect.getAmplifier()))
+                .lore(Tools.componentalize(""),Tools.componentalize(Trans.late("&bClick to increase amplifier")), Tools.componentalize(Trans.late("&bRight Click to decrease amplifier")))
                 .asGuiItem(e -> {
                     int amplifier = effect.getAmplifier();
                     switch (e.getClick()) {
@@ -90,8 +90,8 @@ public class ConfigurePotionEffectGui extends Gui {
     }
 
     private GuiItem durationIcon() {
-        return ItemBuilder.from(Material.CLOCK).name(Tools.componentalize("&eCurrent Effect Duration: &f" + effect.getDuration() / 20))
-                .lore(Tools.componentalize(""),Tools.componentalize("&bClick to increase duration"), Tools.componentalize("&bRight Click to decrease duration"))
+        return ItemBuilder.from(Material.CLOCK).name(Tools.componentalize(Trans.late("&eCurrent Effect Duration: &f") + effect.getDuration() / 20))
+                .lore(Tools.componentalize(Trans.late("")),Tools.componentalize(Trans.late("&bClick to increase duration")), Tools.componentalize(Trans.late("&bRight Click to decrease duration")))
                 .asGuiItem(e -> {
                     int duration = effect.getDuration();
                     switch (e.getClick()) {
@@ -113,8 +113,8 @@ public class ConfigurePotionEffectGui extends Gui {
     }
 
     private GuiItem particlesIcon() {
-        return ItemBuilder.from(Material.BEACON).name(Tools.componentalize("&eParticles: &f" + effect.hasParticles()))
-                .lore(Tools.componentalize("&bClick to toggle whether this effect shows particles"))
+        return ItemBuilder.from(Material.BEACON).name(Tools.componentalize(Trans.late("&eParticles: &f") + effect.hasParticles()))
+                .lore(Tools.componentalize(Trans.late("&bClick to toggle whether this effect shows particles")))
                 .asGuiItem(e -> {
                     effect = effect.withParticles(!effect.hasParticles());
                     updateItem(e.getSlot(), particlesIcon());
@@ -122,8 +122,8 @@ public class ConfigurePotionEffectGui extends Gui {
     }
 
     private GuiItem ambientIcon() {
-        return ItemBuilder.from(Material.BEACON).name(Tools.componentalize("&eAmbient Effect: &f" + effect.isAmbient()))
-                .lore(Tools.componentalize(Tools.wrapText("&bClick to toggle whether this effect shows ambient particles. (Ambient particles are more translucent and not as obvious - this has no effect if particles are turned off)", ChatColor.AQUA)))
+        return ItemBuilder.from(Material.BEACON).name(Tools.componentalize(Trans.late("&eAmbient Effect: &f") + effect.isAmbient()))
+                .lore(Tools.componentalize(Tools.wrapText(Trans.late("&bClick to toggle whether this effect shows ambient particles. (Ambient particles are more translucent and not as obvious - this has no effect if particles are turned off)"), ChatColor.AQUA)))
                 .asGuiItem(e -> {
                     effect = effect.withAmbient(!effect.isAmbient());
                     updateItem(e.getSlot(), ambientIcon());
@@ -131,8 +131,8 @@ public class ConfigurePotionEffectGui extends Gui {
     }
 
     private GuiItem showIconIcon() {
-        return ItemBuilder.from(Material.PAINTING).name(Tools.componentalize("&eShow Effect Icon: &f" + effect.hasIcon()))
-                .lore(Tools.componentalize(Tools.wrapText("&bClick to toggle whether the target of this effect sees an effect icon for the effect", ChatColor.AQUA)))
+        return ItemBuilder.from(Material.PAINTING).name(Tools.componentalize(Trans.late("&eShow Effect Icon: &f") + effect.hasIcon()))
+                .lore(Tools.componentalize(Tools.wrapText(Trans.late("&bClick to toggle whether the target of this effect sees an effect icon for the effect"), ChatColor.AQUA)))
                 .asGuiItem(e -> {
                     effect = effect.withIcon(!effect.hasIcon());
                     updateItem(e.getSlot(), showIconIcon());
@@ -140,7 +140,7 @@ public class ConfigurePotionEffectGui extends Gui {
     }
 
     private GuiItem saveEffectIcon() {
-        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize("&eSave this Effect"))
+        return ItemBuilder.from(Material.WRITABLE_BOOK).name(Tools.componentalize(Trans.late("&eSave this Effect")))
                 .asGuiItem(e -> {
                     e.getWhoClicked().closeInventory();
                     callback.accept(effect);
