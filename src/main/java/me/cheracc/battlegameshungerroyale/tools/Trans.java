@@ -76,22 +76,8 @@ public class Trans {
     }
 
     private static String getCallingClassName() {
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        String callerName = null;
-
-        for (int i = 1; i < elements.length; i++) {
-            StackTraceElement e = elements[i];
-            Logr.info(e.toString());
-            if (!e.getClassName().equals(Trans.class.getName()) && e.getClassName().indexOf("java.lang.Thread") != 0) {
-                if (callerName == null) {
-                    callerName = e.getClassName();
-                } else if (!callerName.equals(e.getClassName())){
-                    Logr.info("Returning " + e.getClassName());
-                    return e.getClassName();
-                }
-            }
-        }
-        return "";
+        String[] fullClassName = Thread.currentThread().getStackTrace()[2].getClassName().split("\\.");
+        return fullClassName[fullClassName.length - 1];
     }
 
     private static String getCallingMethodName() {
