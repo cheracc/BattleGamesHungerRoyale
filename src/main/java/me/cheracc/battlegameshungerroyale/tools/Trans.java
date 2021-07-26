@@ -51,7 +51,8 @@ public class Trans {
             for (String className : translatables.keySet()) {
                 Map<String, Map<String, String>> classMap = translatables.get(className);
                 for (String methodName : classMap.keySet()) {
-                    config.createSection(className + "." + methodName, classMap.get(methodName));
+                    Map<String, String> methodMap = classMap.get(methodName);
+                        config.createSection(className + "." + methodName, methodMap);
                 }
             }
             config.save(file);
