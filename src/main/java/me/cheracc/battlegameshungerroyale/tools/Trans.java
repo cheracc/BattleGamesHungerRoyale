@@ -49,6 +49,7 @@ public class Trans {
                 config.load(file);
 
             for (String className : translatables.keySet()) {
+
                 ConfigurationSection classSection = config.createSection(className, translatables.get(className));
 
             }
