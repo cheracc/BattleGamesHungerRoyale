@@ -79,8 +79,8 @@ public class Game implements Listener {
         MapManager.getInstance().createNewWorldAsync(map, w -> {
             setGameWorld(w);
             setupGame();
-            gameLog = new GameLog(this);
-            gameLog.addPhaseEntry(currentPhase);
+            gameLog = new GameLog(this, plugin);
+            gameLog.addLogEntry("Starting " + options.getConfigFile().getName());
             this.lootManager = new LootManager(this);
             GameManager.getInstance().updateScoreboard();
             if (callback != null)
@@ -128,7 +128,6 @@ public class Game implements Listener {
         if (options.getStartType() == GameOptions.StartType.ELYTRA)
             doElytraSpawn(success -> {
                 gameTick = startGameTick();
-                gameLog.addPhaseEntry(currentPhase);
                 currentPhase = GamePhase.INVINCIBILITY;
                 world.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, false);
                 new GameChangedPhaseEvent(this, "invincibility").callEvent();
@@ -136,7 +135,6 @@ public class Game implements Listener {
         else if (options.getStartType() == GameOptions.StartType.HUNGERGAMES) {
             doHungergamesSpawn(success -> {
                 gameTick = startGameTick();
-                gameLog.addPhaseEntry(currentPhase);
                 currentPhase = GamePhase.INVINCIBILITY;
                 new GameChangedPhaseEvent(this, "invincibility").callEvent();
             });
@@ -229,7 +227,6 @@ public class Game implements Listener {
         bar.addPlayer(player);
         if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.INVINCIBILITY)
             player.setInvulnerable(true);
-        gameLog.addLogEntry(String.format("%s joined (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
 
         if (PlayerManager.getInstance().getPlayerData(player).getKit() == null) {
             player.sendMessage(Tools.componentalize("&fYou haven't selected a kit! Type &e/kit &for let the gods of randomness have their say!"));
@@ -252,7 +249,6 @@ public class Game implements Listener {
         if (participants.containsKey(player.getUniqueId()) && participants.get(player.getUniqueId()) > 0) {
             livesRemaining = participants.get(player.getUniqueId());
             participants.replace(player.getUniqueId(), 0);
-            gameLog.addLogEntry(String.format("%s left (%s/%s)", player.getName(), getActivePlayers().size(), getStartingPlayersSize()));
         }
         new PlayerQuitGameEvent(player, this, livesRemaining).callEvent();
         PlayerData data = PlayerManager.getInstance().getPlayerData(player);
@@ -501,8 +497,8 @@ public class Game implements Listener {
                 if (value > 0)
                     winner = Bukkit.getPlayer(key);
             });
-            doPostGame();
             gameLog.addLogEntry(winner.getName() + " won!");
+            doPostGame();
         }
 
         return winner != null;
@@ -534,7 +530,6 @@ public class Game implements Listener {
         }
         for (UUID id : toRemove)
             participants.remove(id);
-        gameLog.addPhaseEntry(currentPhase);
         GameManager.getInstance().updateScoreboard();
     }
 
@@ -543,7 +538,6 @@ public class Game implements Listener {
         new GameChangedPhaseEvent(this, "border").callEvent();
         world.getWorldBorder().setSize(10, options.getBorderTime());
         GameManager.getInstance().updateScoreboard();
-        gameLog.addPhaseEntry(currentPhase);
     }
 
     private void doPostGame() {
@@ -555,7 +549,6 @@ public class Game implements Listener {
         currentPhase = GamePhase.POSTGAME;
         new GameChangedPhaseEvent(this, "postgame").callEvent();
         GameManager.getInstance().gameIsEnding(this);
-        gameLog.addPhaseEntry(currentPhase);
         world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
     }
 
@@ -809,8 +802,6 @@ public class Game implements Listener {
                 event.setCancelled(true);
                 break;
         }
-
-        gameLog.addDamageEntry(event);
     }
 
     @EventHandler
@@ -819,8 +810,6 @@ public class Game implements Listener {
         Game game = GameManager.getInstance().getPlayersCurrentGame(dead);
 
         if (game  != null && game.equals(this)) {
-            gameLog.addDeathEntry(dead);
-
             if (participants.containsKey(dead.getUniqueId())) {
                 int livesLeft = Math.max(0, participants.get(dead.getUniqueId()) - 1);
 

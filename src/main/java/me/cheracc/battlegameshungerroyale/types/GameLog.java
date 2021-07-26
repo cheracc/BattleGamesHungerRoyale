@@ -1,11 +1,14 @@
 package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.events.GameDamageEvent;
+import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 
 import java.io.File;
@@ -15,47 +18,96 @@ import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.*;
 
-public class GameLog {
+public class GameLog implements Listener {
     private final long startTime;
     private final String mapName;
     private final Map<Long, Object> entries = new HashMap<>();
     private final Game game;
     private final File logFile;
 
-    public GameLog(Game game) {
+    public GameLog(Game game, BGHR plugin) {
         this.startTime = System.currentTimeMillis();
         this.game = game;
         mapName = game.getMap().getMapName();
 
         String timestamp = Instant.now().toString().split("\\.")[0].replace('T', '_').replace(':', '-');
-        logFile = new File(BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/gamelogs",  timestamp + ".log");
+        logFile = new File(plugin.getDataFolder().getAbsolutePath() + "/gamelogs",  timestamp + ".log");
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
+    @EventHandler
+    public void addJoinEntry(PlayerJoinedGameEvent event) {
+        if (!isMyGame(event.getGame()))
+            return;
+
+        insertEntry(event.getPlayer() + " joined the game" + (event.isJoiningAsSpectator() ? " as a spectator" : ""));
+    }
+
+    @EventHandler
+    public void addQuitEntry(PlayerQuitGameEvent event) {
+        if (!isMyGame(event.getGame()))
+            return;
+
+        insertEntry(String.format("%s quit (had %s lives remaining). %s player%s left", event.getPlayer().getName(), event.getLivesRemaining(),
+                event.getGame().getActivePlayers().size(), event.getGame().getActivePlayers().size() > 1 ? "s" : ""));
+    }
+
+    @EventHandler
+    public void addEliminatedEntry(PlayerEliminatedEvent event) {
+        if (!isMyGame(event.getGame()))
+            return;
+
+        StringBuilder sb = new StringBuilder();
+        for (Player p : event.getGame().getActivePlayers()) {
+            if (sb.length() > 0)
+                sb.append(", ");
+            sb.append(p.getName()).append("(").append(p.getHealth()).append(")");
+        }
+        insertEntry(String.format("%s eliminated. Remaining: [ %s ]", event.getPlayer().getName(), sb));
+    }
+
+    @EventHandler
     public void addDamageEntry(GameDamageEvent event) {
+        if (!isMyGame(event.getGame()))
+            return;
+
         GameLogDamageEntry entry = new GameLogDamageEntry(event.getAggressor(), event.getVictim(), event.getType(), event.getDamage(), event.getBestGuess());
         entries.put(System.currentTimeMillis(), entry);
     }
 
+    @EventHandler
+    public void addDeathEntry(GameDeathEvent event) {
+        if (!isMyGame(event.getGame()))
+            return;
+
+        entries.put(System.currentTimeMillis(), String.format("%s died. KB:%s [%s(%s)]",
+                event.getRecentlyDeceased().getName(), event.getKiller() == null ? "?" : event.getKiller().getName(),
+                ((int)(event.getKillingBlowDamage() * 10))/10D, event.getKillingBlowCause()));
+        try {
+            saveLogFile();
+        } catch (IOException e) {
+            Bukkit.getLogger().warning("couldn't save gamelog file");
+        }
+    }
+
+    @EventHandler
+    public void addPhaseEntry(GameChangedPhaseEvent event) {
+        if (!isMyGame(event.getGame()))
+            return;
+        entries.put(System.currentTimeMillis(), event.getPhase());
+        try {
+            saveLogFile();
+        } catch (IOException e) {
+            Bukkit.getLogger().warning("couldn't save gamelog file");
+        }
+    }
+
+    private void insertEntry(String string) {
+        entries.put(System.currentTimeMillis(), string);
+    }
+
     public void addLogEntry(String string) {
         entries.put(System.currentTimeMillis(), string);
-        try {
-            saveLogFile();
-        } catch (IOException e) {
-            Bukkit.getLogger().warning("couldn't save gamelog file");
-        }
-    }
-
-    public void addDeathEntry(Player player) {
-        entries.put(System.currentTimeMillis(), player.getName() + " died.");
-        try {
-            saveLogFile();
-        } catch (IOException e) {
-            Bukkit.getLogger().warning("couldn't save gamelog file");
-        }
-    }
-
-    public void addPhaseEntry(Game.GamePhase phase) {
-        entries.put(System.currentTimeMillis(), phase);
         try {
             saveLogFile();
         } catch (IOException e) {
@@ -69,6 +121,7 @@ public class GameLog {
         } catch (IOException e) {
             Bukkit.getLogger().warning("couldn't save gamelog file");
         }
+        HandlerList.unregisterAll(this);
     }
 
     private void saveLogFile() throws IOException {
@@ -180,5 +233,9 @@ public class GameLog {
         public double getDamage() {
             return damage;
         }
+    }
+
+    private boolean isMyGame(Game game) {
+        return this.game.equals(game);
     }
 }
