@@ -84,6 +84,7 @@ public class Trans {
             if (!e.getClassName().equals(Trans.class.getName()))
                 break;
         }
-        return new String[] {elements[i].getClassName(), elements[i].getMethodName()};
+        String[] fullClassName = elements[i].getClassName().split("\\.");
+        return new String[] {fullClassName[fullClassName.length - 1], elements[i].getMethodName()};
     }
 }
