@@ -51,7 +51,7 @@ public class GameLog implements Listener {
         if (!isMyGame(event.getGame()))
             return;
 
-        insertEntry(String.format("%s quit (had %s lives remaining). %s player%s left", event.getPlayer().getName(), event.getLivesRemaining(),
+        insertEntry(String.format(Trans.late("%s quit (had %s lives remaining). %s player%s left"), event.getPlayer().getName(), event.getLivesRemaining(),
                 event.getGame().getActivePlayers().size(), event.getGame().getActivePlayers().size() > 1 ? "s" : ""));
     }
 
@@ -66,7 +66,7 @@ public class GameLog implements Listener {
                 sb.append(", ");
             sb.append(p.getName()).append("(").append(p.getHealth()).append(")");
         }
-        insertEntry(String.format("%s eliminated. Remaining: [ %s ]", event.getPlayer().getName(), sb));
+        insertEntry(String.format(Trans.late("%s eliminated. Remaining: [ %s ]"), event.getPlayer().getName(), sb));
     }
 
     @EventHandler
@@ -83,13 +83,13 @@ public class GameLog implements Listener {
         if (!isMyGame(event.getGame()))
             return;
 
-        entries.put(System.currentTimeMillis(), String.format("%s died. KB:%s [%s(%s)]",
+        entries.put(System.currentTimeMillis(), String.format(Trans.late("%s died. KB:%s [%s(%s)]"),
                 event.getRecentlyDeceased().getName(), event.getKiller() == null ? "?" : event.getKiller().getName(),
                 ((int)(event.getKillingBlowDamage() * 10))/10D, event.getKillingBlowCause()));
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning("couldn't save gamelog file");
+            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
         }
     }
 
@@ -101,7 +101,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning("couldn't save gamelog file");
+            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
         }
     }
 
@@ -114,7 +114,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning("couldn't save gamelog file");
+            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
         }
     }
 
@@ -122,7 +122,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Bukkit.getLogger().warning("couldn't save gamelog file");
+            Bukkit.getLogger().warning(Trans.late("couldn't save gamelog file"));
         }
         HandlerList.unregisterAll(this);
     }
@@ -130,7 +130,7 @@ public class GameLog implements Listener {
     private void saveLogFile() throws IOException {
         if (!logFile.exists())
             if (logFile.getParentFile().mkdirs())
-                Logr.info("Creating directory for game log files: " + logFile.getParentFile().getAbsolutePath());
+                Logr.info(Trans.late("Creating directory for game log files: ") + logFile.getParentFile().getAbsolutePath());
 
         FileWriter writer = new FileWriter(logFile);
         PrintWriter printer = new PrintWriter(writer);
@@ -147,17 +147,17 @@ public class GameLog implements Listener {
             playerString.append(s);
         }
 
-        printer.printf("Game Started: %s", Instant.ofEpochMilli(startTime));
+        printer.printf(Trans.late("Game Started: %s"), Instant.ofEpochMilli(startTime));
         printer.println();
-        printer.printf("Game Ended: %s", Instant.now());
+        printer.printf(Trans.late("Game Ended: %s"), Instant.now());
         printer.println();
-        printer.printf("Time elapsed: %s", Tools.secondsToMinutesAndSeconds(game.getCurrentGameTime()));
+        printer.printf(Trans.late("Time elapsed: %s"), Tools.secondsToMinutesAndSeconds(game.getCurrentGameTime()));
         printer.println();
-        printer.printf("Map: %s", mapName);
+        printer.printf(Trans.late("Map: %s"), mapName);
         printer.println();
-        printer.printf("Participants(%s): %s", players.size(), playerString);
+        printer.printf(Trans.late("Participants(%s): %s"), players.size(), playerString);
         printer.println();
-        printer.printf("Winner: %s", game.checkForWinner() ? game.getWinner().getName() : "");
+        printer.printf(Trans.late("Winner: %s"), game.checkForWinner() ? game.getWinner().getName() : "");
         printer.println();
 
         for (Long l : entryTimes) {
@@ -177,7 +177,7 @@ public class GameLog implements Listener {
             }
             else if (o instanceof Game.GamePhase) {
                 Game.GamePhase phase = (Game.GamePhase) o;
-                printer.printf("[%s]: Started %s phase", time.toString(), phase.name().toLowerCase());
+                printer.printf(Trans.late("[%s]: Started %s phase"), time.toString(), phase.name().toLowerCase());
             }
             printer.println();
         }
