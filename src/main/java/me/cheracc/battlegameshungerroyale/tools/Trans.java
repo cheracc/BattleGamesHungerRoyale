@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Trans {
-    private static final Map<String, Map<String, String>> translatables = new HashMap<>();
+    private static final Map<String, Map<String, Map<String, String>>> translatables = new HashMap<>();
     private static BGHR plugin;
 
     public static void load(BGHR plugin) {
@@ -28,10 +28,15 @@ public class Trans {
         }
         for (String classKey : config.getKeys(false)) {
             ConfigurationSection classSection = config.getConfigurationSection(classKey);
-            Map<String, String> classMap = new HashMap<>();
+            Map<String, Map<String, String>> classMap = new HashMap<>();
             for (String methodKey : classSection.getKeys(false)) {
-                classMap.put(methodKey, classMap.get(methodKey));
+                ConfigurationSection methodSection = config.getConfigurationSection(methodKey);
+                Map<String, String> methodMap = new HashMap<>();
+                for (String stringKey : methodSection.getKeys(false))
+                    methodMap.put(stringKey, methodSection.getString(stringKey));
+                classMap.put(methodKey, methodMap);
             }
+            translatables.put(classKey, classMap);
         }
     }
 
@@ -44,7 +49,8 @@ public class Trans {
                 config.load(file);
 
             for (String className : translatables.keySet()) {
-                config.createSection(className, translatables.get(className));
+                ConfigurationSection classSection = config.createSection(className, translatables.get(className));
+
             }
             config.save(file);
         } catch (IOException | InvalidConfigurationException e) {
@@ -57,19 +63,26 @@ public class Trans {
         String callingMethod = getCaller()[1];
 
         if (translatables.containsKey(callingClass)) {
-            Map<String, String> classStrings = translatables.get(callingClass);
-            if (classStrings.containsKey(callingMethod))
-                return classStrings.get(callingMethod);
+            Map<String, Map<String, String>> classMap = translatables.get(callingClass);
+            if (classMap.containsKey(callingMethod)) {
+                Map<String, String> methodMap = classMap.get(callingMethod);
+                if (methodMap.containsKey(string))
+                    return methodMap.get(string);
+                else
+                    methodMap.put(string, string);
+            }
             else {
-                classStrings.put(callingMethod, string);
-                translatables.put(callingClass, classStrings);
+                Map<String, String> newMethodMap = new HashMap<>();
+                newMethodMap.put(string, string);
+                classMap.put(callingMethod, newMethodMap);
+                translatables.put(callingClass, classMap);
                 saveFile();
             }
         }
         else {
-            Map<String, String> newMap = new HashMap<>();
-            newMap.put(callingMethod, string);
-            translatables.put(callingClass, newMap);
+            Map<String, Map<String, String>> newClassMap = new HashMap<>();
+            newClassMap.put(callingMethod, new HashMap<>());
+            translatables.put(callingClass, newClassMap);
             saveFile();
         }
         return string;
