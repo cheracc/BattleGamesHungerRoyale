@@ -45,7 +45,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem generateChestsIcon() {
-        ItemBuilder genChestsIcon = ItemBuilder.from(Material.CHEST).name(Trans.lateToComponent("&eGenerate Random Chests: &f" +
+        ItemBuilder genChestsIcon = ItemBuilder.from(Material.CHEST).name(Trans.lateToComponent("&eGenerate Random Chests: &f%s",
                 (options.isGenerateChests() ? Trans.late("on") : Trans.late("off"))));
         genChestsIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether or not the plugin will search the map for locations to place loot chests. If disabled, no additional chests will be placed on the map."), ChatColor.GRAY)));
 
@@ -57,7 +57,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem fillChestsIcon() {
-        ItemBuilder fillChestsIcon = ItemBuilder.from(Material.CHEST_MINECART).name(Trans.lateToComponent("&eFill all chests: &f" +
+        ItemBuilder fillChestsIcon = ItemBuilder.from(Material.CHEST_MINECART).name(Trans.lateToComponent("&eFill all chests: &f%s",
                 (options.isFillAllChests() ? Trans.late("on") : Trans.late("off"))));
         fillChestsIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether or not the plugin will fill chests with loot from the selected loot table. If disabled, the plugin will not place any loot in any chests - this is useful for maps that have pre-filled loot chests"), ChatColor.GRAY)));
 
@@ -68,7 +68,7 @@ public class ConfigureLootGui extends Gui {
     }
 
     private GuiItem lenientSearchingIcon() {
-        ItemBuilder loosenSearchIcon = ItemBuilder.from(Material.GRASS_BLOCK).name(Trans.lateToComponent("&eLoosen Chest Search Restrictions: &f" +
+        ItemBuilder loosenSearchIcon = ItemBuilder.from(Material.GRASS_BLOCK).name(Trans.lateToComponent("&eLoosen Chest Search Restrictions: &f%s",
                 (options.isLoosenSearchRestrictions() ? Trans.late("on") : Trans.late("off"))));
         loosenSearchIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Determines how strictly the plugin searches for loot chest locations. If enabled, chests will be more 'tucked-away' - if disabled, chests will spawn in more obvious/open areas. Enable this for small maps or maps with little to no below-surface areas. Disable this for larger maps or maps with lots of caves and structures."), ChatColor.GRAY)));
 

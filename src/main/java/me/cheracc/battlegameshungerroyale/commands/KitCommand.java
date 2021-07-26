@@ -27,7 +27,7 @@ public class KitCommand implements CommandExecutor {
                     PlayerData data = PlayerManager.getInstance().getPlayerData(p);
 
                     if (data.getKit() != null && data.getKit().equals(kit)) {
-                        p.sendMessage(Trans.lateToComponent("You are already using kit ", kit.getName()));
+                        p.sendMessage(Trans.lateToComponent("You are already using kit &s", kit.getName()));
                         return true;
                     }
 

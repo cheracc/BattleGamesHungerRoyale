@@ -62,7 +62,7 @@ public class ConfigureGameGui extends Gui {
 
     private GuiItem mapsIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.FILLED_MAP);
-        icon = icon.name(Trans.lateToComponent("&eMap: &7" + options.getMap().getMapName()));
+        icon = icon.name(Trans.lateToComponent("&eMap: &7%s", options.getMap().getMapName()));
 
         List<Component> lore = new ArrayList<>();
 
@@ -99,7 +99,7 @@ public class ConfigureGameGui extends Gui {
     }
 
     private GuiItem livesIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.TOTEM_OF_UNDYING).name(Trans.lateToComponent("&eLives per Player: &f" + options.getLivesPerPlayer()));
+        ItemBuilder icon = ItemBuilder.from(Material.TOTEM_OF_UNDYING).name(Trans.lateToComponent("&eLives per Player: &f%s", options.getLivesPerPlayer()));
         icon = icon.lore(Component.space(), Trans.lateToComponent("&bClick to increase"), Trans.lateToComponent("&bRight click to decrease"));
 
         return icon.asGuiItem(e -> {
@@ -115,7 +115,7 @@ public class ConfigureGameGui extends Gui {
     }
 
     private GuiItem allowBuildingIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.WOODEN_PICKAXE).name(Trans.lateToComponent("&eAllow Regular Building: &f" + options.isAllowRegularBuilding()));
+        ItemBuilder icon = ItemBuilder.from(Material.WOODEN_PICKAXE).name(Trans.lateToComponent("&eAllow Regular Building: &f%s", options.isAllowRegularBuilding()));
         icon.flags(ItemFlag.HIDE_ATTRIBUTES);
         icon = icon.lore(Component.space(), Trans.lateToComponent("&bClick to toggle"));
 
@@ -126,7 +126,7 @@ public class ConfigureGameGui extends Gui {
     }
 
     private GuiItem playersNeededIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Trans.lateToComponent("&ePlayers needed to start: &f" + options.getPlayersNeededToStart()));
+        ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Trans.lateToComponent("&ePlayers needed to start: &f%s", options.getPlayersNeededToStart()));
         icon = icon.lore(Component.space(), Trans.lateToComponent("&bClick to increase"), Trans.lateToComponent("&bRight click to decrease"));
 
         return icon.asGuiItem(e -> {
@@ -143,7 +143,7 @@ public class ConfigureGameGui extends Gui {
 
     private GuiItem spawnTypeIcon() {
         Material mat = options.getStartType() == GameOptions.StartType.ELYTRA ? Material.ELYTRA : Material.CHEST;
-        ItemBuilder icon = ItemBuilder.from(mat).name(Trans.lateToComponent("&eStart Type: &f" + options.getStartType().name().toLowerCase()));
+        ItemBuilder icon = ItemBuilder.from(mat).name(Trans.lateToComponent("&eStart Type: &f%s", options.getStartType().name().toLowerCase()));
         List<String> lore = new ArrayList<>();
         if (options.getStartType() == GameOptions.StartType.ELYTRA)
             lore.addAll(Tools.wrapText(Trans.late("&7At the start of the game, players will be teleported to central spawn and then launched into the air to glide back down using a (temporary) provided elytra. The elytra will be removed at the end of the invincibility phase or when the player touches the ground."), ChatColor.GRAY));
@@ -176,7 +176,7 @@ public class ConfigureGameGui extends Gui {
                         return;
                     }
                     options.saveConfig(filename);
-                    e.getWhoClicked().sendMessage(Trans.lateToComponent("&eSaved game configuration to %s%s",filename, ".yml"));
+                    e.getWhoClicked().sendMessage(Trans.lateToComponent("&eSaved game configuration to %s%s", filename, ".yml"));
                     new ConfigureGameGui(e.getWhoClicked(), options, new AdminGui(e.getWhoClicked()));
                 });
             } else {
