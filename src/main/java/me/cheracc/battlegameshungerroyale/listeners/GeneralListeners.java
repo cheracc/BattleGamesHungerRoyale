@@ -13,6 +13,7 @@ import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -102,7 +103,10 @@ public class GeneralListeners implements Listener {
             return;
 
         event.setUseInteractedBlock(Event.Result.ALLOW);
-        event.setUseItemInHand(Event.Result.DENY);
+        if (item.getType() != Material.SHIELD)
+            event.setUseItemInHand(Event.Result.DENY);
+        else
+            event.setUseItemInHand(Event.Result.ALLOW);
 
         if (p.hasCooldown(item.getType()))
             return;
