@@ -1,0 +1,36 @@
+templates:
+  overview:
+    text:
+    - '&e&lWelcome to Battle Games'
+    - '&e&lHunger Royale!'
+    - '&b----------------------------'
+    - '&f&lCurrent Games:'
+    - '&b----------------------------'
+    - '%bghr_game1_info%'
+    - '%bghr_game2_info%'
+    - '%bghr_game3_info%'
+    command: games
+  game1:
+    text:
+    - '&c&lBattle Game One'
+    - '&b----------------------------'
+    - '&eGame Type: &f%bghr_game1_type%'
+    - '&eMap: &f%bghr_game1_map%'
+    - '&b----------------------------'
+    - '&fCurrent Phase: &7%bghr_game1_phase%'
+    - '&fPlayers: &7%bghr_game1_playercount%'
+    - '&fGame Time: &7%bghr_game1_elapsed%'
+    - '&3&l[&bRight Click To Join!&3&l]'
+    command: join 1
+  game2:
+    text:
+    - '&c&lBattle Game Two'
+    - '&b----------------------------'
+    - '&eGame Type: &f%bghr_game2_type%'
+    - '&eMap: &f%bghr_game2_map%'
+    - '&b----------------------------'
+    - '&fCurrent Phase: &7%bghr_game2_phase%'
+    - '&fPlayers: &7%bghr_game2_playercount%'
+    - '&fGame Time: &7%bghr_game2_elapsed%'
+    - '&3&l[&bRight Click To Join!&3&l]'
+    command: join 2

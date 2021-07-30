@@ -78,8 +78,10 @@ public class DisplayManager implements Listener {
     public void loadFromConfig() {
         File file = new File(plugin.getDataFolder(), CONFIG_FILE);
 
-        if (!file.exists())
-            return;
+        if (!file.exists()) {
+            plugin.saveResource(CONFIG_FILE, false);
+        }
+
         try {
             config.load(file);
         } catch (IOException | InvalidConfigurationException e) {
