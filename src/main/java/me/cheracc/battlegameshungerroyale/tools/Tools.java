@@ -1,5 +1,4 @@
 package me.cheracc.battlegameshungerroyale.tools;
-
 import com.destroystokyo.paper.Namespaced;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import net.kyori.adventure.text.Component;
@@ -17,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.*;
@@ -32,7 +32,7 @@ import java.util.zip.ZipInputStream;
 
 public class Tools {
     public static TextComponent BLANK_LINE = Component.text("");
-    public static NamespacedKey PLUGIN_KEY = new NamespacedKey(BGHR.getPlugin(), "battlegameshungerroyale");
+    public static NamespacedKey PLUGIN_KEY = new NamespacedKey(JavaPlugin.getPlugin(BGHR.class), "battlegameshungerroyale");
 
     public static ItemStack tagAsPluginItem(ItemStack item) {
         if (item == null)
@@ -46,17 +46,8 @@ public class Tools {
         return item;
     }
 
-    public static boolean isPluginItem(ItemStack item) {
-        if (item == null)
-            return false;
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null)
-            return false;
-        return (meta.getPersistentDataContainer().has(PLUGIN_KEY, PersistentDataType.LONG));
-    }
-
     public static String getTimestamp() {
-        return Instant.now().toString().replace(":","-").split("\\.")[0];
+        return Instant.now().toString().replace(":", "-").split("\\.")[0];
     }
 
     public static List<String> wrapText(String longText, ChatColor color) {
@@ -103,14 +94,7 @@ public class Tools {
                 player.setGliding(gliding);
                 player.getWorld().setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, elytraCheck);
             }
-        }.runTaskLater(BGHR.getPlugin(), 1);
-    }
-
-    public static String decomponentalize(Component component) {
-        if (component == null)
-            return null;
-        String string = LegacyComponentSerializer.legacyAmpersand().serialize(component);
-        return ChatColor.translateAlternateColorCodes('&', string);
+        }.runTaskLater(JavaPlugin.getPlugin(BGHR.class), 1);
     }
 
     public static List<String> decomponentalize(List<Component> componentList) {
@@ -122,6 +106,13 @@ public class Tools {
                 strings.add(decomponentalize(c));
         });
         return strings;
+    }
+
+    public static String decomponentalize(Component component) {
+        if (component == null)
+            return null;
+        String string = LegacyComponentSerializer.legacyAmpersand().serialize(component);
+        return ChatColor.translateAlternateColorCodes('&', string);
     }
 
     public static List<Component> componentalize(List<String> text) {
@@ -164,7 +155,6 @@ public class Tools {
             return String.format(Trans.late("%s minute, %s seconds"), minutes, seconds);
         }
         return String.format(Trans.late("%s minutes, %s seconds"), minutes, seconds);
-
     }
 
     public static String secondsToAbbreviatedMinsSecs(int timeInSeconds) {
@@ -176,13 +166,10 @@ public class Tools {
             if (seconds == 1)
                 return String.format(Trans.late("%s second"), seconds);
             return String.format(Trans.late("%s seconds"), seconds);
-        }
-        else {
+        } else {
             return String.format(Trans.late("%s:%02d"), minutes, seconds);
         }
-
     }
-
 
     public static String rebuildString(String[] stringArray, int startingLocation) {
         StringBuilder sb = new StringBuilder();
@@ -200,12 +187,11 @@ public class Tools {
 
     public static TextComponent formatInstructions(String instructions, String currentValue) {
         TextComponent formattedInstructions = LegacyComponentSerializer.legacyAmpersand().deserialize(instructions);
-        TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255,0,0));
-        TextComponent instComp = formattedInstructions.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255,255,255))
-                                          .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text(Trans.late("Click here to copy the current text into the chat input box"))));
+        TextComponent borderBar = Component.text("=====================================================").color(TextColor.color(255, 0, 0));
+        TextComponent instComp = formattedInstructions.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.SUGGEST_COMMAND, currentValue)).color(TextColor.color(255, 255, 255))
+                                                      .hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Component.text(Trans.late("Click here to copy the current text into the chat input box"))));
 
         return borderBar.append(Component.newline()).append(instComp).append(Component.newline()).append(borderBar);
-
     }
 
     public static String configOptionToFieldName(String string) {
@@ -234,9 +220,9 @@ public class Tools {
 
     public static void saveObjectToPlayer(String key, Object object, Player p) {
         if (p.hasMetadata(key)) {
-            p.removeMetadata(key, BGHR.getPlugin());
+            p.removeMetadata(key, JavaPlugin.getPlugin(BGHR.class));
         }
-        p.setMetadata(key, new FixedMetadataValue(BGHR.getPlugin(), object));
+        p.setMetadata(key, new FixedMetadataValue(JavaPlugin.getPlugin(BGHR.class), object));
     }
 
     public static ItemStack makeItemPlaceable(ItemStack item) {
@@ -267,49 +253,70 @@ public class Tools {
      * @param zipResource Must end with ".zip".
      * @param destDir     The path of the destination directory, which must exist.
      */
-    public static void extractZipResource(Class myClass, String zipResource, Path destDir)
-    {
-        if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir))
-        {
+    public static void extractZipResource(Class myClass, String zipResource, Path destDir) {
+        if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir)) {
             throw new IllegalArgumentException("myClass=" + myClass + " zipResource=" + zipResource + " destDir=" + destDir);
         }
 
         try (InputStream is = myClass.getResourceAsStream(zipResource);
              BufferedInputStream bis = new BufferedInputStream(is);
-             ZipInputStream zis = new ZipInputStream(bis))
-        {
+             ZipInputStream zis = new ZipInputStream(bis)) {
             ZipEntry entry;
             byte[] buffer = new byte[2048];
-            while ((entry = zis.getNextEntry()) != null)
-            {
+            while ((entry = zis.getNextEntry()) != null) {
                 // Build destination file
                 File destFile = destDir.resolve(entry.getName()).toFile();
 
-                if (entry.isDirectory())
-                {
+                if (entry.isDirectory()) {
                     // Directory, recreate if not present
-                    if (!destFile.exists() && !destFile.mkdirs())
-                    {
-                        Logr.warn("extractZipResource() can't create destination folder : " + destFile.getAbsolutePath());
+                    if (!destFile.exists() && !destFile.mkdirs()) {
+                        JavaPlugin.getPlugin(BGHR.class).getLogr().warn("extractZipResource() can't create destination folder : " + destFile.getAbsolutePath());
                     }
                     continue;
                 }
                 // Plain file, copy it
                 try (FileOutputStream fos = new FileOutputStream(destFile);
-                     BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length))
-                {
+                     BufferedOutputStream bos = new BufferedOutputStream(fos, buffer.length)) {
                     int len;
-                    while ((len = zis.read(buffer)) > 0)
-                    {
+                    while ((len = zis.read(buffer)) > 0) {
                         bos.write(buffer, 0, len);
                     }
                 }
             }
-        } catch (IOException ex)
-        {
+        } catch (IOException ex) {
             ex.printStackTrace();
-            Logr.warn("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
+            JavaPlugin.getPlugin(BGHR.class).getLogr().warn("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
+    }
+
+    public static int getLastEmptyHotbarSlot(Player p) {
+        for (int i = 8; i >= 0; i--) {
+            ItemStack item = p.getInventory().getItem(i);
+            if (item == null || item.getType() == Material.AIR)
+                return i;
+        }
+        for (int i = 8; i >= 0; i--) {
+            ItemStack item = p.getInventory().getItem(i);
+            if (!Tools.isPluginItem(item)) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        p.getInventory().addItem(item);
+                    }
+                }.runTaskLater(JavaPlugin.getPlugin(BGHR.class), 1);
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static boolean isPluginItem(ItemStack item) {
+        if (item == null)
+            return false;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null)
+            return false;
+        return (meta.getPersistentDataContainer().has(PLUGIN_KEY, PersistentDataType.LONG));
     }
 
     public static void copyStreams(InputStream source, OutputStream target) {

@@ -3,7 +3,7 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
@@ -17,9 +17,11 @@ import java.util.HashSet;
 import java.util.List;
 
 public class SelectGameGui extends Gui {
+    private final BghrApi api;
 
-    public SelectGameGui(HumanEntity player) {
+    public SelectGameGui(HumanEntity player, BghrApi api) {
         super(1, "Current Games:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        this.api = api;
         disableAllInteractions();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 
@@ -28,7 +30,7 @@ public class SelectGameGui extends Gui {
     }
 
     private void fillGui(HumanEntity player) {
-        for (Game game : GameManager.getInstance().getActiveGames())
+        for (Game game : api.getGameManager().getActiveGames())
             addItem(gameIcon(player, game));
     }
 
@@ -60,14 +62,14 @@ public class SelectGameGui extends Gui {
                 p.sendMessage(Trans.lateToComponent("You are already in that game"));
                 return;
             }
-            Game current = GameManager.getInstance().getPlayersCurrentGame(p);
+            Game current = api.getGameManager().getPlayersCurrentGame(p);
             if (current != null)
                 current.quit(p);
 
             if (e.isShiftClick() && hasPermission) {
                 game.endGame(g -> {
                     e.getWhoClicked().closeInventory();
-                    new SelectGameGui(e.getWhoClicked());
+                    new SelectGameGui(e.getWhoClicked(), api);
                 });
             }
             else if (e.isLeftClick() && game.isOpenToPlayers())

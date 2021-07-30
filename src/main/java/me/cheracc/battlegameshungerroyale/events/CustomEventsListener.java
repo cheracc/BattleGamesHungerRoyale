@@ -21,14 +21,9 @@ import org.bukkit.projectiles.ProjectileSource;
 import java.util.UUID;
 
 public class CustomEventsListener implements Listener {
-    private static CustomEventsListener singletonInstance = null;
-
-    private CustomEventsListener() {}
-
-    public static CustomEventsListener getInstance() {
-        if (singletonInstance == null)
-            singletonInstance = new CustomEventsListener();
-        return singletonInstance;
+    public final GameManager gameManager;
+    public CustomEventsListener(GameManager gameManager) {
+        this.gameManager = gameManager;
     }
 
     @EventHandler (ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -133,7 +128,7 @@ public class CustomEventsListener implements Listener {
         }
 
         if (event.getDamage() > 0) {
-            game = GameManager.getInstance().getPlayersCurrentGame(victim);
+            game = gameManager.getPlayersCurrentGame(victim);
 
             if (victim.isDead())
                 return;

@@ -1,5 +1,5 @@
 package me.cheracc.battlegameshungerroyale.abilities;
-
+import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
@@ -17,6 +17,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -64,9 +65,10 @@ public class EffectProjectile extends Ability implements ActiveAbility, Listener
                     if (getId().equals(o)) {
                         o = proj.getMetadata("thrower").get(0).value();
                         if (o instanceof UUID) {
+                            PlayerManager pm = JavaPlugin.getPlugin(BGHR.class).getApi().getPlayerManager();
                             Player damager = Bukkit.getPlayer((UUID) o);
 
-                            if (damager != null && event.getEntity() instanceof Player && PlayerManager.getInstance().getPlayerData(damager).hasKit(this.getAssignedKit())) {
+                            if (damager != null && event.getEntity() instanceof Player && pm.getPlayerData(damager).hasKit(this.getAssignedKit())) {
                                 Player target = (Player) event.getEntity();
                                 EntityDamageEvent.DamageCause type = null;
 

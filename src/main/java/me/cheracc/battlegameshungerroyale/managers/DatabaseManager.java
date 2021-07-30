@@ -1,10 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
-
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.h2.tools.Server;
 
@@ -16,15 +13,16 @@ import java.sql.SQLException;
 public class DatabaseManager {
     private final static int CURRENT_DB_VERSION = 3;
 
-    private static DatabaseManager singletonInstance = null;
-    private HikariConfig config = new HikariConfig();
+    private final HikariConfig config = new HikariConfig();
+    private final Logr logr;
     private HikariDataSource ds;
     private boolean useMySql;
     private String connectString;
     private String user;
     private String pass;
 
-    private DatabaseManager(BGHR plugin) {
+    public DatabaseManager(BGHR plugin, Logr logr) {
+        this.logr = logr;
         FileConfiguration config = plugin.getConfig();
 
         useMySql = config.getBoolean("use mysql instead of h2", false);
@@ -42,8 +40,8 @@ public class DatabaseManager {
                 setupDataSource();
                 getConnection();
             } catch (SQLException e) {
-                Logr.warn("Could not connect to MySQL: " + e.getMessage());
-                Logr.warn("Using H2 database instead...");
+                logr.warn("Could not connect to MySQL: " + e.getMessage());
+                logr.warn("Using H2 database instead...");
                 useMySql = false;
             }
         }
@@ -52,7 +50,7 @@ public class DatabaseManager {
             try {
                 h2Server = Server.createTcpServer("-ifNotExists").start();
             } catch (SQLException e) {
-                Logr.warn("could not create h2 server. is it open elsewhere?");
+                logr.warn("could not create h2 server. is it open elsewhere?");
                 e.printStackTrace();
             }
             if (h2Server != null) {
@@ -71,21 +69,6 @@ public class DatabaseManager {
         config.setPassword(pass);
 
         ds = new HikariDataSource(config);
-    }
-
-    public static void initialize(BGHR plugin) {
-            singletonInstance = new DatabaseManager(plugin);
-        try {
-            singletonInstance.setupTables();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static DatabaseManager get() {
-        if (singletonInstance == null)
-            throw new InstantiationError("must be initialized first using .get(plugin)");
-        return singletonInstance;
     }
 
     public Connection getConnection() throws SQLException {
@@ -145,7 +128,7 @@ public class DatabaseManager {
             if (!databaseIsCurrent())
                 updateDb();
 
-            Logr.info("Successfully connected to " + (useMySql ? "MySQL" : "H2" + " database."));
+            logr.info("Successfully connected to " + (useMySql ? "MySQL" : "H2" + " database."));
             ds.getConnection().close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -175,7 +158,7 @@ public class DatabaseManager {
             result.close();
 
             if (foundVersion < CURRENT_DB_VERSION) {
-                Logr.info("Updating current database to new format...");
+                logr.info("Updating current database to new format...");
                 return false;
             } else {
                 return true;
@@ -188,7 +171,7 @@ public class DatabaseManager {
 
     private void updateDb() {
         try {
-            Logr.info("Updating database...");
+            logr.info("Updating database...");
             getConnection();
             PreparedStatement s = ds.getConnection().prepareStatement("ALTER TABLE player_stats ADD chests INT");
             s.execute();

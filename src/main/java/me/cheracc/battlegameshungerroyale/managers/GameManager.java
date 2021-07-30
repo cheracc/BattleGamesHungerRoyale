@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.managers;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
@@ -11,7 +10,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.loot.LootTable;
+import org.bukkit.loot.LootTables;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.*;
@@ -25,22 +28,34 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 public class GameManager {
-    private static GameManager singletonInstance = null;
     private final  List<Game>  activeGames       = new ArrayList<>();
     private final  Scoreboard  mainScoreboard;
     private final  BukkitTask  scoreboardUpdater;
-    private final  BGHR        plugin;
     private final  MapDecider  mapDecider;
+    private final MapManager mapManager;
+    private final BGHR plugin;
+    private final Logr logr;
 
-    private GameManager(BGHR plugin) {
+    public GameManager(BGHR plugin, Logr logr, MapManager mapManager) {
         this.plugin = plugin;
+        this.logr = logr;
+        this.mapManager = mapManager;
         ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
         mainScoreboard = scoreboardManager.getNewScoreboard();
         mapDecider = new MapDecider();
+        getLootTables();
         setupScoreboard();
         setupScoreboardTeams();
         scoreboardUpdater = scoreboardUpdater();
-        Game.createNewGame(mapDecider.selectNextMap(), plugin);
+        createNewGame(mapDecider.selectNextMap());
+    }
+
+    public boolean isThisAGameWorld(World world) {
+        for (Game game : getActiveGames()) {
+            if (game.getWorld().equals(world))
+                return true;
+        }
+        return false;
     }
 
     private void setupScoreboard() {
@@ -72,7 +87,7 @@ public class GameManager {
 
     public void updateScoreboard() {
         int lineNumber = 12;
-        for (Game game : GameManager.getInstance().getActiveGames()) {
+        for (Game game : getActiveGames()) {
             if (lineNumber < 0)
                 break;
             mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Tools.componentalize(
@@ -86,7 +101,7 @@ public class GameManager {
                     if (needed > 0)
                         line2 = String.format("&7    (Need &f%s &7more to start!&7)", needed);
                     else
-                        line2 = String.format("&7    Starting in &f%s", Tools.secondsToAbbreviatedMinsSecs((int) game.getPregameTime()));
+                        line2 = String.format("&7    Starting in &f%s", Tools.secondsToAbbreviatedMinsSecs(game.getCurrentGameTime()));
                     break;
                 case "Invincibility":
                 case "Main":
@@ -96,7 +111,7 @@ public class GameManager {
                     break;
                 case "Postgame":
                     line2 = String.format("    &fWinner: &e%s&f! &7[&fCloses in %s&7]", game.getWinner() != null ? game.getWinner().getName() : "&7nobody",
-                                          Tools.secondsToAbbreviatedMinsSecs((int) game.getPostgameTime()));
+                                          Tools.secondsToAbbreviatedMinsSecs(game.getCurrentGameTime()));
                     break;
                 default:
                     line2 = "";
@@ -112,20 +127,23 @@ public class GameManager {
         mainScoreboard.getTeam("line1").prefix(Trans.lateToComponent(" &e/settings &7to turn this off"));
     }
 
+    public void createNewGameWithCallback(GameOptions options, Consumer<Game> callback) {
+        Game game = new Game(options);
+        mapManager.createNewWorldAsync(options.getMap(), w -> {
+            game.initializeGame(w, plugin.getApi());
+            updateScoreboard();
+            if (callback != null)
+                callback.accept(game);
+        });
+    }
+
+    public void createNewGame(GameOptions options) {
+        createNewGameWithCallback(options, null);
+    }
+
+
     public List<Game> getActiveGames() {
         return new ArrayList<>(activeGames);
-    }
-
-    public static GameManager getInstance() {
-        if (singletonInstance == null) {
-            throw new InstantiationError("must initialize first using initialize(BGHR plugin)");
-        }
-
-        return singletonInstance;
-    }
-
-    public static void initialize(BGHR plugin) {
-        singletonInstance = new GameManager(plugin);
     }
 
     public Scoreboard getMainScoreboard() {
@@ -133,10 +151,6 @@ public class GameManager {
             return mainScoreboard;
         else
             return Bukkit.getScoreboardManager().getMainScoreboard();
-    }
-
-    public BGHR getPlugin() {
-        return plugin;
     }
 
     public boolean isActivelyPlayingAGame(Player player) {
@@ -148,7 +162,7 @@ public class GameManager {
     }
 
     public boolean isInAGame(Player player) {
-        return MapManager.getInstance().isThisAGameWorld(player.getWorld());
+        return isThisAGameWorld(player.getWorld());
     }
 
     public @Nullable Game getPlayersCurrentGame(Player player) {
@@ -159,14 +173,14 @@ public class GameManager {
         return null;
     }
 
-    public void setupGame(Game game) {
+    public void makeThisGameAvailable(Game game) {
         activeGames.add(game);
         updateScoreboard();
     }
 
-    public void gameIsEnding(Game game) {
+    public void gameIsEnding() {
         if (activeGames.size() <= 1 && plugin.isEnabled())
-            Game.createNewGame(mapDecider.selectNextMap(), plugin);
+            createNewGame(mapDecider.selectNextMap());
         updateScoreboard();
     }
 
@@ -175,9 +189,9 @@ public class GameManager {
         mapDecider.setLastMap(game.getMap().getMapName());
         if (activeGames.isEmpty() && plugin.isEnabled())
             if (callback != null)
-                Game.createNewGameWithCallback(mapDecider.selectNextMap(), plugin, callback);
+                createNewGameWithCallback(mapDecider.selectNextMap(), callback);
             else
-                Game.createNewGame(mapDecider.selectNextMap(), plugin);
+                createNewGame(mapDecider.selectNextMap());
         updateScoreboard();
     }
 
@@ -199,7 +213,7 @@ public class GameManager {
 
         if (!configDir.exists())
             if (configDir.mkdirs())
-                Logr.info("Creating new directory for game config files...");
+                logr.info("Creating new directory for game config files...");
 
         if (configDir.listFiles().length == 0) {
             String[] defaultConfigNames = {"crystal_avalanche.yml", "horizon_city.yml", "island_tower.yml", "king_of_the_ring.yml"};
@@ -209,14 +223,14 @@ public class GameManager {
                 File defaultConfig = new File(configDir, filename);
                 try {
                     if (defaultConfig.createNewFile() && !sent) {
-                        Logr.info("Placing the default game config files...");
+                        logr.info("Placing the default game config files...");
                         sent = true;
                     }
                     InputStream in = plugin.getResource("default_game_configs/" + filename);
                     FileUtils.copyToFile(in, defaultConfig);
                     in.close();
                 } catch (IOException e) {
-                    Logr.warn("couldn't create file " + defaultConfig.getAbsolutePath());
+                    logr.warn("couldn't create file " + defaultConfig.getAbsolutePath());
                 }
             }
         }
@@ -224,7 +238,7 @@ public class GameManager {
         for (File file : configDir.listFiles()) {
             if (file.exists() && file.getName().contains(".yml")) {
                 GameOptions options = new GameOptions();
-                options.loadConfig(file);
+                options.loadConfig(file, mapManager, this);
                 configs.add(options);
             }
         }
@@ -313,4 +327,56 @@ public class GameManager {
             this.lastMap = mapName;
         }
     }
+
+    private final Collection<LootTable> lootTables = new HashSet<>();
+
+    private void loadLootTables() {
+
+        for (String s : mapManager.getLootTableNames()) {
+            LootTable t = Bukkit.getLootTable(new NamespacedKey(plugin, s));
+            if (t != null)
+                lootTables.add(t);
+        }
+
+        if (!lootTables.isEmpty()) {
+            StringBuilder names = new StringBuilder(" ");
+            for (LootTable t : lootTables) {
+                names.append(t.getKey().getKey());
+                names.append(" ");
+            }
+            logr.info("Loaded custom loot tables: [%s]", names);
+        }
+        else {
+            // default loot tables
+            for (LootTables t : LootTables.values()) {
+                if (t.getKey().getKey().contains("chest"))
+                    lootTables.add(t.getLootTable());
+            }
+        }
+    }
+
+    public List<LootTable> getLootTables() {
+        if (lootTables.isEmpty())
+            loadLootTables();
+        return new ArrayList<>(lootTables);
+    }
+
+    public LootTable getDefaultLootTable() {
+        LootTable lt = Bukkit.getLootTable(new NamespacedKey(plugin, "default"));
+        if (lt == null) {
+            logr.warn("Could not find default loot table");
+        }
+        return lt;
+    }
+
+    public LootTable getLootTableFromKey(String key) {
+        if (lootTables.isEmpty())
+            loadLootTables();
+        for (LootTable lt : lootTables) {
+            if (lt.getKey().getKey().equalsIgnoreCase(key))
+                return lt;
+        }
+        return null;
+    }
+
 }

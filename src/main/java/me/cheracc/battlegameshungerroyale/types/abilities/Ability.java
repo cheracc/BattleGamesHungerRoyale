@@ -1,8 +1,7 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Kit;
@@ -12,7 +11,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -20,8 +18,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -30,15 +28,13 @@ import java.util.Map;
 import java.util.UUID;
 
 public abstract class Ability implements Cloneable {
-    // static fields and methods
-    private static final NamespacedKey ABILITY_KEY = new NamespacedKey(BGHR.getPlugin(), "ability_item");
-    protected String               description = "";
-    protected String               customName  = null;
-    protected SoundEffect          sound       = null;
-    protected BGHR                 plugin      = null;
-    private   ConfigurationSection section;
-    private   UUID                 id;
-    private   Kit                  forKit      = null;
+    protected String description = "";
+    protected String customName = null;
+    protected SoundEffect sound = null;
+    protected BGHR plugin = null;
+    private ConfigurationSection section;
+    private UUID id;
+    private Kit forKit = null;
 
     public Ability() {
         this.section = null;
@@ -73,36 +69,12 @@ public abstract class Ability implements Cloneable {
         return sb.toString();
     }
 
-    public static Ability getFromItem(ItemStack item) {
-        if (!isAbilityItem(item))
-            return null;
-        String id = item.getItemMeta().getPersistentDataContainer().get(ABILITY_KEY, PersistentDataType.STRING);
-        for (Ability a : KitManager.getInstance().getAllAbilitiesInUse()) {
-            if (a.getId().toString().equals(id))
-                return a;
-        }
-        Logr.warn("couldn't find ability with id %s", id);
-        return null;
-    }
-
-    public static boolean isAbilityItem(ItemStack item) {
-        if (item == null || item.getItemMeta() == null)
-            return false;
-        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
-        return !pdc.isEmpty() && pdc.has(ABILITY_KEY, PersistentDataType.STRING);
-    }
-
     public UUID getId() {
         return id;
     }
 
     public void initialize(BGHR plugin) {
         this.plugin = plugin;
-    }
-
-    public boolean hasMyAbility(Player player) {
-        PlayerData data = PlayerManager.getInstance().getPlayerData(player);
-        return data.getKit() != null && data.getKit().equals(getAssignedKit());
     }
 
     public Kit getAssignedKit() {
@@ -163,17 +135,18 @@ public abstract class Ability implements Cloneable {
     // writes an option to the stored config
     public void setOption(String configOption, Object value) {
         getConfig().set(configOption, value);
-        loadFromConfig(getConfig());
+        if (!loadFromConfig(getConfig()))
+            JavaPlugin.getPlugin(BGHR.class).getLogr().warn("Unknown option found in kits.yml. Kit: %s, Ability: %s", getAssignedKit().getName(), getName());
     }
 
-    public void loadFromConfig(ConfigurationSection section) {
+    public boolean loadFromConfig(ConfigurationSection section) {
         this.section = section;
         this.id = UUID.randomUUID();
         if (section != null) {
             for (String key : section.getKeys(false)) {
                 String fieldName = Tools.configOptionToFieldName(key);
                 Object value = section.get(key);
-                Field f = null;
+                Field f;
                 try {
                     f = this.getClass().getDeclaredField(fieldName);
                     f.setAccessible(true);
@@ -189,12 +162,19 @@ public abstract class Ability implements Cloneable {
                             f.setAccessible(true);
                             f.set(this, value);
                         } catch (NoSuchFieldException | IllegalAccessException exc) {
-                            Logr.warn("no field found for config option. ability:" + getName() + " field:" + fieldName + " option:" + key);
+                            return false;
                         }
                     }
                 }
             }
         }
+        return true;
+    }
+
+    public boolean hasMyAbility(Player player) {
+        PlayerManager pm = plugin.getApi().getPlayerManager();
+        PlayerData data = pm.getPlayerData(player);
+        return data.getKit() != null && data.getKit().equals(getAssignedKit());
     }
 
     // gets the custom name or the default name
@@ -261,7 +241,7 @@ public abstract class Ability implements Cloneable {
         if (item == null || item.getItemMeta() == null)
             return;
         ItemMeta meta = item.getItemMeta();
-        meta.getPersistentDataContainer().set(ABILITY_KEY, PersistentDataType.STRING, id.toString());
+        meta.getPersistentDataContainer().set(BghrApi.ABILITY_KEY, PersistentDataType.STRING, id.toString());
         item.setItemMeta(meta);
     }
 }

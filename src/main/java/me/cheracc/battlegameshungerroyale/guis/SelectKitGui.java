@@ -25,8 +25,8 @@ import java.util.function.Consumer;
 public class SelectKitGui extends ScrollingGui {
     Consumer<Kit> callback;
 
-    public SelectKitGui(HumanEntity player, Gui sendingGui, Consumer<Kit> callback) {
-        super(Math.min(6, KitManager.getInstance().getLoadedKits().size() / 9 + 1), Math.max(45, ((KitManager.getInstance().getLoadedKits().size() / 9) * 9)),
+    public SelectKitGui(HumanEntity player, Gui sendingGui, KitManager kitManager, Consumer<Kit> callback) {
+        super(Math.min(6, kitManager.getLoadedKits().size() / 9 + 1), Math.max(45, ((kitManager.getLoadedKits().size() / 9) * 9)),
                 "Select a Kit", ScrollType.VERTICAL, InteractionModifier.VALUES);
 
         this.callback = callback;
@@ -36,7 +36,7 @@ public class SelectKitGui extends ScrollingGui {
                 sendingGui.open(player);
         });
 
-        List<Kit> availableKits = KitManager.getInstance().getLoadedKits(player.hasPermission("bghr.admin.kits.disabled"));
+        List<Kit> availableKits = kitManager.getLoadedKits(player.hasPermission("bghr.admin.kits.disabled"));
         availableKits.sort(Comparator.comparing(Kit::getName));
 
         for (Kit kit : availableKits) {

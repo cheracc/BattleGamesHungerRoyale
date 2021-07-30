@@ -6,6 +6,7 @@ import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -44,7 +45,7 @@ public class Jump extends Ability implements ActiveAbility {
                 source.setFallDistance(-100);
                 count++;
             }
-        }.runTaskTimer(BGHR.getPlugin(), 5L, 5L);
+        }.runTaskTimer(JavaPlugin.getPlugin(BGHR.class), 5L, 5L);
         return true;
     }
 

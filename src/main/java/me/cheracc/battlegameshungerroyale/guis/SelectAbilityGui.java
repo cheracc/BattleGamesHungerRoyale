@@ -22,8 +22,8 @@ import java.util.function.Consumer;
 
 public class SelectAbilityGui extends Gui {
 
-    public SelectAbilityGui(HumanEntity player, Gui sendingGui, Consumer<Ability> callback) {
-        super(KitManager.getInstance().getDefaultAbilities().size()/9+1, "Select an Ability:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
+    public SelectAbilityGui(HumanEntity player, Gui sendingGui, KitManager kitManager, Consumer<Ability> callback) {
+        super(kitManager.getDefaultAbilities().size()/9+1, "Select an Ability:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
 
         disableAllInteractions();
         setOutsideClickAction(e -> {
@@ -31,7 +31,7 @@ public class SelectAbilityGui extends Gui {
             sendingGui.open(e.getWhoClicked());
         });
 
-        List<Ability> abilities = KitManager.getInstance().getDefaultAbilities();
+        List<Ability> abilities = kitManager.getDefaultAbilities();
         abilities.sort(Comparator.comparing(Ability::getName));
 
         for (Ability a : abilities)

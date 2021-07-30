@@ -1,8 +1,6 @@
 package me.cheracc.battlegameshungerroyale.managers;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.MapData;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
@@ -18,37 +16,9 @@ import org.bukkit.util.Consumer;
 import java.io.*;
 import java.util.*;
 
-// singleton class to handle maps and loaded worlds for the plugin
 public class MapManager implements Listener {
-    // singleton pattern
-    private static MapManager singletonInstance;
-
-    private MapManager() {
-        plugin = BGHR.getPlugin();
-        FileConfiguration mainConfig = plugin.getConfig();
-        mapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("maps directory", "BGHR_Maps/")).getAbsoluteFile();
-        mainWorldFolder = getMainWorldFolder();
-        activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();
-
-        if (!mapsDirectory.exists()) {
-            if (mapsDirectory.mkdirs())
-                Logr.info("Unpacking sample maps into " + mapsDirectory.getPath());
-            Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.toPath());
-        }
-        deleteCompletedMaps();
-        registerMaps();
-        installDataPack();
-        Bukkit.getPluginManager().registerEvents(this, plugin);
-    }
-
-    public static MapManager getInstance() {
-        if (singletonInstance == null)
-            singletonInstance = new MapManager();
-        return singletonInstance;
-    }
-
-    // private fields
     private final BGHR plugin;
+    private final Logr logr;
     private final File mapsDirectory;
     private final File mainWorldFolder;
     private final File activeMapsDirectory;
@@ -57,17 +27,27 @@ public class MapManager implements Listener {
     private World lobbyWorld;
     private boolean updatedDatapack = false;
 
+    public MapManager(BGHR plugin, Logr logr) {
+        this.plugin = plugin;
+        this.logr = logr;
+        FileConfiguration mainConfig = plugin.getConfig();
+        mapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("maps directory", "BGHR_Maps/")).getAbsoluteFile();
+        mainWorldFolder = getMainWorldFolder();
+        activeMapsDirectory = new File(plugin.getDataFolder().getParentFile().getParent(), mainConfig.getString("loaded maps directory", "loaded_maps/")).getAbsoluteFile();
+
+        if (!mapsDirectory.exists()) {
+            if (mapsDirectory.mkdirs())
+                logr.info("Unpacking sample maps into " + mapsDirectory.getPath());
+            Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.toPath());
+        }
+        deleteCompletedMaps();
+        registerMaps();
+        installDataPack();
+        Bukkit.getPluginManager().registerEvents(this, plugin);
+    }
     // public methods
     public boolean wasDatapackUpdated() {
         return updatedDatapack;
-    }
-
-    public boolean isThisAGameWorld(World world) {
-        for (Game game : GameManager.getInstance().getActiveGames()) {
-            if (game.getWorld().equals(world))
-                return true;
-        }
-        return false;
     }
 
     public Set<String> getLootTableNames() {
@@ -114,7 +94,7 @@ public class MapManager implements Listener {
                 return;
             World world = Bukkit.createWorld(new WorldCreator(activeMapsDirectory.getName() + "/" + loadedMap.getName()));
             if (world == null) {
-                Logr.warn("could not load world " + activeMapsDirectory.getName());
+                logr.warn("could not load world " + activeMapsDirectory.getName());
                 return;
             }
             world.setAutoSave(false);
@@ -140,7 +120,7 @@ public class MapManager implements Listener {
     public void saveMap(MapData mapData, World world) {
         File oldVersionsDirectory = new File(mapsDirectory, "old_maps");
         if (!oldVersionsDirectory.exists() && oldVersionsDirectory.mkdirs())
-            Logr.info("Creating 'old_maps' directory for archiving old versions...");
+            logr.info("Creating 'old_maps' directory for archiving old versions...");
         String[] unwantedFiles = { "uid.dat", "session.lock", "level.dat_old", "playerdata", "advancements", "stats" };
 
         world.save();
@@ -151,11 +131,11 @@ public class MapManager implements Listener {
             try {
                 File archiveFolder = new File(oldVersionsDirectory, mapData.getMapDirectory().getName() + "_" + Tools.getTimestamp());
                 FileUtils.moveDirectory(mapData.getMapDirectory(), archiveFolder);
-                Logr.info("Archived " + mapData.getMapDirectory().getPath() + " as " + archiveFolder.getPath());
+                logr.info("Archived " + mapData.getMapDirectory().getPath() + " as " + archiveFolder.getPath());
                 FileUtils.deleteDirectory(mapData.getMapDirectory());
-                Logr.info("Deleted old " + mapData.getMapDirectory().getPath());
+                logr.info("Deleted old " + mapData.getMapDirectory().getPath());
                 FileUtils.copyDirectory(loadedMap, mapData.getMapDirectory());
-                Logr.info("Copied replacement " + loadedMap.getAbsolutePath() + " to " + mapData.getMapDirectory().getPath());
+                logr.info("Copied replacement " + loadedMap.getAbsolutePath() + " to " + mapData.getMapDirectory().getPath());
                 for (String s : unwantedFiles) {
                     File delete = new File(mapData.getMapDirectory(), s);
                     FileUtils.deleteQuietly(delete);
@@ -166,7 +146,7 @@ public class MapManager implements Listener {
             }
         }
         else
-            Logr.warn("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
+            logr.warn("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
     }
 
     // private methods
@@ -201,7 +181,7 @@ public class MapManager implements Listener {
                         config.load(configFile);
                         saveNewConfig = false;
                     } catch (IOException | InvalidConfigurationException e) {
-                        Logr.warn("could not load config file " + configFile.getAbsolutePath());
+                        logr.warn("could not load config file " + configFile.getAbsolutePath());
                     }
                 }
                 MapData mapData = MapData.createFromConfig(config, file);
@@ -232,7 +212,7 @@ public class MapManager implements Listener {
             }
         }
         if (destination.mkdirs())
-            Logr.info("Making a fresh copy of %s%s", mapSourceDirectory.getName(), "...");
+            logr.info("Making a fresh copy of %s%s", mapSourceDirectory.getName(), "...");
 
         if (mapSourceDirectory.listFiles() == null)
             return;
@@ -257,7 +237,7 @@ public class MapManager implements Listener {
                         File playerdataDirectory = new File(destination, "playerdata");
                         if (!playerdataDirectory.exists())
                             if (!playerdataDirectory.mkdirs())
-                                Logr.warn("could not create empty playerdata directory");
+                                logr.warn("could not create empty playerdata directory");
                     }
                     new BukkitRunnable() {
                         @Override
@@ -287,7 +267,7 @@ public class MapManager implements Listener {
         if (!mcmeta.exists()) {
             try {
                 if (mcmeta.createNewFile())
-                    Logr.info("Installing plugin datapack files");
+                    logr.info("Installing plugin datapack files");
                 OutputStream out = new FileOutputStream(mcmeta);
                 Tools.copyStreams(plugin.getResource("datapack_files/pack.mcmeta"), out);
                 out.close();
@@ -300,13 +280,13 @@ public class MapManager implements Listener {
         File pluginLootTablesDir = new File(plugin.getDataFolder(), "loot_tables");
         if (!pluginLootTablesDir.exists())
             if (pluginLootTablesDir.mkdirs())
-                Logr.info("Creating directory " + pluginLootTablesDir.getAbsolutePath() + " (put your own loot tables here!)");
+                logr.info("Creating directory " + pluginLootTablesDir.getAbsolutePath() + " (put your own loot tables here!)");
 
         File defaultLootTable = new File(pluginLootTablesDir, "default.json");
         if (!defaultLootTable.exists()) {
             try {
                 if (defaultLootTable.createNewFile())
-                    Logr.info("Inserting default loot table");
+                    logr.info("Inserting default loot table");
                 OutputStream out = new FileOutputStream(defaultLootTable);
                 Tools.copyStreams(plugin.getResource("datapack_files/default.json"), out);
                 out.close();

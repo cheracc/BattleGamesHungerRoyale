@@ -3,6 +3,8 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
+import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.listeners.TextInputListener;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
@@ -19,6 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +31,19 @@ import java.util.HashSet;
 import java.util.List;
 
 public class ConfigureKitGui extends Gui {
-    Kit kit;
-    Gui sendingGui;
+    private final Kit kit;
+    private final Gui sendingGui;
+    private final BGHR plugin;
+    private final KitManager kitManager;
+    private final TextInputListener textInputListener;
 
-    public ConfigureKitGui(Kit kit, @Nullable Gui sendingGui, HumanEntity player) {
+    public ConfigureKitGui(Kit kit, @Nullable Gui sendingGui, HumanEntity player, BGHR plugin, KitManager kitManager,  TextInputListener textInputListener) {
         super(1, Trans.late("Configuring Kit: ") + kit.getName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.kit = kit;
+        this.plugin = plugin;
         this.sendingGui = sendingGui;
+        this.kitManager = kitManager;
+        this.textInputListener = textInputListener;
 
         disableAllInteractions();
         if (sendingGui == null)
@@ -83,7 +92,7 @@ public class ConfigureKitGui extends Gui {
                     Player p = (Player) e.getWhoClicked();
                     if (e.getClick().isLeftClick()) {
                         p.sendMessage(Tools.formatInstructions(Trans.late("    Enter a new name for this kit:"), kit.getName()));
-                        TextInputListener.getInstance().getNextInputFrom(p, text -> {
+                        textInputListener.getNextInputFrom(p, text -> {
                             kit.setName(text);
                             updateTitle(Trans.late("Configuring Kit: ") + kit.getName());
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
@@ -92,7 +101,7 @@ public class ConfigureKitGui extends Gui {
                     }
                     else if (e.getClick().isRightClick()) {
                         p.sendMessage(Tools.formatInstructions(Trans.late("Enter a new description for this kit. If you want to edit the current description, you can click on this message to enter it into the chat box"), kit.getDescription()));
-                        TextInputListener.getInstance().getNextInputFrom(p, text -> {
+                        textInputListener.getNextInputFrom(p, text -> {
                             kit.setDescription(text);
                             updateItem(e.getSlot(), nameAndDescriptionIcon());
                             open(p);
@@ -142,7 +151,7 @@ public class ConfigureKitGui extends Gui {
                     new EquipmentSetGui(e.getWhoClicked(), kit.getEquipment(), this, equipment -> {
                         kit.setEquipment(equipment);
                         updateItem(e.getSlot(), equipmentIcon());
-                        new ConfigureKitGui(kit, null, e.getWhoClicked());
+                        new ConfigureKitGui(kit, null, e.getWhoClicked(), plugin, kitManager, textInputListener);
                     });
                 });
     }
@@ -184,9 +193,11 @@ public class ConfigureKitGui extends Gui {
         return ItemBuilder.from(icon).name(Tools.componentalize(iconName)).lore(Tools.componentalize(lore)).asGuiItem(e -> {
             if (e.getWhoClicked() instanceof Player) {
                 Player p = (Player) e.getWhoClicked();
+                BGHR plugin = JavaPlugin.getPlugin(BGHR.class);
 
                 if (e.getClick() == ClickType.SHIFT_LEFT) {
                     kit.removeAbility(ability);
+                    kit.saveConfig(plugin);
                     repopulateGui();
                     update();
                     return;
@@ -194,7 +205,8 @@ public class ConfigureKitGui extends Gui {
 
                 p.closeInventory();
                 kit.removeAbility(ability);
-                new ConfigureAbilityGui(e.getWhoClicked(), ability, this, abilityResponse -> {
+                kit.saveConfig(plugin);
+                new ConfigureAbilityGui(e.getWhoClicked(), ability, this, plugin, textInputListener, abilityResponse -> {
                     kit.addAbility(abilityResponse);
                     repopulateGui();
                     update();
@@ -221,7 +233,6 @@ public class ConfigureKitGui extends Gui {
         return ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("&eSave and Exit"))
                 .lore(Tools.componentalize(lore)).asGuiItem(e -> {
                     if (e.getWhoClicked() instanceof Player) {
-                        KitManager kitManager = KitManager.getInstance();
                         Player p = (Player) e.getWhoClicked();
                         p.closeInventory();
 
@@ -238,7 +249,8 @@ public class ConfigureKitGui extends Gui {
 
         return ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Tools.componentalize(Trans.late("&eAdd an Ability")))
             .lore(Tools.componentalize(Tools.wrapText(instructions, ChatColor.AQUA))).asGuiItem(e ->
-                new SelectAbilityGui(e.getWhoClicked(), this, ability -> new ConfigureAbilityGui(e.getWhoClicked(), ability, this, finalAbility -> {
+                new SelectAbilityGui(e.getWhoClicked(), this, kitManager, ability -> new ConfigureAbilityGui(e.getWhoClicked(), ability, this,
+                                                                                                 plugin, textInputListener, finalAbility -> {
                     kit.addAbility(finalAbility);
                     repopulateGui();
                     update();

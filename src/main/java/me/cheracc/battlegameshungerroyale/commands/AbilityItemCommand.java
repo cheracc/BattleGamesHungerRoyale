@@ -1,7 +1,6 @@
 package me.cheracc.battlegameshungerroyale.commands;
-import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.guis.ConfigureAbilityGui;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,10 +11,15 @@ import org.bukkit.metadata.MetadataValue;
 import org.jetbrains.annotations.NotNull;
 
 public class AbilityItemCommand implements CommandExecutor {
+    private final BghrApi api;
+
+    public AbilityItemCommand(BghrApi api) {
+        this.api = api;
+    }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         if (sender instanceof Player) {
-            BGHR plugin = BGHR.getPlugin();
             Player p = (Player) sender;
 
             int slot = -1;
@@ -35,17 +39,17 @@ public class AbilityItemCommand implements CommandExecutor {
                 if (item != null && item.getType().isItem()) {
                     gui.updateConfigOptionForSlot(configOption, slot, item);
                     gui.open(p);
-                    p.removeMetadata("ability_config", plugin);
+                    p.removeMetadata("ability_config", api.getPlugin());
                 } else {
                     p.sendMessage(Trans.lateToComponent("Hold the item you wish to add in your main hand, then try typing &e/abilityitem &fagain"));
                 }
             } else {
-                Logr.info(slot + " " + gui.getClass().getSimpleName() + " " + configOption);
+                api.logr().info(slot + " " + gui.getClass().getSimpleName() + " " + configOption);
                 p.sendMessage(Trans.lateToComponent("You don't seem to be editing a kit or ability item"));
             }
-            p.removeMetadata("ability_config_gui", plugin);
-            p.removeMetadata("ability_config_option", plugin);
-            p.removeMetadata("ability_config_slot", plugin);
+            p.removeMetadata("ability_config_gui", api.getPlugin());
+            p.removeMetadata("ability_config_option", api.getPlugin());
+            p.removeMetadata("ability_config_slot", api.getPlugin());
         }
         return true;
     }

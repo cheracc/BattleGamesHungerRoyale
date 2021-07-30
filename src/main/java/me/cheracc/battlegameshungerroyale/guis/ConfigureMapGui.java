@@ -4,6 +4,7 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
+import me.cheracc.battlegameshungerroyale.listeners.TextInputListener;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
@@ -22,9 +23,13 @@ public class ConfigureMapGui extends Gui {
     private final MapData map;
     private final Gui sendingGui;
     private final HumanEntity player;
+    private final MapManager mapManager;
+    private final TextInputListener textInputListener;
 
-    public ConfigureMapGui(HumanEntity player, Gui sendingGui, MapData map) {
+    public ConfigureMapGui(HumanEntity player, Gui sendingGui, MapData map, MapManager mapManager, TextInputListener textInputListener) {
         super(1, Trans.late("Configure Map: ") + map.getMapName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        this.mapManager = mapManager;
+        this.textInputListener = textInputListener;
         this.map = map;
         this.sendingGui = sendingGui;
         this.player = player;
@@ -73,7 +78,7 @@ public class ConfigureMapGui extends Gui {
             e.getWhoClicked().closeInventory();
             if (e.isShiftClick()) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions(Trans.late("Enter the name of the map creator(s) in the chat window: "), map.getMapName()));
-                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
+                textInputListener.getNextInputFrom((Player) e.getWhoClicked(), text -> {
                     map.setCreator(text);
                     e.getWhoClicked().closeInventory();
                     updateItem(0, nameAndDescriptionIcon());
@@ -82,7 +87,7 @@ public class ConfigureMapGui extends Gui {
             }
             else if (e.isLeftClick()) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions(Trans.late("Type a new name for this map in the chat window: "), map.getMapName()));
-                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
+                textInputListener.getNextInputFrom((Player) e.getWhoClicked(), text -> {
                     map.setName(text);
                     e.getWhoClicked().closeInventory();
                     updateItem(0, nameAndDescriptionIcon());
@@ -92,7 +97,7 @@ public class ConfigureMapGui extends Gui {
             else if (e.isRightClick()) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions(Trans.late("Type a new description for this map in the chat window. ") +
                         Trans.late("You can click this message to load the current description so that you may edit it."), map.getMapDescription()));
-                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
+                textInputListener.getNextInputFrom((Player) e.getWhoClicked(), text -> {
                     map.setDescription(text);
                     e.getWhoClicked().closeInventory();
                     updateItem(0, nameAndDescriptionIcon());
@@ -125,7 +130,7 @@ public class ConfigureMapGui extends Gui {
 
         lore.add("");
 
-        MapData data = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        MapData data = mapManager.getMapFromWorld(player.getWorld());
         if (data != null && data.equals(map)) {
             editable = true;
             if (map.isUseBorder())
@@ -169,7 +174,7 @@ public class ConfigureMapGui extends Gui {
     public GuiItem centerIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.CONDUIT).name(Trans.lateToComponent("&eBorder Center"));
         boolean editable = false;
-        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        MapData mapData = mapManager.getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(this.map)) {
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("Click here to set the center at your location. You can also stand where you want the center to be and type &f/mapconfig &fbordercenter&7. Right click to strike the current center with lightning."), ChatColor.GRAY)));
             editable = true;
@@ -199,7 +204,7 @@ public class ConfigureMapGui extends Gui {
         if (type == null || type.isAir() || !type.isItem())
             type = Material.DIRT;
         ItemBuilder icon = ItemBuilder.from(type).name(Trans.lateToComponent("&eSpawn Point Block"));
-        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        MapData mapData = mapManager.getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(map)) {
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("Games will look for this block type to spawn players on. Click to open a gui and select a new block type. You can also stand on a spawn point and type /mapconfig spawn"), ChatColor.GRAY)));
             editable = true;
@@ -223,7 +228,7 @@ public class ConfigureMapGui extends Gui {
     public GuiItem spawnRadiusIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.ENDER_EYE).name(Trans.lateToComponent("&eSpawn Radius: &f%s", map.getSpawnRadius()));
         boolean editable = false;
-        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        MapData mapData = mapManager.getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(map)) {
             editable = true;
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("How far away players will spawn from the center. Click to increase, Right click to decrease"), ChatColor.GRAY)));
@@ -251,7 +256,7 @@ public class ConfigureMapGui extends Gui {
     public GuiItem spawnCenterIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.PLAYER_HEAD).name(Trans.lateToComponent("&eSpawn Center"));
         boolean editable = false;
-        MapData mapData = MapManager.getInstance().getMapFromWorld(player.getWorld());
+        MapData mapData = mapManager.getMapFromWorld(player.getWorld());
         if (mapData != null && mapData.equals(map)) {
             editable = true;
             icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("Click here to set the center of spawn at your location. You can also stand where you want the center to be and type &f/mapconfig &fspawncenter&7. Right click to strike the current center with lightning."), ChatColor.GRAY)));

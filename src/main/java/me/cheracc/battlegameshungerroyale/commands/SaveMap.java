@@ -1,9 +1,8 @@
 package me.cheracc.battlegameshungerroyale.commands;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.types.MapData;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -12,22 +11,31 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class SaveMap implements CommandExecutor {
-    java.util.Map<UUID, Long> confirmations = new HashMap<>();
-    BukkitTask task = null;
+    private final MapManager mapManager;
+    private final BGHR plugin;
+    private final Map<UUID, Long> confirmations = new HashMap<>();
+    private final BukkitRunnable cleanup;
+
+    public SaveMap(MapManager mapManager, BGHR plugin) {
+        this.mapManager = mapManager;
+        this.plugin = plugin;
+        cleanup = cleanupTask();
+        cleanup.runTaskTimer(plugin, 20*60L, 20*60L);
+    }
 
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         if (commandSender instanceof Player) {
             Player p = (Player) commandSender;
             World w = p.getWorld();
-            MapData mapDataToSave = MapManager.getInstance().getMapFromWorld(w);
+            MapData mapDataToSave = mapManager.getMapFromWorld(w);
 
             if (args.length == 1 && args[0].equalsIgnoreCase("confirm")) {
                 if (checkConfirmation(p) && mapDataToSave != null) {
@@ -36,7 +44,7 @@ public class SaveMap implements CommandExecutor {
                     w.setAutoSave(false);
 
                     String mapName = mapDataToSave.getMapName();
-                    MapManager.getInstance().saveMap(mapDataToSave, w);
+                    mapManager.saveMap(mapDataToSave, w);
                     double elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000;
 
                     p.sendMessage(Tools.componentalize(String.format("&fWorld and Config for &e%s &fhas been saved. That took %.3f seconds. You can type &e/quit&f at any time to unload this map and return to the main world.", mapName, elapsedSeconds)));
@@ -48,8 +56,8 @@ public class SaveMap implements CommandExecutor {
             } else {
                 if (mapDataToSave != null) {
                     sendConfirmation(p);
-                    if (task == null)
-                        startCleanupTask();
+                    if (cleanup.isCancelled())
+                        cleanup.runTaskTimer(plugin, 20*60L, 20*60L);
                     return true;
                 }
             }
@@ -77,13 +85,15 @@ public class SaveMap implements CommandExecutor {
         return false;
     }
 
-    private void startCleanupTask() {
-        task = new BukkitRunnable() {
+    private BukkitRunnable cleanupTask() {
+        return new BukkitRunnable() {
             @Override
             public void run() {
                 Long currentTime = System.currentTimeMillis();
                 confirmations.entrySet().removeIf(e -> currentTime - e.getValue() >= 15000);
+                if (confirmations.isEmpty())
+                    cancel();
             }
-        }.runTaskTimer(BGHR.getPlugin(), 20*60L, 20*60L);
+        };
     }
 }

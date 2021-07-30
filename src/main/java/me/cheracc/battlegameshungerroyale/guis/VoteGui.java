@@ -4,8 +4,7 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import me.cheracc.battlegameshungerroyale.types.MapData;
@@ -19,9 +18,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class VoteGui extends Gui {
+    private final BghrApi api;
 
-    public VoteGui(HumanEntity player) {
-        super(MapManager.getInstance().getMaps().size() / 9 + 1, "Cast Your Vote:", InteractionModifier.VALUES);
+    public VoteGui(HumanEntity player, BghrApi api) {
+        super(api.getMapManager().getMaps().size() / 9 + 1, "Cast Your Vote:", InteractionModifier.VALUES);
+        this.api = api;
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
 
         fillGui();
@@ -30,9 +31,9 @@ public class VoteGui extends Gui {
 
     private void forceUpdateAll() {
         int slot = 0;
-        for (MapData map : MapManager.getInstance().getMaps()) {
+        for (MapData map : api.getMapManager().getMaps()) {
             List<GameOptions> games = new ArrayList<>();
-            GameManager.getInstance().getAllConfigs().forEach(opt -> {
+            api.getGameManager().getAllConfigs().forEach(opt -> {
                 if (opt.getMap().getMapName().equals(map.getMapName()))
                     games.add(opt);
             });
@@ -43,9 +44,9 @@ public class VoteGui extends Gui {
 
     private void fillGui() {
         int slot = 0;
-        for (MapData map : MapManager.getInstance().getMaps()) {
+        for (MapData map : api.getMapManager().getMaps()) {
             List<GameOptions> games = new ArrayList<>();
-            GameManager.getInstance().getAllConfigs().forEach(opt -> {
+            api.getGameManager().getAllConfigs().forEach(opt -> {
                 if (opt.getMap().getMapName().equals(map.getMapName()))
                     games.add(opt);
             });
@@ -56,7 +57,7 @@ public class VoteGui extends Gui {
 
     private GuiItem mapIcon(MapData map, List<GameOptions> games) {
         List<String> lore = new ArrayList<>();
-        int votes = GameManager.getInstance().getVotes(map.getMapName());
+        int votes = api.getGameManager().getVotes(map.getMapName());
         ItemBuilder icon = ItemBuilder.from(map.getIcon()).name(Tools.componentalize(ChatColor.YELLOW + map.getMapName() +
                 ((votes > 0) ? " &8(&7" + votes + " vote" + (votes > 1 ? "s" : "") + "&8)" : "")));
 
@@ -103,7 +104,7 @@ public class VoteGui extends Gui {
         icon.lore(Tools.componentalize(lore));
 
         return icon.asGuiItem(e -> {
-            GameManager.getInstance().addVote((Player) e.getWhoClicked(), map.getMapName());
+            api.getGameManager().addVote((Player) e.getWhoClicked(), map.getMapName());
             forceUpdateAll();
         });
     }

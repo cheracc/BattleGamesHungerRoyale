@@ -1,12 +1,11 @@
 package me.cheracc.battlegameshungerroyale.types;
-import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class EquipmentSet {
-    private final static NamespacedKey EQUIPMENT_KEY = new NamespacedKey(BGHR.getPlugin(), "equipment");
     public enum EquipmentSetSlot { HEAD, CHEST, LEGS, FEET, OFF_HAND, HOTBAR_1, HOTBAR_2, HOTBAR_3;
         boolean isArmor() {
             return ordinal() < 5;
@@ -201,7 +199,7 @@ public class EquipmentSet {
         if (item == null) return false;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return false;
-        String id = meta.getPersistentDataContainer().get(EQUIPMENT_KEY, PersistentDataType.STRING);
+        String id = meta.getPersistentDataContainer().get(BghrApi.EQUIPMENT_KEY, PersistentDataType.STRING);
 
         return (id != null && id.equalsIgnoreCase(uuid.toString()));
     }
@@ -211,7 +209,7 @@ public class EquipmentSet {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        meta.getPersistentDataContainer().set(EQUIPMENT_KEY, PersistentDataType.STRING, uuid.toString());
+        meta.getPersistentDataContainer().set(BghrApi.EQUIPMENT_KEY, PersistentDataType.STRING, uuid.toString());
         item.setItemMeta(meta);
         return item;
     }

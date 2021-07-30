@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 public class SelectMapGui extends Gui {
     private final Consumer<MapData> callback;
 
-    public SelectMapGui(HumanEntity player, Gui sendingGui, Consumer<MapData> callback) {
+    public SelectMapGui(HumanEntity player, Gui sendingGui, MapManager mapManager, Consumer<MapData> callback) {
         super(1, "Select a map:", new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.callback = callback;
         disableAllInteractions();
@@ -28,12 +28,12 @@ public class SelectMapGui extends Gui {
             if (sendingGui != null)
                 sendingGui.open(player);
         });
-        fillGui();
+        fillGui(mapManager);
         open(player);
     }
 
-    private void fillGui() {
-        for (MapData map : MapManager.getInstance().getMaps())
+    private void fillGui(MapManager mapManager) {
+        for (MapData map : mapManager.getMaps())
             addItem(mapIcon(map));
     }
 

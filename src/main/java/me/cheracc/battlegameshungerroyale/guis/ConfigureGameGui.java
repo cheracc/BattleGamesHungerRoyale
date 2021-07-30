@@ -3,12 +3,9 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import me.cheracc.battlegameshungerroyale.types.MapData;
 import net.kyori.adventure.text.Component;
@@ -26,10 +23,12 @@ import java.util.List;
 import java.util.function.IntConsumer;
 
 public class ConfigureGameGui extends Gui {
+    private final BghrApi api;
     private final GameOptions options;
 
-    public ConfigureGameGui(HumanEntity player, GameOptions options, Gui sendingGui) {
+    public ConfigureGameGui(HumanEntity player, GameOptions options, Gui sendingGui, BghrApi api) {
         super(1, Trans.late("Configure Game"), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        this.api = api;
         disableAllInteractions();
         setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();
@@ -169,20 +168,20 @@ public class ConfigureGameGui extends Gui {
             if (options.getConfigFile() == null) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions(Trans.late("Enter a name for this configuration. If you enter an existing configuration name, the old configuration will be overwritten."),
                         options.getConfigFile() == null ? "" : options.getConfigFile().getName().split("\\.")[0]));
-                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), filename -> {
+                api.getTextInputListener().getNextInputFrom((Player) e.getWhoClicked(), filename -> {
                     if (filename.matches("[^-_.A-Za-z0-9]")) {
                         e.getWhoClicked().sendMessage(Trans.lateToComponent("Config names may not contain spaces or other odd characters"));
                         open(e.getWhoClicked());
                         return;
                     }
-                    options.saveConfig(filename);
+                    options.saveConfig(filename, api.getPlugin());
                     e.getWhoClicked().sendMessage(Trans.lateToComponent("&eSaved game configuration to %s%s", filename, ".yml"));
-                    new ConfigureGameGui(e.getWhoClicked(), options, new AdminGui(e.getWhoClicked()));
+                    new ConfigureGameGui(e.getWhoClicked(), options, new AdminGui(e.getWhoClicked(), api), api);
                 });
             } else {
-                options.saveConfig(options.getConfigFile().getName());
+                options.saveConfig(options.getConfigFile().getName(), api.getPlugin());
                 e.getWhoClicked().sendMessage(Trans.lateToComponent("&eSaved game configuration to %s", options.getConfigFile().getName()));
-                new ConfigureGameGui(e.getWhoClicked(), options, new AdminGui(e.getWhoClicked()));
+                new ConfigureGameGui(e.getWhoClicked(), options, new AdminGui(e.getWhoClicked(), api), api);
             }
         });
     }
@@ -192,7 +191,7 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            Game.createNewGameWithCallback(options, GameManager.getInstance().getPlugin(), game -> new SelectGameGui(e.getWhoClicked()));
+            api.getGameManager().createNewGameWithCallback(options, game -> new SelectGameGui(e.getWhoClicked(), api));
         });
 
     }
@@ -211,13 +210,13 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem(e -> {
            e.getWhoClicked().closeInventory();
-           new ConfigureLootGui(e.getWhoClicked(), this, options);
+           new ConfigureLootGui(e.getWhoClicked(), this, options, api);
         });
 
     }
 
     private void sendSelectConfigGui(HumanEntity player) {
-        File configDir = new File(BGHR.getPlugin().getDataFolder(), "gameconfigs/");
+        File configDir = new File(api.getPlugin().getDataFolder(), "gameconfigs/");
         List<File> configFiles = new ArrayList<>();
 
         for (File file : configDir.listFiles()) {
@@ -242,21 +241,21 @@ public class ConfigureGameGui extends Gui {
                 .lore(Trans.lateToComponent("&bClick to start a game using this config"),
                     Trans.lateToComponent("&bRight click to view or modify it")).asGuiItem(e -> {
                         e.getWhoClicked().closeInventory();
-                        options.loadConfig(file);
-                        new ConfigureGameGui(e.getWhoClicked(), options, this);
+                        options.loadConfig(file, api.getMapManager(), api.getGameManager());
+                        new ConfigureGameGui(e.getWhoClicked(), options, this, api);
             }));
         }
 
         gui.addItem(ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Trans.lateToComponent("&eCreate New Configuration")).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            new ConfigureGameGui(e.getWhoClicked(), options, this);
+            new ConfigureGameGui(e.getWhoClicked(), options, this, api);
         }));
 
         gui.open(player);
     }
 
     private void sendSelectMapsGui(HumanEntity player) {
-        List<MapData> maps = MapManager.getInstance().getMaps();
+        List<MapData> maps = api.getMapManager().getMaps();
         int rows = maps.size() / 9 + 1;
 
         Gui gui = Gui.gui().rows(rows).title(Trans.lateToComponent("&0Select a map for this Game")).create();
@@ -272,7 +271,7 @@ public class ConfigureGameGui extends Gui {
             icon.setAction(e -> {
                 options.setMap(map);
                 e.getWhoClicked().closeInventory();
-                new ConfigureGameGui(e.getWhoClicked(), options, this);
+                new ConfigureGameGui(e.getWhoClicked(), options, this, api);
             });
             gui.addItem(icon);
         }

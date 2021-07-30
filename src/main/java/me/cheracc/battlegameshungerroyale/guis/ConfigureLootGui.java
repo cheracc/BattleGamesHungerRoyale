@@ -4,7 +4,7 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.managers.LootManager;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.GameOptions;
@@ -20,11 +20,13 @@ import java.util.HashSet;
 import java.util.List;
 
 public class ConfigureLootGui extends Gui {
+    private final BghrApi api;
     private final GameOptions options;
     private final Gui sendingGui;
 
-    public ConfigureLootGui(HumanEntity player, Gui sendingGui, GameOptions options) {
+    public ConfigureLootGui(HumanEntity player, Gui sendingGui, GameOptions options, BghrApi api) {
         super(1, Trans.late("Loot Settings"), new HashSet<>(Arrays.asList(InteractionModifier.values())));
+        this.api = api;
         this.options = options;
         this.sendingGui = sendingGui;
         disableAllInteractions();
@@ -127,7 +129,7 @@ public class ConfigureLootGui extends Gui {
         lootTableIcon.name(Trans.lateToComponent("&eLoot Table: &f%s", split[split.length - 1]));
 
         lootTableIcon.lore(Trans.lateToComponent("&bClick to cycle through loot tables"), Trans.lateToComponent("&bRight click to cycle backwards"));
-        List<LootTable> allLootTables = LootManager.getLootTables();
+        List<LootTable> allLootTables = api.getGameManager().getLootTables();
 
         GuiAction<InventoryClickEvent> action = (e -> {
             int index = 0;
@@ -158,14 +160,14 @@ public class ConfigureLootGui extends Gui {
         saveIcon.setAction(e -> {
             e.getWhoClicked().closeInventory();
             if (options.getConfigFile() != null) {
-                options.saveConfig(options.getConfigFile().getName());
-                new ConfigureGameGui(e.getWhoClicked(), options, sendingGui);
+                options.saveConfig(options.getConfigFile().getName(), api.getPlugin());
+                new ConfigureGameGui(e.getWhoClicked(), options, sendingGui, api);
             }
             else {
                 Tools.formatInstructions(Trans.late("You need to save the game configuration first. Enter a name for these game settings (only letter, numbers, dash and underscores - no spaces):"), "");
-                TextInputListener.getInstance().getNextInputFrom((Player) e.getWhoClicked(), text -> {
-                    options.saveConfig(text);
-                    new ConfigureGameGui(e.getWhoClicked(), options, sendingGui);
+                api.getTextInputListener().getNextInputFrom((Player) e.getWhoClicked(), text -> {
+                    options.saveConfig(text, api.getPlugin());
+                    new ConfigureGameGui(e.getWhoClicked(), options, sendingGui, api);
                 });
             }
             updateItem(8, saveIcon());

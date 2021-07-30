@@ -1,7 +1,5 @@
 package me.cheracc.battlegameshungerroyale.managers;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.types.Game;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -16,7 +14,6 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.loot.LootTable;
-import org.bukkit.loot.LootTables;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -27,6 +24,8 @@ import java.util.function.Consumer;
 
 public class LootManager implements Listener {
     private final Game game;
+    private final Logr logr;
+    private final BGHR plugin;
     private final BukkitTask asyncChunkScanner;
     private final BukkitTask updateChests;
     private final BukkitTask chestRecycler;
@@ -42,8 +41,10 @@ public class LootManager implements Listener {
     private final Set<Location> usedChestLocations = new HashSet<>();
     private final Queue<ChunkSnapshot> toSearch = new ConcurrentLinkedQueue<>();
 
-    public LootManager(Game game) {
-        Bukkit.getPluginManager().registerEvents(this, BGHR.getPlugin());
+    public LootManager(Game game, BGHR plugin, Logr logr, GameManager gameManager) {
+        this.plugin = plugin;
+        this.logr = logr;
+        Bukkit.getPluginManager().registerEvents(this, plugin);
         this.generateChests = game.getOptions().isGenerateChests();
         this.loadPrePlacedChests = game.getOptions().isFillAllChests();
         this.maxChestsPerChunk = game.getOptions().getMaxChestsPerChunk();
@@ -54,10 +55,10 @@ public class LootManager implements Listener {
         this.updateChests = updateChests();
         this.chestRecycler = chestRecycler();
         if (game.getOptions().getLootTable() == null)
-            this.lootTable = getDefaultLootTable();
+            this.lootTable = gameManager.getDefaultLootTable();
         else
             this.lootTable = game.getOptions().getLootTable();
-        Logr.info("Searching for loot chest locations...");
+        logr.info("Searching for loot chest locations...");
     }
 
     public void close() {
@@ -113,7 +114,7 @@ public class LootManager implements Listener {
                 toRemove.clear();
             }
         };
-        return addShinies.runTaskTimer(BGHR.getPlugin(), 10L, 8L);
+        return addShinies.runTaskTimer(plugin, 10L, 8L);
     }
 
     private BukkitTask asyncChunkScanner() {
@@ -124,7 +125,7 @@ public class LootManager implements Listener {
             public void run() {
                 if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0 && System.currentTimeMillis() - startTime > 1000*10)) {
                     cancel();
-                    Logr.info("Finished searching, found %s loot chest locations.",
+                    logr.info("Finished searching, found %s loot chest locations.",
                             unusedChestLocations.size() + usedChestLocations.size());
                     return;
                 }
@@ -141,7 +142,7 @@ public class LootManager implements Listener {
 
             }
         };
-        return asyncScanner.runTaskTimerAsynchronously(BGHR.getPlugin(), 20L, 2L);
+        return asyncScanner.runTaskTimerAsynchronously(plugin, 20L, 2L);
     }
 
     private void searchChunkForChestLocations(ChunkSnapshot chunk, int maxChestsPerChunk) {
@@ -217,7 +218,7 @@ public class LootManager implements Listener {
                     }
                 }
             }
-        }.runTaskAsynchronously(BGHR.getPlugin());
+        }.runTaskAsynchronously(plugin);
 
     }
 
@@ -236,7 +237,7 @@ public class LootManager implements Listener {
                 }
             }
         };
-        return recycler.runTaskTimer(BGHR.getPlugin(), 200L, 100L);
+        return recycler.runTaskTimer(plugin, 200L, 100L);
     }
 
     private void recycleChestAt(Location location) {
@@ -264,7 +265,7 @@ public class LootManager implements Listener {
         }
         b.setType(Material.CHEST);
         Chest chest = (Chest) b.getState();
-        LootTable table = Bukkit.getLootTable(new NamespacedKey(BGHR.getPlugin(), lootTable.getKey().getKey()));
+        LootTable table = Bukkit.getLootTable(new NamespacedKey(plugin, lootTable.getKey().getKey()));
         chest.setLootTable(table);
         chest.update(true);
         Directional data = (Directional) chest.getBlockData();
@@ -350,58 +351,6 @@ public class LootManager implements Listener {
             if (centerX - 1 >= 0)
                 sides.add(chunk.getBlockData(centerX - 1, centerY, centerZ));
         }
-    }
-
-    private final static Collection<LootTable> LOOT_TABLES = new HashSet<>();
-
-    private static void loadLootTables() {
-        BGHR plugin = BGHR.getPlugin();
-
-        for (String s : MapManager.getInstance().getLootTableNames()) {
-            LootTable t = Bukkit.getLootTable(new NamespacedKey(plugin, s));
-            if (t != null)
-                LOOT_TABLES.add(t);
-        }
-
-        if (!LOOT_TABLES.isEmpty()) {
-            StringBuilder names = new StringBuilder(" ");
-            for (LootTable t : LOOT_TABLES) {
-                names.append(t.getKey().getKey());
-                names.append(" ");
-            }
-            Logr.info("Loaded custom loot tables: [%s]", names);
-        }
-        else {
-            // default loot tables
-            for (LootTables t : LootTables.values()) {
-                if (t.getKey().getKey().contains("chest"))
-                    LOOT_TABLES.add(t.getLootTable());
-            }
-        }
-    }
-
-    public static List<LootTable> getLootTables() {
-        if (LOOT_TABLES.isEmpty())
-            loadLootTables();
-        return new ArrayList<>(LOOT_TABLES);
-    }
-
-    public static LootTable getDefaultLootTable() {
-        LootTable lt = Bukkit.getLootTable(new NamespacedKey(BGHR.getPlugin(), "default"));
-        if (lt == null) {
-            Logr.warn("Could not find default loot table");
-        }
-        return lt;
-    }
-
-    public static LootTable getLootTableFromKey(String key) {
-        if (LOOT_TABLES.isEmpty())
-            loadLootTables();
-        for (LootTable lt : LOOT_TABLES) {
-            if (lt.getKey().getKey().equalsIgnoreCase(key))
-                return lt;
-        }
-        return null;
     }
 
     @EventHandler

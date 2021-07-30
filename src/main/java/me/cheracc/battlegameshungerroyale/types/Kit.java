@@ -2,40 +2,32 @@ package me.cheracc.battlegameshungerroyale.types;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.KitManager;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
-import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
-import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
-import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Kit {
     private final ConfigurationSection config;
-    private final String id;
-    private final List<Ability> abilities = new ArrayList<>();
-    private boolean enabled;
-    private String name;
-    private String description;
-    private String iconItemType;
+    private final String               id;
+    private final List<Ability>        abilities = new ArrayList<>();
+    private       boolean              enabled;
+    private       String               name;
+    private       String               description;
+    private       String               iconItemType;
     private EquipmentSet equipment;
 
-    public Kit(String key, ConfigurationSection config) {
+    public Kit(String key, ConfigurationSection config, KitManager kitManager) {
         this.id = key;
         this.config = config;
         this.equipment = EquipmentSet.newEquipmentSet();
@@ -45,8 +37,8 @@ public class Kit {
         name = config.getString("name", "Nameless Kit");
         description = config.getString("description", "Give this kit a description");
         iconItemType = config.getString("icon", "chest").toUpperCase();
-        if (config.contains("abilities"))
-            loadAbilities(Objects.requireNonNull(config.getConfigurationSection("abilities")));
+        if (config.getConfigurationSection("abilities") != null)
+            loadAbilities(config.getConfigurationSection("abilities"), kitManager);
         enabled = config.getBoolean("enabled", true);
     }
 
@@ -95,67 +87,13 @@ public class Kit {
 
     public void removeAbility(Ability ability) {
         if (!abilities.contains(ability)) {
-            Logr.warn("Tried to remove " + ability.getName() + " from kit " + getName() + " but it isn't there");
             return;
         }
         abilities.remove(ability);
-        saveConfig();
     }
 
     public EquipmentSet getEquipment() {
         return equipment;
-    }
-
-    public void disrobePlayer(Player player) {
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item == null || item.getItemMeta() == null)
-                continue;
-            if (Ability.isAbilityItem(item) || Tools.isPluginItem(item))
-                player.getInventory().remove(item);
-        }
-        ItemStack item = player.getInventory().getItemInOffHand();
-        if (item != null && item.getItemMeta() != null) {
-            if (Ability.isAbilityItem(item) || Tools.isPluginItem(item))
-                player.getInventory().setItemInOffHand(null);
-        }
-
-        getEquipment().unequip(player);
-        for (Ability ability : getAbilities()) {
-            if (ability instanceof PassiveAbility) {
-                ((PassiveAbility) ability).deactivate(player);
-            }
-        }
-    }
-
-    public void outfitPlayer(Player p) {
-        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
-        Kit kit = data.getKit();
-        if (!this.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Trans.lateToComponent("That kit is disabled"));
-            return;
-        }
-
-        if (kit != null)
-            kit.disrobePlayer(p);
-
-        for (Ability a : abilities) {
-            if (a instanceof ActiveAbility) {
-                ItemStack abilityItem = ((ActiveAbility) a).createAbilityItem();
-                p.getInventory().setItem(getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(abilityItem));
-            }
-            if (a instanceof PassiveAbility) {
-                if (((PassiveAbility) a).hasToggleItem()) {
-                    ItemStack toggleItem = ((PassiveAbility) a).makeToggleItem();
-                    p.getInventory().setItem(getLastEmptyHotbarSlot(p), Tools.tagAsPluginItem(toggleItem));
-                } else {
-                    ((PassiveAbility) a).activate(p);
-                }
-            }
-        }
-        if (equipment.isNotEmpty()) {
-            equipment.equip(p);
-        }
-        p.sendMessage(Trans.lateToComponent("You have been equipped with kit &e" + getName()));
     }
 
     public Material getIcon() {
@@ -178,8 +116,7 @@ public class Kit {
         this.equipment = equipment;
     }
 
-    public void saveConfig() {
-        BGHR plugin = BGHR.getPlugin();
+    public void saveConfig(BGHR plugin) {
         File configFile = new File(plugin.getDataFolder(), "kits.yml");
         if (!configFile.exists())
             plugin.saveResource("kits.yml", false);
@@ -208,34 +145,12 @@ public class Kit {
         }
     }
 
-    private int getLastEmptyHotbarSlot(Player p) {
-        for (int i = 8; i >= 0; i--) {
-            ItemStack item = p.getInventory().getItem(i);
-            if (item == null || item.getType() == Material.AIR)
-                return i;
-        }
-        for (int i = 8; i >= 0; i--) {
-            ItemStack item = p.getInventory().getItem(i);
-            if (!Tools.isPluginItem(item)) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        p.getInventory().addItem(item);
-                    }
-                }.runTaskLater(BGHR.getPlugin(), 1);
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private void loadAbilities(ConfigurationSection section) {
-        KitManager kits = KitManager.getInstance();
+    private void loadAbilities(ConfigurationSection section, KitManager kitManager) {
         Set<String> keys = section.getKeys(false);
 
         for (String key : keys) {
             if (key != null) {
-                for (Ability a : kits.getDefaultAbilities()) {
+                for (Ability a : kitManager.getDefaultAbilities()) {
                     if (key.startsWith(a.getName())) {
                         Ability ability = a.newWithDefaults();
                         ability.loadFromConfig(section.getConfigurationSection(key));
@@ -247,7 +162,8 @@ public class Kit {
     }
 
     public List<PlayerData> getMyPlayers() {
-        List<PlayerData> players = PlayerManager.getInstance().getLoadedPlayers();
+        PlayerManager playerManager = JavaPlugin.getPlugin(BGHR.class).getApi().getPlayerManager();
+        List<PlayerData> players = playerManager.getLoadedPlayers();
         players.removeIf(data -> data.getKit() == null || !data.getKit().equals(this));
 
         return players;

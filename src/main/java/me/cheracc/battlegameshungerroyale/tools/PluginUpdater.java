@@ -73,7 +73,7 @@ public class PluginUpdater {
             currentBuildNumber = pluginYml.getInt("build-number", 0);
             isSnapshotBuild = pluginYml.getString("version", "").contains("SNAPSHOT");
             if (isSnapshotBuild)
-                Logr.warn("Using a snapshot build - expect errors or bugs! Please report them if you find them!");
+                plugin.getLogr().warn("Using a snapshot build - expect errors or bugs! Please report them if you find them!");
         }
     }
 
@@ -92,12 +92,12 @@ public class PluginUpdater {
             JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
 
             if (jsonObject == null) {
-                Logr.warn("could not read json string");
+                plugin.getLogr().warn("could not read json string");
                 return;
             }
             JsonObject buildInfo = jsonObject.getAsJsonObject("lastStableBuild");
             if (buildInfo == null) {
-                Logr.warn("json object did not contain lastStableBuild");
+                plugin.getLogr().warn("json object did not contain lastStableBuild");
                 return;
             }
             if (buildInfo.has("number"))
@@ -116,7 +116,7 @@ public class PluginUpdater {
 
         if (mostRecentBuildAvailable > 0 && urlToMostRecentBuild != null && urlToMostRecentBuild.length() > 0) {
             if (!notified)
-                Logr.info(String.format("Updater found no new version. (snapshots:%s, current:%s, newest:%s)", useSnapshotBuilds, currentBuildNumber, mostRecentBuildAvailable));
+                plugin.getLogr().info(String.format("Updater found no new version. (snapshots:%s, current:%s, newest:%s)", useSnapshotBuilds, currentBuildNumber, mostRecentBuildAvailable));
             notified = true;
             return mostRecentBuildAvailable <= currentBuildNumber;
         }
@@ -141,7 +141,7 @@ public class PluginUpdater {
                     toSave.delete();
                 toSave.getParentFile().mkdirs();
 
-                Logr.info(String.format("Updater found a new update (%s build #%s): preparing to download", useSnapshotBuilds ? "SNAPSHOT" : "" ,mostRecentBuildAvailable));
+                plugin.getLogr().info(String.format("Updater found a new update (%s build #%s): preparing to download", useSnapshotBuilds ? "SNAPSHOT" : "" ,mostRecentBuildAvailable));
 
                 try {
                     toSave.createNewFile();
@@ -172,11 +172,11 @@ public class PluginUpdater {
             public void run() {
                 if (downloadStatus != null && downloadStatus.isDone()) {
                     if (downloadStatus.getNow(false)) {
-                        Logr.info("Updater finished downloading plugin update. it will be installed on restart");
+                        plugin.getLogr().info("Updater finished downloading plugin update. it will be installed on restart");
                         cancel();
                     }
                     else {
-                        Logr.info("Updater failed to download update!");
+                        plugin.getLogr().info("Updater failed to download update!");
                         downloadStatus = null;
                         File failure = new File(Bukkit.getUpdateFolderFile(), plugin.getJarFilename());
                         if (failure.exists())

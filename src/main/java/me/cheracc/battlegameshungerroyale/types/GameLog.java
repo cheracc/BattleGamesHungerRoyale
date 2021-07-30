@@ -2,7 +2,7 @@ package me.cheracc.battlegameshungerroyale.types;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.*;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
+import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.Bukkit;
@@ -25,10 +25,12 @@ public class GameLog implements Listener {
     private final Map<Long, Object> entries = new HashMap<>();
     private final Game game;
     private final File logFile;
+    private final Logr logr;
 
     public GameLog(Game game, BGHR plugin) {
         this.startTime = System.currentTimeMillis();
         this.game = game;
+        this.logr = plugin.getLogr();
         mapName = game.getMap().getMapName();
 
         String timestamp = Instant.now().toString().split("\\.")[0].replace('T', '_').replace(':', '-');
@@ -89,7 +91,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Logr.warn("couldn't save gamelog file");
+            logr.warn("couldn't save gamelog file");
         }
     }
 
@@ -101,7 +103,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Logr.warn("couldn't save gamelog file");
+            logr.warn("couldn't save gamelog file");
         }
     }
 
@@ -114,7 +116,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Logr.warn("couldn't save gamelog file");
+            logr.warn("couldn't save gamelog file");
         }
     }
 
@@ -122,7 +124,7 @@ public class GameLog implements Listener {
         try {
             saveLogFile();
         } catch (IOException e) {
-            Logr.warn("couldn't save gamelog file");
+            logr.warn("couldn't save gamelog file");
         }
         HandlerList.unregisterAll(this);
     }
@@ -130,7 +132,7 @@ public class GameLog implements Listener {
     private void saveLogFile() throws IOException {
         if (!logFile.exists())
             if (logFile.getParentFile().mkdirs())
-                Logr.info("Creating directory for game log files: " + logFile.getParentFile().getAbsolutePath());
+                logr.info("Creating directory for game log files: " + logFile.getParentFile().getAbsolutePath());
 
         FileWriter writer = new FileWriter(logFile);
         PrintWriter printer = new PrintWriter(writer);

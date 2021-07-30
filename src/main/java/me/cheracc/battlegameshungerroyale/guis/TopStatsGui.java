@@ -8,9 +8,8 @@ import dev.triumphteam.gui.builder.item.SkullBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.managers.DatabaseManager;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
+import me.cheracc.battlegameshungerroyale.BghrApi;
+import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.entity.HumanEntity;
@@ -34,28 +33,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class TopStatsGui extends Gui {
-    private final BGHR plugin;
-    private BukkitTask completionChecker;
-    private static TopStatsGui singleton;
+    private final BghrApi api;
     private final List<CompletableFuture<TopTenCategory>> uncompletedFutures = new ArrayList<>();
     private final LinkedHashMap<String, TopTenCategory> finishedCategories = new LinkedHashMap<>();
     String[] columns = new String[] { "kills", "killstreak", "deaths", "wins", "secondplaces", "totaltime", "quits", "damagedealt", "damagetaken", "activeabilities", "chests", "itemslooted", "arrowsshot", "monsterskilled", "animalskilled", "foodeaten"};
     String[] prettyNames = new String[] { "Kills", "Highest Kill Streak", "Deaths", "Wins", "Second Place Finishes", "Total Time Played", "Games Quit", "Damage Dealt", "Damage Taken", "Abilities Used", "Chests Opened", "Items Looted", "Arrows Shot", "Monsters Killed", "Animals Killed", "Food Eaten"};
 
-    private TopStatsGui(BGHR plugin) {
+    public TopStatsGui(BghrApi api) {
         super(2, "Top Players", InteractionModifier.VALUES);
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
-        singleton = this;
-        this.plugin = plugin;
-        completionChecker = watchForCompleted();
+        this.api = api;
+        BukkitTask completionChecker = watchForCompleted();
 
         for (int i = 0; i < columns.length; i++) {
-            uncompletedFutures.add(TopTenCategory.loadTopTen(columns[i], prettyNames[i]));
+            uncompletedFutures.add(new TopTenCategory(columns[i], prettyNames[i]).loadTopTen());
         }
-    }
-
-    public static void initialize(BGHR plugin) {
-        singleton = new TopStatsGui(plugin);
     }
 
     public void send(HumanEntity player) {
@@ -63,10 +55,6 @@ public class TopStatsGui extends Gui {
             setItem(i, categoryIcon(finishedCategories.get(columns[i])));
         }
         open(player);
-    }
-
-    public static TopStatsGui getInstance() {
-        return singleton;
     }
 
     private GuiItem categoryIcon(TopTenCategory statistic) {
@@ -97,25 +85,25 @@ public class TopStatsGui extends Gui {
                 }
                 uncompletedFutures.removeAll(toRemove);
                 if (uncompletedFutures.isEmpty()) {
-                    Logr.info("Finished loading TopStats");
+                    api.logr().info("Finished loading TopStats");
                     cancel();
                 }
             }
         };
-        return task.runTaskTimer(plugin, 40, 5L);
+        return task.runTaskTimer(api.getPlugin(), 40, 5L);
     }
 
-    private static class TopTenCategory {
+    private class TopTenCategory {
         private final String prettyName;
         private final String columnName;
         private String topTexture;
         LinkedHashMap<String, Integer> topScores = new LinkedHashMap<>();
 
-        private TopTenCategory(String columnName, String prettyName) {
+        public TopTenCategory(String columnName, String prettyName) {
             this.columnName = columnName;
             this.prettyName = prettyName;
 
-            try (Connection con = DatabaseManager.get().getConnection();
+            try (Connection con = api.getDatabaseManager().getConnection();
             PreparedStatement stmt = con.prepareStatement("SELECT uuid," + columnName + " FROM player_stats ORDER BY " + columnName + " DESC LIMIT 10");
             ResultSet result = stmt.executeQuery()) {
                 boolean first = true;
@@ -182,14 +170,14 @@ public class TopStatsGui extends Gui {
             return columnName;
         }
 
-        public static CompletableFuture<TopTenCategory> loadTopTen(String columnName, String prettyName) {
+        public CompletableFuture<TopTenCategory> loadTopTen() {
             CompletableFuture<TopTenCategory> future = new CompletableFuture<>();
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     future.complete(new TopTenCategory(columnName, prettyName));
                 }
-            }.runTaskAsynchronously(BGHR.getPlugin());
+            }.runTaskAsynchronously(api.getPlugin());
             return future;
         }
     }

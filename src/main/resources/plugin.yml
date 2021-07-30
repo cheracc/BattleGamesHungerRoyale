@@ -47,3 +47,6 @@ commands:
   vote:
     usage: "/vote"
     description: "lets you vote for your favorite map"
+  join:
+    usage: "/join"
+    description: "joins the current game or shows the list of games available"

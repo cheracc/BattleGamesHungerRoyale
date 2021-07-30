@@ -1,8 +1,7 @@
 package me.cheracc.battlegameshungerroyale.abilities;
-
+import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.GameStartEvent;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
@@ -18,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Arrays;
@@ -61,8 +61,9 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
 
     @EventHandler
     public void giveItemOnGameStart(GameStartEvent event) {
+        PlayerManager playerManager = JavaPlugin.getPlugin(BGHR.class).getApi().getPlayerManager();
         for (Player p : event.getPlayers()) {
-            if (PlayerManager.getInstance().getPlayerData(p).hasKit(getAssignedKit()))
+            if (playerManager.getPlayerData(p).hasKit(getAssignedKit()))
                 if (!p.hasMetadata("has_base_item")) {
                     giveBaseItem(p);
                     p.setMetadata("has_base_item", new FixedMetadataValue(plugin, true));
@@ -173,7 +174,6 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
             if (meta.getPersistentDataContainer().has(key, PersistentDataType.STRING))
                 return i;
         }
-        Logr.warn(String.format("Could not find upgradeable item %s on %s", baseItem.getType().name(), player.getName()));
         return null;
     }
 }

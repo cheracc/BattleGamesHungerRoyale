@@ -1,11 +1,9 @@
 package me.cheracc.battlegameshungerroyale.types;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.managers.*;
+import me.cheracc.battlegameshungerroyale.managers.DatabaseManager;
+import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -19,7 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
 
 public class PlayerData {
     private final UUID uuid;
@@ -32,28 +30,11 @@ public class PlayerData {
     private boolean modified = false;
     private boolean loaded = false;
 
-    public PlayerData(UUID uuid, Consumer<PlayerData> callback) {
+    public PlayerData(UUID uuid) {
         this.uuid = uuid;
         settings = new PlayerSettings();
         stats = new PlayerStats(uuid);
         // load the stats and if new, mark as modified so they can be saved on the next update
-        loadAsynchronously(foundRecords -> {
-            if (foundRecords)
-                Logr.info("Finished loading playerdata for %s", uuid);
-            else {
-                Logr.info("Creating new playerdata for " + uuid);
-                lastLocation = Bukkit.getWorlds().get(0).getSpawnLocation();
-                lastInventory = new String[] { "", "", "" };
-            }
-            modified = !foundRecords;
-            PlayerManager.getInstance().thisPlayerIsLoaded(this);
-            loaded = true;
-
-            if (getPlayer() != null)
-                restorePlayer();
-            if (callback != null)
-                callback.accept(this);
-        });
     }
 
     public UUID getUuid() {
@@ -96,8 +77,6 @@ public class PlayerData {
             p.sendMessage(Trans.lateToComponent("That kit is disabled"));
             return;
         }
-
-
         if (this.kit != null)
             removeKit(this.kit);
 
@@ -105,38 +84,14 @@ public class PlayerData {
             p.getInventory().clear();
 
         this.kit = kit;
-
-
-        if (MapManager.getInstance().isThisAGameWorld(p.getWorld()) || BGHR.getPlugin().getConfig().getBoolean("main world.kits useable in main world", false)) {
-            kit.outfitPlayer(p);
-        } else {
-            p.sendMessage(Component.text("Kit&e " + kit.getName() + " &fwill be equipped when you join a game."));
-        }
     }
 
     public void removeKit(Kit kit) {
-        kit.disrobePlayer(getPlayer());
         this.kit = null;
     }
 
     public boolean hasKit(Kit kit) {
         return this.kit != null && this.kit.equals(kit);
-    }
-
-    public void restorePlayer() {
-        Player p = getPlayer();
-        if (settings.isShowMainScoreboard())
-            p.setScoreboard(GameManager.getInstance().getMainScoreboard());
-        else
-            p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-
-        writeSavedInventoryToPlayer();
-
-        if (getSettings().getDefaultKit() != null) {
-            Kit kit = KitManager.getInstance().getKit(getSettings().getDefaultKit());
-            if (kit != null)
-                registerKit(kit, false);
-        }
     }
 
     public Location getLastLocation() {
@@ -147,6 +102,12 @@ public class PlayerData {
         if (!loc.equals(lastLocation)) {
             lastLocation = loc;
             modified = true;
+        }
+    }
+
+    public void setLastLocation() {
+        if (getPlayer() != null) {
+            setLastLocation(getPlayer().getLocation());
         }
     }
 
@@ -170,7 +131,7 @@ public class PlayerData {
         return lastInventory;
     }
 
-    private void writeSavedInventoryToPlayer() {
+    public void writeSavedInventoryToPlayer() {
         try {
             if (lastInventory != null) {
                 InventorySerializer.resetPlayerInventoryFromBase64(getPlayer(), lastInventory);
@@ -188,26 +149,25 @@ public class PlayerData {
         modified = value;
     }
 
-    private void loadAsynchronously(Consumer<Boolean> callback) {
+    public CompletableFuture<PlayerData> loadAsynchronously(DatabaseManager db, Logr logr, BGHR plugin) {
+        CompletableFuture<PlayerData> future = new CompletableFuture<>();
         new BukkitRunnable() {
             @Override
             public void run() {
-                boolean success = load();
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        callback.accept(success);
-                    }
-                }.runTask(BGHR.getPlugin());
+                logr.debug("Starting load of %s", uuid);
+                load(db, logr);
+                logr.debug("Load complete");
+                future.complete(PlayerData.this);
             }
-        }.runTaskAsynchronously(BGHR.getPlugin());
+        }.runTaskAsynchronously(plugin);
+        return future;
     }
 
 
-    public boolean load() {
+    private boolean load(DatabaseManager db, Logr logr) {
         boolean found = false;
 
-        try (Connection con = DatabaseManager.get().getConnection();
+        try (Connection con = db.getConnection();
         PreparedStatement loadStatsQuery = con.prepareStatement("SELECT * FROM player_stats WHERE uuid=?");
         PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?");
         PreparedStatement loadDataQuery = con.prepareStatement("SELECT * FROM player_data WHERE uuid=?")) {
@@ -219,7 +179,7 @@ public class PlayerData {
                 result.next();
 
                 if (!result.isLast()) {
-                    Logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
+                    logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
                     return false;
                 }
                 found = true;
@@ -249,7 +209,7 @@ public class PlayerData {
                 result.next();
 
                 if (!result.isLast()) {
-                    Logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
+                    logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
                     return false;
                 }
 
@@ -266,7 +226,7 @@ public class PlayerData {
                 result.next();
 
                 if (!result.isLast()) {
-                    Logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
+                    logr.warn("attempting to load player data resulted in duplicate uuids (this shouldn't happen)");
                     return false;
                 }
 
@@ -293,8 +253,8 @@ public class PlayerData {
         }
     }
 
-    public void save() {
-        try (Connection con = DatabaseManager.get().getConnection();
+    public void save(DatabaseManager db) {
+        try (Connection con = db.getConnection();
              PreparedStatement updateSettings = con.prepareStatement(
                      "INSERT INTO player_settings (uuid,showmain,showhelp,defaultkit) VALUES (?,?,?,?) " +
                              "ON DUPLICATE KEY UPDATE " +

@@ -1,21 +1,16 @@
 package me.cheracc.battlegameshungerroyale.listeners;
-
-import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.MapManager;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.Hologram;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -27,22 +22,22 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
 public class GeneralListeners implements Listener {
-    private final BGHR plugin;
-    public GeneralListeners(BGHR plugin) {
-        this.plugin = plugin;
+    private final BghrApi api;
+    public GeneralListeners(BghrApi api) {
+        this.api = api;
     }
 
     @EventHandler
     public void handlePlayerQuits(PlayerQuitEvent event) {
         Player p = event.getPlayer();
-        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+        PlayerData data = api.getPlayerManager().getPlayerData(p);
         if (data.getKit() != null)
-            data.getKit().disrobePlayer(p);
+            api.getPlayerManager().disrobePlayer(p, data.getKit());
 
-        if (!GameManager.getInstance().isInAGame(p))
+        if (!api.getGameManager().isInAGame(p))
             data.saveInventory(false);
 
-        Game game = GameManager.getInstance().getPlayersCurrentGame(p);
+        Game game = api.getGameManager().getPlayersCurrentGame(p);
         if (game != null)
             game.quit(event.getPlayer());
     }
@@ -54,16 +49,16 @@ public class GeneralListeners implements Listener {
             return;
 
         Player p = event.getPlayer();
-        PlayerData pData = PlayerManager.getInstance().getPlayerData(p);
+        PlayerData pData = api.getPlayerManager().getPlayerData(p);
 
         // check if player is leaving a game or loaded map and handle it - this should only happen if admins are using /tp commands.
-        if (event.getCause() != PlayerTeleportEvent.TeleportCause.PLUGIN && MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld())) {
+        if (event.getCause() != PlayerTeleportEvent.TeleportCause.PLUGIN && api.getGameManager().isThisAGameWorld(event.getFrom().getWorld())) {
             Bukkit.dispatchCommand(p, "quit");
         }
 
         // check if player is transferring TO a main world FROM a game world
-        if (!MapManager.getInstance().isThisAGameWorld(p.getWorld()) && MapManager.getInstance().isThisAGameWorld(event.getFrom().getWorld())) {
-            GameMode defaultGameMode = GameMode.valueOf(plugin.getConfig().getString("main world.gamemode", "adventure").toUpperCase());
+        if (!api.getGameManager().isThisAGameWorld(p.getWorld()) && api.getGameManager().isThisAGameWorld(event.getFrom().getWorld())) {
+            GameMode defaultGameMode = GameMode.valueOf(api.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
             p.setGameMode(defaultGameMode);
             pData.setLastLocation(event.getFrom());
         }
@@ -73,7 +68,7 @@ public class GeneralListeners implements Listener {
     @EventHandler
     public void keepKitItems(PlayerDeathEvent event) {
         Player p = event.getEntity();
-        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+        PlayerData data = api.getPlayerManager().getPlayerData(p);
 
         if (data.getKit() != null) {
             for (ItemStack item : p.getInventory()) {
@@ -91,13 +86,13 @@ public class GeneralListeners implements Listener {
     @EventHandler
     public void onUseActiveAbility(PlayerInteractEvent event) {
         Player p = event.getPlayer();
-        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+        PlayerData data = api.getPlayerManager().getPlayerData(p);
         ItemStack item = p.getInventory().getItemInMainHand();
-        Ability ability = Ability.getFromItem(item);
+        Ability ability = api.getKitManager().getAbilityFromItem(item);
 
         if (item == null || ability == null) {
             item = p.getInventory().getItemInOffHand();
-            ability = Ability.getFromItem(item);
+            ability = api.getKitManager().getAbilityFromItem(item);
         }
 
         if (p == null || item == null || ability == null)
@@ -143,7 +138,7 @@ public class GeneralListeners implements Listener {
             ItemStack clicked = event.getCurrentItem();
 
             if (clicked != null) {
-                if (Ability.isAbilityItem(clicked)) {
+                if (api.getKitManager().isAbilityItem(clicked)) {
                     p.sendMessage(Component.text("Ability items must remain in your hotbar or offhand. You can use the 'swap hands' (default 'F') button to move them around"));
                     event.setCancelled(true);
                 }
@@ -156,7 +151,7 @@ public class GeneralListeners implements Listener {
         Player p = event.getPlayer();
         ItemStack item = event.getItemDrop().getItemStack();
 
-        if (Ability.isAbilityItem(item)) {
+        if (api.getKitManager().isAbilityItem(item)) {
             event.setCancelled(true);
             p.sendMessage(Component.text("That's kind of important, you should keep it."));
         }
@@ -165,13 +160,14 @@ public class GeneralListeners implements Listener {
     // attempt to grab a player's data before they actually log in
     @EventHandler
     public void loadDataAtPreLogin(AsyncPlayerPreLoginEvent event) {
-        PlayerManager.getInstance().getPlayerData(event.getUniqueId());
+        api.getPlayerManager().loadPlayerDataAsync(event.getUniqueId());
     }
 
     // processes a player when they join
     @EventHandler
     public void loadPlayersOnJoin(PlayerJoinEvent event) {
         Player p = event.getPlayer();
+        PlayerManager pm = api.getPlayerManager();
 
         // change the join message to read "server" instead of "game"
         event.joinMessage(Trans.lateToComponent("&e%s has joined the server", event.getPlayer().getName()));
@@ -188,15 +184,15 @@ public class GeneralListeners implements Listener {
         }
 
         // set the gamemode based on config
-        String gm = plugin.getConfig().getString("main world.gamemode", "adventure");
+        String gm = api.getPlugin().getConfig().getString("main world.gamemode", "adventure");
         GameMode mode = GameMode.valueOf(gm.toUpperCase());
         p.setGameMode(mode);
 
-        if (PlayerManager.getInstance().isPlayerDataLoaded(p.getUniqueId()))
-            PlayerManager.getInstance().getPlayerData(p).restorePlayer();
+        if (pm.isPlayerDataLoaded(p.getUniqueId()))
+            pm.restorePlayerFromSavedData(p, pm.getPlayerData(p));
 
-        if (plugin.getConfig().getBoolean("main world.place players at spawn on join", false))
-            p.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation());
+        if (api.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false))
+            p.teleport(api.getMapManager().getLobbyWorld().getSpawnLocation());
     }
 
     // Inventory handling listener
@@ -205,21 +201,21 @@ public class GeneralListeners implements Listener {
         final World from = event.getFrom();
         final World to = event.getPlayer().getWorld();
 
-        final boolean enteringGameFromMainWorlds = MapManager.getInstance().isThisAGameWorld(to) && !MapManager.getInstance().isThisAGameWorld(from);
-        final boolean leavingGameToMainWorlds = MapManager.getInstance().isThisAGameWorld(from) && !MapManager.getInstance().isThisAGameWorld(to);
+        final boolean enteringGameFromMainWorlds = api.getGameManager().isThisAGameWorld(to) && !api.getGameManager().isThisAGameWorld(from);
+        final boolean leavingGameToMainWorlds = api.getGameManager().isThisAGameWorld(from) && !api.getGameManager().isThisAGameWorld(to);
 
         if (enteringGameFromMainWorlds) {
             Player p = event.getPlayer();
-            PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+            PlayerData data = api.getPlayerManager().getPlayerData(p);
 
             data.saveInventory(true);
         }
 
         if (leavingGameToMainWorlds) {
             Player p = event.getPlayer();
-            PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+            PlayerData data = api.getPlayerManager().getPlayerData(p);
 
-            data.restorePlayer();
+            api.getPlayerManager().restorePlayerFromSavedData(p, data);
         }
     }
 

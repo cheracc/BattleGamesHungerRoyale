@@ -1,5 +1,6 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
-
+import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import org.bukkit.entity.*;
@@ -9,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.world.LootGenerateEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public abstract class TriggeredAbility extends Ability implements Listener {
     public abstract AbilityTrigger getTrigger();
@@ -19,6 +21,8 @@ public abstract class TriggeredAbility extends Ability implements Listener {
 
     @EventHandler
     public void doDamageTriggers(EntityDamageByEntityEvent event) {
+        PlayerManager playerManager = JavaPlugin.getPlugin(BGHR.class).getApi().getPlayerManager();
+
         if (event.getDamager() instanceof Player || event.getDamager() instanceof Projectile) {
             Player p = null;
             if (event.getDamager() instanceof Player)
@@ -34,7 +38,7 @@ public abstract class TriggeredAbility extends Ability implements Listener {
             }
 
             if (p != null) {
-                if (PlayerManager.getInstance().getPlayerData(p).hasKit(this.getAssignedKit())) {
+                if (playerManager.getPlayerData(p).hasKit(this.getAssignedKit())) {
                     if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK ||
                             event.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK) {
                         if (getTrigger() == AbilityTrigger.DEAL_MELEE_HIT) {
@@ -66,7 +70,6 @@ public abstract class TriggeredAbility extends Ability implements Listener {
                                 return;
                             }
                         }
-
                     }
                 }
             }
@@ -74,7 +77,7 @@ public abstract class TriggeredAbility extends Ability implements Listener {
         if (event.getEntity() instanceof Player) {
             Player p = (Player) event.getEntity();
 
-            if (PlayerManager.getInstance().getPlayerData(p).hasKit(this.getAssignedKit())) {
+            if (playerManager.getPlayerData(p).hasKit(this.getAssignedKit())) {
                 if (getTrigger() == AbilityTrigger.TAKE_ANY_DAMAGE) {
                     onTrigger(p, event);
                     return;
@@ -112,8 +115,9 @@ public abstract class TriggeredAbility extends Ability implements Listener {
 
     @EventHandler
     public void doLootTrigger(LootGenerateEvent event) {
+        BghrApi api = JavaPlugin.getPlugin(BGHR.class).getApi();
         for (Player p : event.getInventoryHolder().getInventory().getLocation().getNearbyPlayers(4)) {
-            if (PlayerManager.getInstance().getPlayerData(p).hasKit(this.getAssignedKit()) &&
+            if (api.getPlayerManager().getPlayerData(p).hasKit(this.getAssignedKit()) &&
                     getTrigger() == AbilityTrigger.OPEN_LOOT_CHEST && p.getOpenInventory() != null) {
                 onTrigger(p, event);
             }

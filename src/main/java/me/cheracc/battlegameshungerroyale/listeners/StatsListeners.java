@@ -21,9 +21,11 @@ import org.bukkit.inventory.PlayerInventory;
 
 public class StatsListeners implements Listener {
     private final PlayerManager pm;
+    private final GameManager gm;
 
-    public StatsListeners() {
-        this.pm = PlayerManager.getInstance();
+    public StatsListeners(GameManager gameManager, PlayerManager playerManager) {
+        this.pm = playerManager;
+        this.gm = gameManager;
     }
 
     @EventHandler
@@ -93,7 +95,7 @@ public class StatsListeners implements Listener {
 
     @EventHandler
     public void countLootChests(InventoryOpenEvent event) {
-        if (!(event.getPlayer() instanceof Player) || !GameManager.getInstance().isActivelyPlayingAGame((Player) event.getPlayer()))
+        if (!(event.getPlayer() instanceof Player) || !gm.isActivelyPlayingAGame((Player) event.getPlayer()))
             return;
         PlayerData data = pm.getPlayerData((Player) event.getPlayer());
         data.getStats().addChestOpened();
@@ -109,14 +111,14 @@ public class StatsListeners implements Listener {
             if (event.getFinalDamage() < e.getHealth())
                 return;
 
-            if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+            if (gm.isActivelyPlayingAGame(p)) {
                 if (event.getEntity() instanceof Monster) {
-                    PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                    PlayerData data = pm.getPlayerData(p);
                     data.getStats().addMonstersKilled();
                     data.setModified(true);
                 }
                 else if (event.getEntity() instanceof Animals) {
-                    PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                    PlayerData data = pm.getPlayerData(p);
                     data.getStats().addAnimalsKilled();
                     data.setModified(true);
                 }
@@ -126,8 +128,8 @@ public class StatsListeners implements Listener {
 
     @EventHandler (priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void countFood(PlayerItemConsumeEvent event) {
-        if (GameManager.getInstance().isActivelyPlayingAGame(event.getPlayer())) {
-            PlayerData data = PlayerManager.getInstance().getPlayerData(event.getPlayer());
+        if (gm.isActivelyPlayingAGame(event.getPlayer())) {
+            PlayerData data = pm.getPlayerData(event.getPlayer());
             data.getStats().addFoodEaten();
             data.setModified(true);
         }
@@ -137,8 +139,8 @@ public class StatsListeners implements Listener {
     public void countArrowsShot(ProjectileLaunchEvent event) {
         if (event.getEntity().getShooter() instanceof Player) {
             Player p = (Player) event.getEntity().getShooter();
-            if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
-                PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+            if (gm.isActivelyPlayingAGame(p)) {
+                PlayerData data = pm.getPlayerData(p);
                 data.getStats().addArrowsShot();
                 data.setModified(true);
             }
@@ -149,10 +151,10 @@ public class StatsListeners implements Listener {
     public void countLootedItems(InventoryClickEvent event) {
         if (event.getWhoClicked() instanceof Player) {
             Player p = (Player) event.getWhoClicked();
-            if (GameManager.getInstance().isActivelyPlayingAGame(p)) {
+            if (gm.isActivelyPlayingAGame(p)) {
                 if (!(event.getClickedInventory() instanceof PlayerInventory) &&
                         (event.getAction().name().contains("PICKUP") || event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY)) {
-                    PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+                    PlayerData data = pm.getPlayerData(p);
                     data.getStats().addItemsLooted();
                     data.setModified(true);
                 }

@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.cheracc</groupId>
     <artifactId>BattleGamesHungerRoyale</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0</version>
     <build>
         <plugins>
             <plugin>
@@ -48,7 +48,8 @@
                                     <!-- Replace this with your package! -->
                                     <shadedPattern>me.cheracc.battlegameshungerroyale</shadedPattern>
                                 </relocation>
-                            </relocations></configuration>
+                            </relocations>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -93,7 +94,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>20.1.0</version>
+            <version>21.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -129,7 +130,7 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>4.0.3</version>
+            <version>5.0.0</version>
         </dependency>
     </dependencies>
 
@@ -163,6 +164,11 @@
         <repository>
             <id>md_5-public</id>
             <url>https://repo.md-5.net/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>maven_central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2/</url>
         </repository>
     </repositories>
     <pluginRepositories>

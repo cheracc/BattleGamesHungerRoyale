@@ -12,21 +12,28 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class QuitCommand implements CommandExecutor {
+    private final GameManager gameManager;
+    private final MapManager mapManager;
+
+    public QuitCommand(GameManager gameManager, MapManager mapManager) {
+        this.gameManager = gameManager;
+        this.mapManager = mapManager;
+    }
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         if (sender instanceof Player) {
             Player p = (Player) sender;
 
-            Game game = GameManager.getInstance().getPlayersCurrentGame(p);
+            Game game = gameManager.getPlayersCurrentGame(p);
 
             if (game != null) {
                 game.quit(p);
             }
 
-            if (game == null && !p.getWorld().equals(MapManager.getInstance().getLobbyWorld())) {
+            if (game == null && !p.getWorld().equals(mapManager.getLobbyWorld())) {
                 World world = p.getWorld();
-                p.teleport(MapManager.getInstance().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-                MapManager.getInstance().unloadWorld(world);
+                p.teleport(mapManager.getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+                mapManager.unloadWorld(world);
                 p.sendMessage(Trans.lateToComponent("Finished editing, world unloaded."));
             }
         }

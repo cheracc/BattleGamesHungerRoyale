@@ -1,8 +1,8 @@
 package me.cheracc.battlegameshungerroyale.types;
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.managers.LootManager;
+import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -23,20 +23,14 @@ public class GameOptions {
     private int postGameTime;
     private boolean allowRegularBuilding;
     private StartType startType;
-    public enum StartType { HUNGERGAMES, ELYTRA }
-
     private boolean generateChests;
     private boolean fillAllChests;
     private boolean loosenSearchRestrictions;
     private int maxChestsPerChunk;
     private int chestRespawnTime;
-    private LootTable lootTable = LootManager.getDefaultLootTable();
+    private LootTable lootTable;
 
-    public GameOptions() {
-        loadConfig(null);
-    }
-
-    public void loadConfig(File file) {
+    public void loadConfig(File file, MapManager mapManager, GameManager gameManager) {
         FileConfiguration config = new YamlConfiguration();
 
         if (file != null) {
@@ -50,9 +44,9 @@ public class GameOptions {
         }
 
         String mapName = config.getString("map");
-        MapData map = MapManager.getInstance().getMapByMapDirectoryName(mapName);
+        MapData map = mapManager.getMapByMapDirectoryName(mapName);
         if (mapName == null || map == null) {
-            this.map = MapManager.getInstance().getMaps().get(0);
+            this.map = mapManager.getMaps().get(0);
         } else
             this.map = map;
 
@@ -68,23 +62,23 @@ public class GameOptions {
         generateChests = config.getBoolean("loot.generate chests", true);
         loosenSearchRestrictions = config.getBoolean("loot.loosen search restrictions", true);
         maxChestsPerChunk = config.getInt("loot.max chests per chunk", 10);
-        lootTable = LootManager.getLootTableFromKey(config.getString("loot.loot table", "default"));
+        lootTable = gameManager.getLootTableFromKey(config.getString("loot.loot table", "default"));
         if (lootTable == null)
-            lootTable = LootManager.getDefaultLootTable();
+            lootTable = gameManager.getDefaultLootTable();
         chestRespawnTime = config.getInt("loot.chest respawn time", 45);
         fillAllChests = config.getBoolean("loot.fill all chests", true);
     }
 
-    public void saveConfig(String configName) {
+    public void saveConfig(String configName, BGHR plugin) {
         String filename = configName;
         if (!configName.contains(".yml"))
             filename = configName + ".yml";
 
-        File configFile = new File(BGHR.getPlugin().getDataFolder().getAbsolutePath() + "/gameconfigs", filename);
+        File configFile = new File(plugin.getDataFolder().getAbsolutePath() + "/gameconfigs", filename);
 
         if (!configFile.exists()) {
             if (configFile.getParentFile().mkdirs())
-                Logr.warn("creating directory: " + configFile.getAbsolutePath());
+                plugin.getLogr().warn("creating directory: " + configFile.getAbsolutePath());
         }
 
         FileConfiguration config = new YamlConfiguration();
@@ -247,4 +241,17 @@ public class GameOptions {
         this.lootTable = table;
     }
 
+    public enum StartType {
+        HUNGERGAMES, ELYTRA;
+
+        public String prettyName() {
+            switch (this) {
+                case ELYTRA:
+                    return "Battle Royale: Elytra Style";
+                case HUNGERGAMES:
+                    return "Battle Royale: Hungergames!";
+            }
+            return StringUtils.capitalize(name().toLowerCase());
+        }
+    }
 }

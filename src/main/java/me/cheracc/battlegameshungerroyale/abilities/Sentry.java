@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.abilities;
-
 import com.destroystokyo.paper.event.entity.ProjectileCollideEvent;
+import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.DamageSource;
 import me.cheracc.battlegameshungerroyale.types.abilities.Totem;
@@ -17,6 +17,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -128,7 +129,8 @@ public class Sentry extends Totem implements Listener {
         if (projectile.hasMetadata("owner") && projectile.hasMetadata("ability_id")) {
             UUID ownerId = (UUID) projectile.getMetadata("owner").get(0).value();
             UUID abilityId = (UUID) projectile.getMetadata("ability_id").get(0).value();
-            if (PlayerManager.getInstance().getPlayerData(ownerId).hasKit(getAssignedKit())) {
+            PlayerManager pm = JavaPlugin.getPlugin(BGHR.class).getApi().getPlayerManager();
+            if (pm.getPlayerData(ownerId).hasKit(getAssignedKit())) {
                 return (abilityId.equals(getId()));
             }
         }
@@ -194,7 +196,8 @@ public class Sentry extends Totem implements Listener {
             LivingEntity target = (LivingEntity) event.getEntity();
             if (proj.hasMetadata("owner") && isMyProjectile(proj)) {
                 Player owner = Bukkit.getPlayer((UUID) proj.getMetadata("owner").get(0).value());
-                if (owner == null || !owner.isOnline() || !PlayerManager.getInstance().getPlayerData(owner).hasKit(this.getAssignedKit()))
+                PlayerManager pm = JavaPlugin.getPlugin(BGHR.class).getApi().getPlayerManager();
+                if (owner == null || !owner.isOnline() || !pm.getPlayerData(owner).hasKit(this.getAssignedKit()))
                     return;
                 event.setDamage(attackDamage);
                 if (target instanceof Player)

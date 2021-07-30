@@ -1,12 +1,14 @@
 package me.cheracc.battlegameshungerroyale.managers;
-
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.tools.Logr;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 
@@ -15,17 +17,23 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class KitManager {
-    private static KitManager singletonInstance = null;
-    private static BGHR plugin = null;
+    private final BGHR plugin;
+    private final Logr logr;
     private final List<Kit> loadedKits = new ArrayList<>();
     private final List<Ability> defaultAbilities = new ArrayList<>();
 
-    private KitManager() {
-
+    public KitManager(BGHR plugin, Logr logr) {
+        this.plugin = plugin;
+        this.logr = logr;
+        findAndLoadDefaultAbilities();
+        loadKits();
     }
 
     public Set<Ability> getAllAbilitiesInUse() {
@@ -67,7 +75,7 @@ public class KitManager {
             loadedKits.remove(k);
         }
         loadedKits.add(kit);
-        kit.saveConfig();
+        kit.saveConfig(plugin);
     }
 
     public void loadKits() {
@@ -85,42 +93,56 @@ public class KitManager {
 
         for (String s : config.getKeys(false)) {
             if (s != null && config.getConfigurationSection(s) != null) {
-                Kit kit = new Kit(s, Objects.requireNonNull(config.getConfigurationSection(s)));
+                Kit kit = new Kit(s, config.getConfigurationSection(s), this);
 
                 loadedKits.add(kit);
             }
         }
-        Logr.info("Loaded %s kits and %s abilities", loadedKits.size(), defaultAbilities.size());
+        logr.info("Loaded %s kits and %s abilities", loadedKits.size(), defaultAbilities.size());
     }
+
+    public Ability getAbilityFromItem(ItemStack item) {
+        if (!isAbilityItem(item))
+            return null;
+        String id = item.getItemMeta().getPersistentDataContainer().get(BghrApi.ABILITY_KEY, PersistentDataType.STRING);
+        for (Ability a : getAllAbilitiesInUse()) {
+            if (a.getId().toString().equals(id))
+                return a;
+        }
+        logr.warn("couldn't find ability with id %s", id);
+        return null;
+    }
+
+    public boolean isAbilityItem(ItemStack item) {
+        if (item == null || item.getItemMeta() == null)
+            return false;
+        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
+        return !pdc.isEmpty() && pdc.has(BghrApi.ABILITY_KEY, PersistentDataType.STRING);
+    }
+
 
     public List<Ability> getDefaultAbilities() {
         return new ArrayList<>(defaultAbilities);
     }
 
-    public void findAndLoadDefaultAbilities(BGHR plugin) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private void findAndLoadDefaultAbilities() {
         Set<Class<?>> abilityClasses = new HashSet<>((new Reflections("me.cheracc.battlegameshungerroyale.abilities", new SubTypesScanner(false))).getSubTypesOf(Ability.class));
 
         for (Class<?> c : abilityClasses) {
             if (c == null || Modifier.isAbstract(c.getModifiers()))
                 continue;
-            Constructor<?> con = c.getDeclaredConstructor();
-            Object o = con.newInstance();
-            if (o instanceof Ability) {
-                Ability ability = (Ability) o;
-                ability.initialize(plugin);
-                defaultAbilities.add(ability);
+            try {
+                Constructor<?> con = c.getDeclaredConstructor();
+                Object o = con.newInstance();
+                if (o instanceof Ability) {
+                    Ability ability = (Ability) o;
+                    ability.initialize(plugin);
+                    defaultAbilities.add(ability);
+                }
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
             }
         }
-    }
-
-    public static void initialize(BGHR plugin) {
-        KitManager.plugin = plugin;
-    }
-
-    public static KitManager getInstance() {
-        if (singletonInstance == null)
-            singletonInstance = new KitManager();
-        return singletonInstance;
     }
 
     public Kit getRandomKit(boolean includeDisabled) {

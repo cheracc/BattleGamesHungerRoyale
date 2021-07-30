@@ -6,6 +6,7 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.listeners.TextInputListener;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
@@ -34,12 +35,16 @@ public class ConfigureAbilityGui extends Gui {
     private final Ability ability;
     private final Consumer<Ability> callback;
     private final Gui sendingGui;
+    private final BGHR plugin;
+    private final TextInputListener textInputListener;
 
-    public ConfigureAbilityGui(HumanEntity p, Ability ability, Gui sendingGui, Consumer<Ability> callback) {
+    public ConfigureAbilityGui(HumanEntity p, Ability ability, Gui sendingGui, BGHR plugin, TextInputListener textInputListener, Consumer<Ability> callback) {
         super(2, Trans.late("Edit Ability: ") + ability.getCustomName(), new HashSet<>(Arrays.asList(InteractionModifier.values())));
         this.ability = ability;
         this.callback = callback;
         this.sendingGui = sendingGui;
+        this.plugin = plugin;
+        this.textInputListener = textInputListener;
         disableAllInteractions();
         setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();
@@ -78,7 +83,7 @@ public class ConfigureAbilityGui extends Gui {
                 if (e.getClick() == ClickType.RIGHT) {
                     Component message = Tools.formatInstructions(Trans.late("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing."), ability.getDescription());
                     p.sendMessage(message);
-                    TextInputListener.getInstance().getNextInputFrom(p, text -> {
+                    textInputListener.getNextInputFrom(p, text -> {
                         ability.setOption("description", text);
                         updateItem(e.getSlot(), nameDescGuiItem());
                         open(p);
@@ -87,7 +92,7 @@ public class ConfigureAbilityGui extends Gui {
                 else {
                     Component message = Tools.formatInstructions(Trans.late("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing."), ability.getCustomName());
                     p.sendMessage(message);
-                    TextInputListener.getInstance().getNextInputFrom(p, text -> {
+                    textInputListener.getNextInputFrom(p, text -> {
                         ability.setOption("custom name", text);
                         updateItem(e.getSlot(), nameDescGuiItem());
                         open(p);
@@ -303,7 +308,7 @@ public class ConfigureAbilityGui extends Gui {
             p.closeInventory();
             Component message = Tools.formatInstructions(Trans.late("&eEnter a new value. You can also click on this message to enter the current value of this option in the chat box for easy editing."), currentValue);
             p.sendMessage(message);
-            TextInputListener.getInstance().getNextInputFrom(p, text -> {
+            textInputListener.getNextInputFrom(p, text -> {
                 ability.setOption(configOption, text);
                 updateItem(event.getSlot(), genericOptionGuiItem(configOption));
                 open(p);
@@ -361,9 +366,9 @@ public class ConfigureAbilityGui extends Gui {
                 e.getWhoClicked().closeInventory();
                 e.getWhoClicked().sendMessage(Tools.formatInstructions(Trans.late("Create/Rename/Enchant the item you want to add to ") +
                         Trans.late("this kit's loot table. When you are finished, hold the item in your hand and type &e/abilityitem"), ""));
-                e.getWhoClicked().setMetadata("ability_config_gui", new FixedMetadataValue(BGHR.getPlugin(), this));
-                e.getWhoClicked().setMetadata("ability_config_option", new FixedMetadataValue(BGHR.getPlugin(), configOption));
-                e.getWhoClicked().setMetadata("ability_config_slot", new FixedMetadataValue(BGHR.getPlugin(), slot));
+                e.getWhoClicked().setMetadata("ability_config_gui", new FixedMetadataValue(plugin, this));
+                e.getWhoClicked().setMetadata("ability_config_option", new FixedMetadataValue(plugin, configOption));
+                e.getWhoClicked().setMetadata("ability_config_slot", new FixedMetadataValue(plugin, slot));
             }
         }));
 

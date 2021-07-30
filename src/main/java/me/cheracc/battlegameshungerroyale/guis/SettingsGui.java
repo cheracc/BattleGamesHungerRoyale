@@ -3,9 +3,7 @@ import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.managers.KitManager;
-import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Game;
@@ -20,13 +18,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 
 public class SettingsGui extends Gui {
+    private final BghrApi        api;
     private final PlayerSettings settings;
 
-    public SettingsGui(HumanEntity player) {
+    public SettingsGui(HumanEntity player, BghrApi api) {
         super(1, "Player Settings", InteractionModifier.VALUES);
+        this.api = api;
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
         Player p = (Player) player;
-        PlayerData data = PlayerManager.getInstance().getPlayerData(p);
+        PlayerData data = api.getPlayerManager().getPlayerData(p);
         this.settings = data.getSettings();
 
         fillGui();
@@ -48,9 +48,9 @@ public class SettingsGui extends Gui {
         return item.asGuiItem(e -> {
             Player p = (Player) e.getWhoClicked();
             settings.toggleMainScoreboard();
-            if (!GameManager.getInstance().isInAGame(p)) {
+            if (!api.getGameManager().isInAGame(p)) {
                 if (settings.isShowMainScoreboard())
-                    p.setScoreboard(GameManager.getInstance().getMainScoreboard());
+                    p.setScoreboard(api.getGameManager().getMainScoreboard());
                 else
                     p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
             }
@@ -64,7 +64,7 @@ public class SettingsGui extends Gui {
         return item.asGuiItem(e -> {
             Player p = (Player) e.getWhoClicked();
             settings.toggleGameScoreboard();
-            Game game = GameManager.getInstance().getPlayersCurrentGame(p);
+            Game game = api.getGameManager().getPlayersCurrentGame(p);
             if (game != null) {
                 if (settings.isShowGameScoreboard())
                     p.setScoreboard(game.getScoreboard());
@@ -87,7 +87,7 @@ public class SettingsGui extends Gui {
     private GuiItem setDefaultKit(int slot) {
         String kitName = "Random";
         if (settings.getDefaultKit() != null) {
-            Kit kit = KitManager.getInstance().getKit(settings.getDefaultKit());
+            Kit kit = api.getKitManager().getKit(settings.getDefaultKit());
             if (kit != null)
                 kitName = kit.getName();
         }
@@ -97,7 +97,7 @@ public class SettingsGui extends Gui {
         item.flags(ItemFlag.HIDE_ATTRIBUTES);
         return item.asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            new SelectKitGui(e.getWhoClicked(), this, kit -> {
+            new SelectKitGui(e.getWhoClicked(), this, api.getKitManager(), kit -> {
                 e.getWhoClicked().closeInventory();
                 settings.setDefaultKit(kit.getName());
                 updateItem(slot, setDefaultKit(slot));
@@ -110,7 +110,7 @@ public class SettingsGui extends Gui {
     private GuiItem saveIcon() {
         ItemBuilder item = ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("&eSave Settings"));
         return item.asGuiItem(e -> {
-            PlayerManager.getInstance().getPlayerData((Player) e.getWhoClicked()).setModified(true);
+            api.getPlayerManager().getPlayerData((Player) e.getWhoClicked()).setModified(true);
             e.getWhoClicked().closeInventory();
         });
     }
