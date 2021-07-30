@@ -34,8 +34,10 @@ public class Hologram {
         this.uuid = uuid;
         int line = 1;
         for (String s : text) {
-            displayText.put(line, s);
-            line++;
+            if (!s.equals("")) {
+                displayText.put(line, s);
+                line++;
+            }
         }
         getCurrentEntities();
         if (location != null && !displayText.isEmpty())
@@ -204,7 +206,18 @@ public class Hologram {
 
     public void update() {
         for (Map.Entry<Integer, String> e : displayText.entrySet()) {
-            hologramLines.get(e.getKey()).customName(Tools.componentalize(JavaPlugin.getPlugin(BGHR.class).getApi().replacePlaceholders(e.getValue())));
+            String updatedLine = JavaPlugin.getPlugin(BGHR.class).getApi().replacePlaceholders(e.getValue());
+            ArmorStand entity = hologramLines.get(e.getKey());
+            if (updatedLine.equals("") && entity != null) {
+                entity.remove();
+                hologramLines.remove(e.getKey());
+                continue;
+            } else if (!updatedLine.equals("") && entity == null) {
+                entity = createArmorStand(e.getKey());
+                hologramLines.put(e.getKey(), entity);
+            }
+            if (entity != null)
+                entity.customName(Tools.componentalize(updatedLine));
         }
     }
 
