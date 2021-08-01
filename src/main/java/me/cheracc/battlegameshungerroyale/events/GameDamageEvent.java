@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.events;
-
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -9,17 +8,16 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GameDamageEvent extends Event implements Cancellable,GameEvent {
+public class GameDamageEvent extends Event implements Cancellable, GameEvent {
     private static final HandlerList handlerList = new HandlerList();
     private final Player aggressor;
     private final Player victim;
-
     private final EntityDamageEvent.DamageCause type;
     private final Game game;
+    private final boolean directDamage;
     private String bestGuess;
     private boolean cancelled = false;
     private double damage;
-    private final boolean directDamage;
 
     public GameDamageEvent(Player aggressor, Player victim, Game game, double damage, boolean directDamage, EntityDamageEvent.DamageCause type) {
         this.aggressor = aggressor;
@@ -31,7 +29,12 @@ public class GameDamageEvent extends Event implements Cancellable,GameEvent {
         this.bestGuess = null;
     }
 
-    public @Nullable Player getAggressor() {
+    public static HandlerList getHandlerList() {
+        return handlerList;
+    }
+
+    public @Nullable
+    Player getAggressor() {
         return aggressor;
     }
 
@@ -65,11 +68,8 @@ public class GameDamageEvent extends Event implements Cancellable,GameEvent {
     }
 
     @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlerList;
-    }
-
-    public static HandlerList getHandlerList() {
+    public @NotNull
+    HandlerList getHandlers() {
         return handlerList;
     }
 

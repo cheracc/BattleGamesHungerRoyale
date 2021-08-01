@@ -6,7 +6,7 @@
 
     <groupId>me.cheracc</groupId>
     <artifactId>BattleGamesHungerRoyale</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <build>
         <plugins>
             <plugin>
@@ -58,8 +58,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>

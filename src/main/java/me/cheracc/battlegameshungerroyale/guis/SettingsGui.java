@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.guis;
+
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
@@ -6,10 +7,10 @@ import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.Kit;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.PlayerSettings;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -18,7 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 
 public class SettingsGui extends Gui {
-    private final BghrApi        api;
+    private final BghrApi api;
     private final PlayerSettings settings;
 
     public SettingsGui(HumanEntity player, BghrApi api) {
@@ -50,7 +51,7 @@ public class SettingsGui extends Gui {
             settings.toggleMainScoreboard();
             if (!api.getGameManager().isInAGame(p)) {
                 if (settings.isShowMainScoreboard())
-                    p.setScoreboard(api.getGameManager().getMainScoreboard());
+                    p.setScoreboard(api.getDisplayManager().getMainScoreboard());
                 else
                     p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
             }
@@ -104,7 +105,6 @@ public class SettingsGui extends Gui {
                 open(e.getWhoClicked());
             });
         });
-
     }
 
     private GuiItem saveIcon() {

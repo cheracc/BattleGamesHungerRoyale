@@ -1,6 +1,6 @@
 package me.cheracc.battlegameshungerroyale.commands;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

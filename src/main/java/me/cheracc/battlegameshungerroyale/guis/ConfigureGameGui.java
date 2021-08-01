@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.guis;
+
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
@@ -6,8 +7,9 @@ import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import me.cheracc.battlegameshungerroyale.types.MapData;
+import me.cheracc.battlegameshungerroyale.types.games.GameOptions;
+import me.cheracc.battlegameshungerroyale.types.games.GameType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -47,12 +49,12 @@ public class ConfigureGameGui extends Gui {
     }
 
     private void fillGui() {
-        setItem(0, mapsIcon());
-        setItem(1, timersIcon());
-        setItem(2, livesIcon());
-        setItem(3, playersNeededIcon());
-        setItem(4, allowBuildingIcon());
-        setItem(5, spawnTypeIcon());
+        setItem(0, gameTypeIcon());
+        setItem(1, mapsIcon());
+        setItem(2, timersIcon());
+        setItem(3, livesIcon());
+        setItem(4, playersNeededIcon());
+        setItem(5, allowBuildingIcon());
         setItem(6, lootIcon());
 
         setItem(7, saveConfigIcon());
@@ -71,8 +73,8 @@ public class ConfigureGameGui extends Gui {
         icon = icon.lore(lore);
 
         return icon.asGuiItem(e -> {
-                e.getWhoClicked().closeInventory();
-                sendSelectMapsGui(e.getWhoClicked());
+            e.getWhoClicked().closeInventory();
+            sendSelectMapsGui(e.getWhoClicked());
         });
     }
 
@@ -140,22 +142,25 @@ public class ConfigureGameGui extends Gui {
         });
     }
 
-    private GuiItem spawnTypeIcon() {
-        Material mat = options.getStartType() == GameOptions.StartType.ELYTRA ? Material.ELYTRA : Material.CHEST;
-        ItemBuilder icon = ItemBuilder.from(mat).name(Trans.lateToComponent("&eStart Type: &f%s", options.getStartType().name().toLowerCase()));
-        List<String> lore = new ArrayList<>();
-        if (options.getStartType() == GameOptions.StartType.ELYTRA)
-            lore.addAll(Tools.wrapText(Trans.late("&7At the start of the game, players will be teleported to central spawn and then launched into the air to glide back down using a (temporary) provided elytra. The elytra will be removed at the end of the invincibility phase or when the player touches the ground."), ChatColor.GRAY));
+    private GuiItem gameTypeIcon() {
+        GameType gameType;
+        if (api.getGameManager().getGameType(options.getGameType()) == null)
+            gameType = api.getGameManager().getValidGameTypes().get(0);
         else
-            lore.addAll(Tools.wrapText(Trans.late("&7At the start of the game, players are teleported to spawn points equally distant from the center spawn. If spawn point blocks are set, each player will spawn on one of the spawn point blocks - otherwise they will be evenly spaced around the center."), ChatColor.GRAY));
+            gameType = api.getGameManager().getGameType(options.getGameType());
+
+        Material mat = gameType.getIcon();
+        ItemBuilder icon = ItemBuilder.from(mat).name(Trans.lateToComponent("&eGame Type: &f%s", gameType.getPrettyName()));
+        icon.flags(ItemFlag.HIDE_ATTRIBUTES);
+        List<String> lore = new ArrayList<>(Tools.wrapText("&7" + gameType.getDescription(), ChatColor.GRAY));
 
         lore.add("");
         lore.add(Trans.late("&bClick to change"));
         icon.lore(Tools.componentalize(lore));
 
         return icon.asGuiItem(e -> {
-            options.toggleStartType();
-            updateItem(5, spawnTypeIcon());
+            options.setGameType(Tools.getNext(gameType, api.getGameManager().getValidGameTypes()));
+            updateItem(e.getSlot(), gameTypeIcon());
         });
     }
 
@@ -167,7 +172,7 @@ public class ConfigureGameGui extends Gui {
 
             if (options.getConfigFile() == null) {
                 e.getWhoClicked().sendMessage(Tools.formatInstructions(Trans.late("Enter a name for this configuration. If you enter an existing configuration name, the old configuration will be overwritten."),
-                        options.getConfigFile() == null ? "" : options.getConfigFile().getName().split("\\.")[0]));
+                                                                       options.getConfigFile() == null ? "" : options.getConfigFile().getName().split("\\.")[0]));
                 api.getTextInputListener().getNextInputFrom((Player) e.getWhoClicked(), filename -> {
                     if (filename.matches("[^-_.A-Za-z0-9]")) {
                         e.getWhoClicked().sendMessage(Trans.lateToComponent("Config names may not contain spaces or other odd characters"));
@@ -193,7 +198,6 @@ public class ConfigureGameGui extends Gui {
             e.getWhoClicked().closeInventory();
             api.getGameManager().createNewGameWithCallback(options, game -> new SelectGameGui(e.getWhoClicked(), api));
         });
-
     }
 
     private GuiItem lootIcon() {
@@ -209,10 +213,9 @@ public class ConfigureGameGui extends Gui {
         icon.lore(Tools.componentalize(lore));
 
         return icon.asGuiItem(e -> {
-           e.getWhoClicked().closeInventory();
-           new ConfigureLootGui(e.getWhoClicked(), this, options, api);
+            e.getWhoClicked().closeInventory();
+            new ConfigureLootGui(e.getWhoClicked(), this, options, api);
         });
-
     }
 
     private void sendSelectConfigGui(HumanEntity player) {
@@ -238,12 +241,12 @@ public class ConfigureGameGui extends Gui {
 
         for (File file : configFiles) {
             gui.addItem(ItemBuilder.from(Material.KNOWLEDGE_BOOK).name(Tools.componentalize(file.getName().split("\\.")[0]))
-                .lore(Trans.lateToComponent("&bClick to start a game using this config"),
-                    Trans.lateToComponent("&bRight click to view or modify it")).asGuiItem(e -> {
+                                   .lore(Trans.lateToComponent("&bClick to start a game using this config"),
+                                         Trans.lateToComponent("&bRight click to view or modify it")).asGuiItem(e -> {
                         e.getWhoClicked().closeInventory();
                         options.loadConfig(file, api.getMapManager(), api.getGameManager());
                         new ConfigureGameGui(e.getWhoClicked(), options, this, api);
-            }));
+                    }));
         }
 
         gui.addItem(ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Trans.lateToComponent("&eCreate New Configuration")).asGuiItem(e -> {
@@ -282,13 +285,13 @@ public class ConfigureGameGui extends Gui {
         if (record < 0 || record > 4)
             return null;
 
-        String[] phases = { Trans.late("Pregame"), Trans.late("Invincibility"), Trans.late("Main Phase"), Trans.late("Border Shrinking"), Trans.late("Postgame") };
+        String[] phases = {Trans.late("Pregame"), Trans.late("Invincibility"), Trans.late("Main Phase"), Trans.late("Border Shrinking"), Trans.late("Postgame")};
         int[] values = {
-               options.getPregameTime(),
-               options.getInvincibilityTime(),
-               options.getMainPhaseTime(),
-               options.getBorderTime(),
-               options.getPostGameTime()
+                options.getPregameTime(),
+                options.getInvincibilityTime(),
+                options.getMainPhaseTime(),
+                options.getBorderTime(),
+                options.getPostGameTime()
         };
         IntConsumer[] updates = {
                 options::setPregameTime,
@@ -324,7 +327,7 @@ public class ConfigureGameGui extends Gui {
         gui.disableAllInteractions();
         gui.setOutsideClickAction(e -> {
             e.getWhoClicked().closeInventory();
-            updateItem(1, timersIcon());
+            updateItem(e.getSlot(), timersIcon());
             open(e.getWhoClicked());
         });
 
@@ -334,7 +337,7 @@ public class ConfigureGameGui extends Gui {
 
         gui.setItem(8, ItemBuilder.from(Material.WRITABLE_BOOK).name(Trans.lateToComponent("&eSave")).asGuiItem(e -> {
             e.getWhoClicked().closeInventory();
-            updateItem(1, timersIcon());
+            updateItem(e.getSlot(), timersIcon());
             open(e.getWhoClicked());
         }));
 
@@ -354,5 +357,4 @@ public class ConfigureGameGui extends Gui {
 
         return icon.asGuiItem();
     }
-
 }

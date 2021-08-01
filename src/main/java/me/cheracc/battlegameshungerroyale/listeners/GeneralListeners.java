@@ -3,8 +3,7 @@ import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Game;
-import me.cheracc.battlegameshungerroyale.types.Hologram;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -23,6 +22,7 @@ import org.bukkit.potion.PotionEffect;
 
 public class GeneralListeners implements Listener {
     private final BghrApi api;
+
     public GeneralListeners(BghrApi api) {
         this.api = api;
     }
@@ -117,9 +117,7 @@ public class GeneralListeners implements Listener {
                 data.getStats().addActiveAbilityUsed();
                 data.setModified(true);
             }
-        }
-
-        else if (ability instanceof PassiveAbility && event.getAction().name().contains("RIGHT")) {
+        } else if (ability instanceof PassiveAbility && event.getAction().name().contains("RIGHT")) {
             PassiveAbility passiveAbility = (PassiveAbility) ability;
 
             if (passiveAbility.isActive(p))
@@ -131,7 +129,7 @@ public class GeneralListeners implements Listener {
     }
 
     // these listeners are looking for items tied to abilities and ensuring that they stay in the hotbar.
-    @EventHandler (ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true)
     public void abilityItemsStayInHotbar(InventoryClickEvent event) {
         if (event.getWhoClicked() instanceof Player) {
             Player p = (Player) event.getWhoClicked();
@@ -218,5 +216,4 @@ public class GeneralListeners implements Listener {
             api.getPlayerManager().restorePlayerFromSavedData(p, data);
         }
     }
-
 }

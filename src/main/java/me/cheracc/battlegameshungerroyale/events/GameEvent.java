@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.events;
-
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.entity.Player;
 
 import java.util.Set;

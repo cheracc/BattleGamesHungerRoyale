@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.commands;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
@@ -21,13 +22,13 @@ public class SaveMap implements CommandExecutor {
     private final MapManager mapManager;
     private final BGHR plugin;
     private final Map<UUID, Long> confirmations = new HashMap<>();
-    private final BukkitRunnable cleanup;
+    private BukkitRunnable cleanup;
 
     public SaveMap(MapManager mapManager, BGHR plugin) {
         this.mapManager = mapManager;
         this.plugin = plugin;
         cleanup = cleanupTask();
-        cleanup.runTaskTimer(plugin, 20*60L, 20*60L);
+        cleanup.runTaskTimer(plugin, 20 * 60L, 20 * 60L);
     }
 
     @Override
@@ -49,15 +50,17 @@ public class SaveMap implements CommandExecutor {
 
                     p.sendMessage(Tools.componentalize(String.format("&fWorld and Config for &e%s &fhas been saved. That took %.3f seconds. You can type &e/quit&f at any time to unload this map and return to the main world.", mapName, elapsedSeconds)));
                     return true;
-                }
-                else
+                } else
                     p.sendMessage(Component.text("Your confirmation timer has expired. You will need to re-issue the /savemap command"));
                 return true;
             } else {
                 if (mapDataToSave != null) {
                     sendConfirmation(p);
-                    if (cleanup.isCancelled())
-                        cleanup.runTaskTimer(plugin, 20*60L, 20*60L);
+                    if (cleanup.isCancelled()) {
+                        cleanup = cleanupTask();
+                        
+                        cleanup.runTaskTimer(plugin, 20 * 60L, 20 * 60L);
+                    }
                     return true;
                 }
             }

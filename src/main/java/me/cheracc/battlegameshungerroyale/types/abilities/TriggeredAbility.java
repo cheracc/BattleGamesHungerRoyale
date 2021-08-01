@@ -1,6 +1,8 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.BghrApi;
+import me.cheracc.battlegameshungerroyale.events.PlayerLootedChestEvent;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import org.bukkit.entity.*;
@@ -9,15 +11,15 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public abstract class TriggeredAbility extends Ability implements Listener {
-    public abstract AbilityTrigger getTrigger();
-    public abstract void onTrigger(Player player, Event event);
-
     public TriggeredAbility() {
     }
+
+    public abstract AbilityTrigger getTrigger();
+
+    public abstract void onTrigger(Player player, Event event);
 
     @EventHandler
     public void doDamageTriggers(EntityDamageByEntityEvent event) {
@@ -114,9 +116,9 @@ public abstract class TriggeredAbility extends Ability implements Listener {
     }
 
     @EventHandler
-    public void doLootTrigger(LootGenerateEvent event) {
+    public void doLootTrigger(PlayerLootedChestEvent event) {
         BghrApi api = JavaPlugin.getPlugin(BGHR.class).getApi();
-        for (Player p : event.getInventoryHolder().getInventory().getLocation().getNearbyPlayers(4)) {
+        for (Player p : event.getEvent().getInventoryHolder().getInventory().getLocation().getNearbyPlayers(4)) {
             if (api.getPlayerManager().getPlayerData(p).hasKit(this.getAssignedKit()) &&
                     getTrigger() == AbilityTrigger.OPEN_LOOT_CHEST && p.getOpenInventory() != null) {
                 onTrigger(p, event);

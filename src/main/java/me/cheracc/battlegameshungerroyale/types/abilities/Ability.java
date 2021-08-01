@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;

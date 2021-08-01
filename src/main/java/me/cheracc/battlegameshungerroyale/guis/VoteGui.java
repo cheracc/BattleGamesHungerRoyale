@@ -1,13 +1,12 @@
 package me.cheracc.battlegameshungerroyale.guis;
-
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import me.cheracc.battlegameshungerroyale.types.GameOptions;
 import me.cheracc.battlegameshungerroyale.types.MapData;
+import me.cheracc.battlegameshungerroyale.types.games.GameOptions;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -59,23 +58,33 @@ public class VoteGui extends Gui {
         List<String> lore = new ArrayList<>();
         int votes = api.getGameManager().getVotes(map.getMapName());
         ItemBuilder icon = ItemBuilder.from(map.getIcon()).name(Tools.componentalize(ChatColor.YELLOW + map.getMapName() +
-                ((votes > 0) ? " &8(&7" + votes + " vote" + (votes > 1 ? "s" : "") + "&8)" : "")));
+                                                                                             ((votes > 0) ? " &8(&7" + votes + " vote" + (votes > 1 ? "s" : "") + "&8)" : "")));
 
         Integer[] needed = new Integer[games.size()];
         Integer[] respawns = new Integer[games.size()];
-        GameOptions.StartType[] style = new GameOptions.StartType[games.size()];
+        String[] types = new String[games.size()];
 
         int i = 0;
         for (GameOptions g : games) {
             needed[i] = g.getPlayersNeededToStart();
             respawns[i] = g.getLivesPerPlayer() - 1;
-            style[i] = g.getStartType();
+            types[i] = g.getGameType();
             i++;
+        }
+
+        StringBuilder gameTypes = new StringBuilder();
+        for (String s : types) {
+            if (!gameTypes.toString().isEmpty() && !gameTypes.toString().contains(s)) {
+                gameTypes.append(", ");
+            }
+            if (!gameTypes.toString().contains(s))
+                gameTypes.append(s);
         }
 
         int min = Collections.min(Arrays.asList(needed));
         int max = Collections.max(Arrays.asList(needed));
         String neededString;
+
         if (max == min)
             neededString = Integer.toString(max);
         else
@@ -84,17 +93,15 @@ public class VoteGui extends Gui {
         min = Collections.min(Arrays.asList(respawns));
         max = Collections.max(Arrays.asList(respawns));
         String respawnsString;
+
         if (max == min)
             respawnsString = Integer.toString(max);
         else
             respawnsString = String.format("%s-%s", min, max);
 
-        boolean elytra = Arrays.asList(style).contains(GameOptions.StartType.ELYTRA);
-        boolean hg = Arrays.asList(style).contains(GameOptions.StartType.HUNGERGAMES);
-
         lore.add("&fPlayers Needed to Start: &7" + neededString);
         lore.add("&fRespawns: &7" + respawnsString);
-        lore.add("&fGame Start: &7" + (elytra ? "Elytra" : "") + ((elytra && hg) ? "/" : "") + (hg ? "HG" : ""));
+        lore.add("&fGame Type: &7" + gameTypes);
         lore.add("&fBorder Size: &7" + map.getBorderRadius() * 2);
         lore.add("&fTimes Played: &7" + map.getTimesPlayed());
         lore.add("&fAvg. Game Length: &7" + Tools.secondsToAbbreviatedMinsSecs((int) map.getAverageLength()));

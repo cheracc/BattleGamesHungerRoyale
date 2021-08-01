@@ -7,7 +7,7 @@ import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.GameOptions;
+import me.cheracc.battlegameshungerroyale.types.games.GameOptions;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -48,19 +48,18 @@ public class ConfigureLootGui extends Gui {
 
     private GuiItem generateChestsIcon() {
         ItemBuilder genChestsIcon = ItemBuilder.from(Material.CHEST).name(Trans.lateToComponent("&eGenerate Random Chests: &f%s",
-                (options.isGenerateChests() ? Trans.late("on") : Trans.late("off"))));
+                                                                                                (options.isGenerateChests() ? Trans.late("on") : Trans.late("off"))));
         genChestsIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether or not the plugin will search the map for locations to place loot chests. If disabled, no additional chests will be placed on the map."), ChatColor.GRAY)));
 
         return genChestsIcon.asGuiItem(e -> {
             options.toggleGenerateChests();
             updateItem(0, generateChestsIcon());
         });
-
     }
 
     private GuiItem fillChestsIcon() {
         ItemBuilder fillChestsIcon = ItemBuilder.from(Material.CHEST_MINECART).name(Trans.lateToComponent("&eFill all chests: &f%s",
-                (options.isFillAllChests() ? Trans.late("on") : Trans.late("off"))));
+                                                                                                          (options.isFillAllChests() ? Trans.late("on") : Trans.late("off"))));
         fillChestsIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Whether or not the plugin will fill chests with loot from the selected loot table. If disabled, the plugin will not place any loot in any chests - this is useful for maps that have pre-filled loot chests"), ChatColor.GRAY)));
 
         return fillChestsIcon.asGuiItem(e -> {
@@ -71,7 +70,7 @@ public class ConfigureLootGui extends Gui {
 
     private GuiItem lenientSearchingIcon() {
         ItemBuilder loosenSearchIcon = ItemBuilder.from(Material.GRASS_BLOCK).name(Trans.lateToComponent("&eLoosen Chest Search Restrictions: &f%s",
-                (options.isLoosenSearchRestrictions() ? Trans.late("on") : Trans.late("off"))));
+                                                                                                         (options.isLoosenSearchRestrictions() ? Trans.late("on") : Trans.late("off"))));
         loosenSearchIcon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7Determines how strictly the plugin searches for loot chest locations. If enabled, chests will be more 'tucked-away' - if disabled, chests will spawn in more obvious/open areas. Enable this for small maps or maps with little to no below-surface areas. Disable this for larger maps or maps with lots of caves and structures."), ChatColor.GRAY)));
 
         return loosenSearchIcon.asGuiItem(e -> {
@@ -83,7 +82,6 @@ public class ConfigureLootGui extends Gui {
     private GuiItem densityIcon() {
         ItemBuilder icon = ItemBuilder.from(Material.PAINTING).name(Trans.lateToComponent("&eMax Chest Spawns Per Chunk: &f%s", options.getMaxChestsPerChunk()));
         icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("  &7How many chest locations to look for in each chunk. The plugin will stop searching a chunk when it finds this many locations. This does not guarantee that this many locations will be found. Increase this for smaller maps."), ChatColor.GRAY)));
-
 
         return icon.asGuiItem(e -> {
             int value = options.getMaxChestsPerChunk();
@@ -162,8 +160,7 @@ public class ConfigureLootGui extends Gui {
             if (options.getConfigFile() != null) {
                 options.saveConfig(options.getConfigFile().getName(), api.getPlugin());
                 new ConfigureGameGui(e.getWhoClicked(), options, sendingGui, api);
-            }
-            else {
+            } else {
                 Tools.formatInstructions(Trans.late("You need to save the game configuration first. Enter a name for these game settings (only letter, numbers, dash and underscores - no spaces):"), "");
                 api.getTextInputListener().getNextInputFrom((Player) e.getWhoClicked(), text -> {
                     options.saveConfig(text, api.getPlugin());

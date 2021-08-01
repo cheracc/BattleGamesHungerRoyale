@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
@@ -109,18 +110,18 @@ public class Hologram {
         as.setGravity(false);
         as.setCanMove(false);
         as.customName(Tools.componentalize(plugin.getApi().replacePlaceholders(displayText.get(lineNumber))));
-        as.setMetadata(BghrApi.HOLOGRAM_TAG, new FixedMetadataValue(plugin, lineNumber));
-        as.setMetadata(BghrApi.HOLOGRAM_ID_TAG, new FixedMetadataValue(plugin, uuid));
+        as.setMetadata(Metadata.HOLOGRAM_TAG.key(), new FixedMetadataValue(plugin, lineNumber));
+        as.setMetadata(Metadata.HOLOGRAM_ID_TAG.key(), new FixedMetadataValue(plugin, uuid));
 
         return as;
     }
 
     private void getCurrentEntities() {
         for (LivingEntity e : location.getWorld().getNearbyLivingEntities(location, 5, 15, 5)) {
-            if (!e.hasMetadata(BghrApi.HOLOGRAM_ID_TAG) || !e.getMetadata(BghrApi.HOLOGRAM_ID_TAG).get(0).value().equals(uuid))
+            if (!e.hasMetadata(Metadata.HOLOGRAM_ID_TAG.key()) || !e.getMetadata(Metadata.HOLOGRAM_ID_TAG.key()).get(0).value().equals(uuid))
                 continue;
-            if (e.hasMetadata(BghrApi.HOLOGRAM_TAG) && e instanceof ArmorStand) {
-                int line = e.getMetadata(BghrApi.HOLOGRAM_TAG).get(0).asInt();
+            if (e.hasMetadata(Metadata.HOLOGRAM_TAG.key()) && e instanceof ArmorStand) {
+                int line = e.getMetadata(Metadata.HOLOGRAM_TAG.key()).get(0).asInt();
                 hologramLines.put(line, (ArmorStand) e);
             }
             if (e.hasMetadata(BghrApi.HOLOGRAM_CLICKABLE))
@@ -137,9 +138,9 @@ public class Hologram {
         BGHR plugin = JavaPlugin.getPlugin(BGHR.class);
         this.command = command;
         clickable = (LivingEntity) location.getWorld().spawnEntity(location.clone().add(0, 1.5, 0), EntityType.RAVAGER);
-        clickable.setMetadata(BghrApi.HOLOGRAM_ID_TAG, new FixedMetadataValue(plugin, uuid));
-        clickable.setMetadata(BghrApi.HOLOGRAM_TAG, new FixedMetadataValue(plugin, 0));
-        clickable.setMetadata(BghrApi.HOLOGRAM_CLICKABLE, new FixedMetadataValue(plugin, command));
+        clickable.setMetadata(Metadata.HOLOGRAM_ID_TAG.key(), new FixedMetadataValue(plugin, uuid));
+        clickable.setMetadata(Metadata.HOLOGRAM_TAG.key(), new FixedMetadataValue(plugin, 0));
+        clickable.setMetadata(Metadata.HOLOGRAM_CLICKABLE.key(), new FixedMetadataValue(plugin, command));
         clickable.setInvulnerable(true);
         clickable.setPersistent(false);
         clickable.setInvisible(true);
@@ -252,8 +253,8 @@ public class Hologram {
 
     public void remove() {
         for (Entity e : location.getNearbyLivingEntities(5, 5, 5)) {
-            if (e.hasMetadata(BghrApi.HOLOGRAM_ID_TAG)) {
-                UUID uuid = (UUID) e.getMetadata(BghrApi.HOLOGRAM_ID_TAG).get(0).value();
+            if (e.hasMetadata(Metadata.HOLOGRAM_ID_TAG.key())) {
+                UUID uuid = (UUID) e.getMetadata(Metadata.HOLOGRAM_ID_TAG.key()).get(0).value();
                 if (uuid != null && uuid.equals(this.uuid))
                     e.remove();
             }

@@ -1,5 +1,6 @@
 package me.cheracc.battlegameshungerroyale.abilities;
 
+import me.cheracc.battlegameshungerroyale.events.PlayerLootedChestEvent;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
@@ -13,8 +14,8 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class AddToChestLootTable extends TriggeredAbility {
-    private double chance;
-    private ItemStack item;
+    private final double chance;
+    private final ItemStack item;
 
     public AddToChestLootTable() {
         this.chance = 0.5;
@@ -28,8 +29,8 @@ public class AddToChestLootTable extends TriggeredAbility {
 
     @Override
     public void onTrigger(Player player, Event event) {
-        if (event instanceof LootGenerateEvent) {
-            LootGenerateEvent e = (LootGenerateEvent) event;
+        if (event instanceof PlayerLootedChestEvent) {
+            LootGenerateEvent e = ((PlayerLootedChestEvent) event).getEvent();
             Random r = ThreadLocalRandom.current();
 
             if (r.nextFloat() < chance) {

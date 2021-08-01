@@ -15,7 +15,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -34,10 +33,9 @@ public class StatsListeners implements Listener {
         dead.getStats().addToTimePlayed(event.getGame().getCurrentGameTime());
         if (event.getGame().getActivePlayers().size() == 2)
             dead.getStats().addSecondPlaceFinish();
-
     }
 
-    @EventHandler (priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void recordKillsAndDeaths(GameDeathEvent event) {
         if (event.getKiller() != null) {
             PlayerData killer = pm.getPlayerData(event.getKiller());
@@ -49,7 +47,7 @@ public class StatsListeners implements Listener {
         dead.setModified(true);
     }
 
-    @EventHandler (priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void recordDamage(GameDamageEvent event) {
         if (event.getAggressor() instanceof Player && event.getVictim() instanceof Player) {
             PlayerData aggressor = pm.getPlayerData(event.getAggressor());
@@ -94,10 +92,8 @@ public class StatsListeners implements Listener {
     }
 
     @EventHandler
-    public void countLootChests(InventoryOpenEvent event) {
-        if (!(event.getPlayer() instanceof Player) || !gm.isActivelyPlayingAGame((Player) event.getPlayer()))
-            return;
-        PlayerData data = pm.getPlayerData((Player) event.getPlayer());
+    public void countLootChests(PlayerLootedChestEvent event) {
+        PlayerData data = pm.getPlayerData(event.getPlayer());
         data.getStats().addChestOpened();
         data.setModified(true);
     }
@@ -116,8 +112,7 @@ public class StatsListeners implements Listener {
                     PlayerData data = pm.getPlayerData(p);
                     data.getStats().addMonstersKilled();
                     data.setModified(true);
-                }
-                else if (event.getEntity() instanceof Animals) {
+                } else if (event.getEntity() instanceof Animals) {
                     PlayerData data = pm.getPlayerData(p);
                     data.getStats().addAnimalsKilled();
                     data.setModified(true);
@@ -126,7 +121,7 @@ public class StatsListeners implements Listener {
         }
     }
 
-    @EventHandler (priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void countFood(PlayerItemConsumeEvent event) {
         if (gm.isActivelyPlayingAGame(event.getPlayer())) {
             PlayerData data = pm.getPlayerData(event.getPlayer());

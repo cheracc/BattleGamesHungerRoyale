@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.guis;
+
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
@@ -8,9 +9,14 @@ import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.DisplayManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.*;
+import me.cheracc.battlegameshungerroyale.types.Hologram;
+import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.MapData;
+import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
+import me.cheracc.battlegameshungerroyale.types.games.GameOptions;
+import me.cheracc.battlegameshungerroyale.types.games.GameType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -82,7 +88,7 @@ public class AdminGui extends Gui {
     }
 
     private GuiItem gamesIcon() {
-        ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize(Trans.late("&eManage Game Configurations")));
+        ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Tools.componentalize(Trans.late("&eManage Games")));
         icon.lore(Tools.componentalize(Tools.wrapText(Trans.late("&7  View, modify, or create new game configurations, timers, and rules."), ChatColor.GRAY)));
 
         return icon.asGuiItem(e -> {
@@ -221,7 +227,7 @@ public class AdminGui extends Gui {
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     if (!api.getGameManager().isInAGame(p))
                         if (newValue)
-                            p.setScoreboard(api.getGameManager().getMainScoreboard());
+                            p.setScoreboard(api.getDisplayManager().getMainScoreboard());
                         else
                             p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
                 }
@@ -322,7 +328,7 @@ public class AdminGui extends Gui {
                 });
             });
         }
-        BaseAdminGui mapsGui = new BaseAdminGui(player, Trans.late("Map Configurations"), icons.size() / 9 + 1);
+        BaseAdminGui mapsGui = new BaseAdminGui(player, Trans.late("Manage Maps"), icons.size() / 9 + 1);
         mapsGui.setIcons(icons);
         mapsGui.open(player);
     }
@@ -330,34 +336,52 @@ public class AdminGui extends Gui {
     public void sendGameAdminGui(HumanEntity player) {
         Set<BaseIcon> icons = new HashSet<>();
 
-        for (GameOptions game : api.getGameManager().getAllConfigs())
+        for (GameOptions options : api.getGameManager().getAllConfigs()) {
+            GameType gameType = (api.getGameManager().getGameType(options.getGameType()) == null) ?
+                    api.getGameManager().getValidGameTypes().get(0) :
+                    api.getGameManager().getGameType(options.getGameType());
+
             icons.add(slot -> {
-                ItemBuilder icon = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Trans.lateToComponent("&eGame: &f%s", game.getConfigFile().getName().split("\\.")[0]));
+                ItemBuilder icon = ItemBuilder.from(gameType.getIcon()).name(Trans.lateToComponent("&e&l%s", gameType.getPrettyName()));
+                icon.flags(ItemFlag.HIDE_ATTRIBUTES);
                 List<String> lore = new ArrayList<>();
-                lore.add(Trans.late("&fMap: &7") + game.getMap().getMapName());
-                lore.add(Trans.late("&fPlayers needed to start: &7") + game.getPlayersNeededToStart());
-                lore.add(Trans.late("&fStarting style: &7") + game.getStartType().name().toLowerCase());
-                lore.add(Trans.late("&fRespawns per player: &7") + (game.getLivesPerPlayer() - 1));
-                lore.add(Trans.late("&fFill pre-placed chests: &7") + (game.isFillAllChests() ? Trans.late("yes") : Trans.late("no")));
-                lore.add(Trans.late("&fRandomly place loot chests: &7") + (game.isGenerateChests() ? Trans.late("yes") : Trans.late("no")));
-                lore.add(Trans.late("&fLoot chest respawn time: &7") + game.getChestRespawnTime() + (game.getChestRespawnTime() > 1 ? Trans.late(" minutes") : Trans.late(" minute")));
-                lore.add(Trans.late("&fLoot table: &7") + game.getLootTable().getKey().getKey());
+                lore.add(Trans.late("&eMap: &f&l") + options.getMap().getMapName());
                 lore.add("");
-                lore.add(Trans.late("&bClick to start a new game with this configuration"));
-                lore.add(Trans.late("&bRight click to edit this configuration"));
+                lore.add(Trans.late(" &7Players needed to start: &9") + options.getPlayersNeededToStart());
+                lore.add(Trans.late(" &7Respawns per player: &9") + (options.getLivesPerPlayer() - 1));
+                lore.add(Trans.late(" &7Fill pre-placed chests: &9") + (options.isFillAllChests() ? Trans.late("yes") : Trans.late("no")));
+                lore.add(Trans.late(" &7Randomly place loot chests: &9") + (options.isGenerateChests() ? Trans.late("yes") : Trans.late("no")));
+                lore.add(Trans.late(" &7Loot chest respawn time: &9") + options.getChestRespawnTime() + (options.getChestRespawnTime() > 1 ? Trans.late(" minutes") : Trans.late(" minute")));
+                lore.add(Trans.late(" &7Loot table: &9") + options.getLootTable().getKey().getKey());
+                lore.add(Trans.late(" &7Configuration File: &9") + options.getConfigFile().getName().split("\\.")[0]);
+                lore.add("");
+                lore.add(Trans.late("&3[&bLeft Click&3] &fStart this Game"));
+                lore.add(Trans.late("&3[&bRight Click&3] &fEdit this Config"));
 
                 icon.lore(Tools.componentalize(lore));
 
                 return icon.asGuiItem(e -> {
                     e.getWhoClicked().closeInventory();
                     if (e.isRightClick()) {
-                        new ConfigureGameGui(e.getWhoClicked(), game, this, api);
+                        new ConfigureGameGui(e.getWhoClicked(), options, this, api);
                     } else {
-                        api.getGameManager().createNewGameWithCallback(game, newGame -> new SelectGameGui(e.getWhoClicked(), api));
+                        api.getGameManager().createNewGameWithCallback(options, newGame -> new SelectGameGui(e.getWhoClicked(), api));
                     }
                 });
             });
-        BaseAdminGui gameGui = new BaseAdminGui(player, Trans.late("Game Configurations"), icons.size() / 9 + 1);
+        }
+        icons.add(slot -> {
+            ItemBuilder icon = ItemBuilder.from(Material.ENCHANTED_GOLDEN_APPLE).name(Trans.lateToComponent("&eCreate New Game"));
+            icon.lore(Trans.lateToComponent("&7  Create a new Game Configuration"));
+            return icon.asGuiItem(e -> {
+                e.getWhoClicked().closeInventory();
+                GameOptions newGame = new GameOptions();
+                newGame.loadConfig(null, api.getMapManager(), api.getGameManager());
+                new ConfigureGameGui(e.getWhoClicked(), newGame, this, api);
+            });
+        });
+
+        BaseAdminGui gameGui = new BaseAdminGui(player, Trans.late("Manage Games"), icons.size() / 9 + 1);
         gameGui.setIcons(icons);
         gameGui.open(player);
     }

@@ -1,15 +1,18 @@
 package me.cheracc.battlegameshungerroyale;
+
 import me.cheracc.battlegameshungerroyale.commands.*;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
+import me.cheracc.battlegameshungerroyale.events.PlayerLootedChestEvent;
+import me.cheracc.battlegameshungerroyale.events.PluginLoadedEvent;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
 import me.cheracc.battlegameshungerroyale.listeners.StatsListeners;
 import me.cheracc.battlegameshungerroyale.listeners.TextInputListener;
 import me.cheracc.battlegameshungerroyale.managers.*;
 import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.SoundEffect;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.*;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
@@ -23,6 +26,9 @@ public class BghrApi implements Listener {
     public final static String HOLOGRAM_TAG = "hologram";
     public final static String HOLOGRAM_ID_TAG = "hologram_id";
     public final static String HOLOGRAM_CLICKABLE = "clickable_hologram";
+    public final static String PRE_ELYTRA = "pre-elytra";
+    public final static String PREGAME_HEALTH = "pregame_health";
+    public final static String PREGAME_FOOD_LEVEL = "pregame-foodlevel";
     public static NamespacedKey EQUIPMENT_KEY;
     public static NamespacedKey ABILITY_KEY;
     public static NamespacedKey HOLOGRAM_TEXT_KEY;
@@ -82,6 +88,7 @@ public class BghrApi implements Listener {
         registerListeners();
         if (mapManager.wasDatapackUpdated())
             Bukkit.reloadData();
+        new PluginLoadedEvent().callEvent();
     }
 
     private void registerCommands() {
@@ -107,6 +114,7 @@ public class BghrApi implements Listener {
         Bukkit.getPluginManager().registerEvents(new CustomEventsListener(gameManager), plugin);
         Bukkit.getPluginManager().registerEvents(new StatsListeners(gameManager, playerManager), plugin);
         Bukkit.getPluginManager().registerEvents(textInputListener = new TextInputListener(plugin), plugin);
+        Bukkit.getPluginManager().registerEvents(new PlayerLootedChestEvent(plugin), plugin);
     }
 
     public void shutdown() {
@@ -116,7 +124,6 @@ public class BghrApi implements Listener {
         plugin.saveConfig();
         HandlerList.unregisterAll((Plugin) plugin);
         unregisterSerializers();
-        gameManager.stopUpdater();
         playerManager.disable();
         if (updater != null)
             updater.disable();

@@ -1,8 +1,8 @@
-package me.cheracc.battlegameshungerroyale.types;
+package me.cheracc.battlegameshungerroyale.types.games;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.managers.MapManager;
-import org.apache.commons.lang.StringUtils;
+import me.cheracc.battlegameshungerroyale.types.MapData;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -13,6 +13,7 @@ import java.io.IOException;
 
 public class GameOptions {
     private File configFile;
+    private String gameType;
     private MapData map;
     private int livesPerPlayer;
     private int playersNeededToStart;
@@ -22,7 +23,6 @@ public class GameOptions {
     private int borderTime;
     private int postGameTime;
     private boolean allowRegularBuilding;
-    private StartType startType;
     private boolean generateChests;
     private boolean fillAllChests;
     private boolean loosenSearchRestrictions;
@@ -50,6 +50,7 @@ public class GameOptions {
         } else
             this.map = map;
 
+        gameType = config.getString("game type", "me.cheracc.battlegameshungerroyale.types.games.FreeForAll");
         livesPerPlayer = config.getInt("lives per player", 1);
         playersNeededToStart = config.getInt("players needed to start", 2);
         allowRegularBuilding = config.getBoolean("allow regular building", false);
@@ -58,7 +59,6 @@ public class GameOptions {
         mainPhaseTime = config.getInt("timers.main", 600);
         borderTime = config.getInt("timers.border", 300);
         postGameTime = config.getInt("timers.postgame", 60);
-        startType = StartType.valueOf(config.getString("start type", "elytra").toUpperCase());
         generateChests = config.getBoolean("loot.generate chests", true);
         loosenSearchRestrictions = config.getBoolean("loot.loosen search restrictions", true);
         maxChestsPerChunk = config.getInt("loot.max chests per chunk", 10);
@@ -83,6 +83,7 @@ public class GameOptions {
 
         FileConfiguration config = new YamlConfiguration();
         config.set("map", map.getMapDirectory().getName());
+        config.set("game type", gameType);
         config.set("lives per player", livesPerPlayer);
         config.set("players needed to start", playersNeededToStart);
         config.set("allow regular building", allowRegularBuilding);
@@ -91,7 +92,6 @@ public class GameOptions {
         config.set("timers.main", mainPhaseTime);
         config.set("timers.border", borderTime);
         config.set("timers.postgame", postGameTime);
-        config.set("start type", startType.name().toLowerCase());
         config.set("loot.generate chests", generateChests);
         config.set("loot.loosen search restrictions", loosenSearchRestrictions);
         config.set("loot.max chests per chunk", maxChestsPerChunk);
@@ -106,6 +106,14 @@ public class GameOptions {
         }
     }
 
+    public String getGameType() {
+        return gameType;
+    }
+
+    public void setGameType(GameType gameType) {
+        this.gameType = gameType.getClassName();
+    }
+
     public MapData getMap() {
         return map;
     }
@@ -116,17 +124,6 @@ public class GameOptions {
 
     public File getConfigFile() {
         return configFile;
-    }
-
-    public StartType getStartType() {
-        return startType;
-    }
-
-    public void toggleStartType() {
-        if (startType == StartType.ELYTRA)
-            startType = StartType.HUNGERGAMES;
-        else
-            startType = StartType.ELYTRA;
     }
 
     public int getLivesPerPlayer() {
@@ -239,19 +236,5 @@ public class GameOptions {
 
     public void setLootTable(LootTable table) {
         this.lootTable = table;
-    }
-
-    public enum StartType {
-        HUNGERGAMES, ELYTRA;
-
-        public String prettyName() {
-            switch (this) {
-                case ELYTRA:
-                    return "Battle Royale: Elytra Style";
-                case HUNGERGAMES:
-                    return "Battle Royale: Hungergames!";
-            }
-            return StringUtils.capitalize(name().toLowerCase());
-        }
     }
 }

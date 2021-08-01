@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.tools;
+
 import com.destroystokyo.paper.Namespaced;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import net.kyori.adventure.text.Component;
@@ -44,6 +45,13 @@ public class Tools {
         meta.getPersistentDataContainer().set(PLUGIN_KEY, PersistentDataType.LONG, System.currentTimeMillis());
         item.setItemMeta(meta);
         return item;
+    }
+
+    public static <T> T getNext(T object, List<T> objects) {
+        int index = objects.indexOf(object);
+        if (objects.size() > index + 1)
+            return objects.get(index + 1);
+        return objects.get(0);
     }
 
     public static String getTimestamp() {
@@ -161,7 +169,7 @@ public class Tools {
         int i = Math.abs(timeInSeconds);
         int remainder = i % 3600, minutes = remainder / 60, seconds = remainder % 60;
         if (seconds == 0 && minutes == 0)
-            return Trans.late("No time at all");
+            return Trans.late("N/A");
         if (minutes == 0) {
             if (seconds == 1)
                 return String.format(Trans.late("%s second"), seconds);

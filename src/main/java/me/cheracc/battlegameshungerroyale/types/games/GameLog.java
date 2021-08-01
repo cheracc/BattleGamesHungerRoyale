@@ -1,5 +1,4 @@
-package me.cheracc.battlegameshungerroyale.types;
-
+package me.cheracc.battlegameshungerroyale.types.games;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.managers.Logr;
@@ -34,7 +33,7 @@ public class GameLog implements Listener {
         mapName = game.getMap().getMapName();
 
         String timestamp = Instant.now().toString().split("\\.")[0].replace('T', '_').replace(':', '-');
-        logFile = new File(plugin.getDataFolder().getAbsolutePath() + "/gamelogs",  timestamp + ".log");
+        logFile = new File(plugin.getDataFolder().getAbsolutePath() + "/gamelogs", timestamp + ".log");
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -54,7 +53,7 @@ public class GameLog implements Listener {
             return;
 
         insertEntry(String.format(Trans.late("%s quit (had %s lives remaining). %s player%s left"), event.getPlayer().getName(), event.getLivesRemaining(),
-                event.getGame().getActivePlayers().size(), event.getGame().getActivePlayers().size() > 1 ? "s" : ""));
+                                  event.getGame().getActivePlayers().size(), event.getGame().getActivePlayers().size() > 1 ? "s" : ""));
     }
 
     @EventHandler
@@ -86,8 +85,8 @@ public class GameLog implements Listener {
             return;
 
         entries.put(System.currentTimeMillis(), String.format(Trans.late("%s died. KB:%s [%s(%s)]"),
-                event.getRecentlyDeceased().getName(), event.getKiller() == null ? "?" : event.getKiller().getName(),
-                ((int)(event.getKillingBlowDamage() * 10))/10D, event.getKillingBlowCause()));
+                                                              event.getRecentlyDeceased().getName(), event.getKiller() == null ? "?" : event.getKiller().getName(),
+                                                              ((int) (event.getKillingBlowDamage() * 10)) / 10D, event.getKillingBlowCause()));
         try {
             saveLogFile();
         } catch (IOException e) {
@@ -170,20 +169,22 @@ public class GameLog implements Listener {
                 GameLogDamageEntry entry = (GameLogDamageEntry) o;
                 if (entry.getDamager() != null && entry.getDamager().length() > 1) {
                     printer.printf("[%s]: %s(%.1f) [%s(%.1f)-> %s(%.1f)", time.toString(), entry.getDamager(), entry.getDamagerHealth(),
-                            entry.getType().name().toLowerCase(), entry.getDamage(), entry.getVictim(), entry.getVictimHealth());
+                                   entry.getType().name().toLowerCase(), entry.getDamage(), entry.getVictim(), entry.getVictimHealth());
                 } else
                     printer.printf("[%s]: %s [%s(%.1f)-> %s(%.1f)", time.toString(), entry.getBestGuess(), entry.getType().name().toLowerCase(), entry.getDamage(), entry.getVictim(), entry.getVictimHealth());
-            }
-            else if (o instanceof String) {
+            } else if (o instanceof String) {
                 printer.printf("[%s]: %s", time.toString(), o);
-            }
-            else if (o instanceof Game.GamePhase) {
+            } else if (o instanceof Game.GamePhase) {
                 Game.GamePhase phase = (Game.GamePhase) o;
                 printer.printf(Trans.late("[%s]: Started %s phase"), time.toString(), phase.name().toLowerCase());
             }
             printer.println();
         }
         printer.close();
+    }
+
+    private boolean isMyGame(Game game) {
+        return this.game.equals(game);
     }
 
     private static class GameLogDamageEntry {
@@ -238,9 +239,5 @@ public class GameLog implements Listener {
         public double getDamage() {
             return damage;
         }
-    }
-
-    private boolean isMyGame(Game game) {
-        return this.game.equals(game);
     }
 }

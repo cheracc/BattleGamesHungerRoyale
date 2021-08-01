@@ -1,16 +1,19 @@
-package me.cheracc.battlegameshungerroyale.types;
+package me.cheracc.battlegameshungerroyale.types.games;
+
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.managers.LootManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.MapData;
+import me.cheracc.battlegameshungerroyale.types.Metadata;
+import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -18,40 +21,36 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
-public class Game implements Listener {
+public abstract class Game implements Listener {
+    protected final List<Location> spawnPoints;
+    protected final List<BukkitTask> tasks;
     private final MapData map;
     private final GameOptions options;
     private final BossBar bar;
     private final Scoreboard scoreboard;
     private final Map<UUID, Integer> participants;
-    private final List<Location> spawnPoints;
-    private final List<BukkitTask> tasks;
+    protected BghrApi api;
+    protected GamePhase currentPhase;
+    protected LootManager lootManager;
     private World world;
-    private BghrApi api;
     private GameLog gameLog;
-    private LootManager lootManager;
     private boolean openToPlayers;
     private double gameTime;
     private long startTime;
     private long lastChestRespawn;
     private Player winner = null;
-    private GamePhase currentPhase;
 
     public Game(GameOptions options) {
         currentPhase = GamePhase.PREGAME;
@@ -68,13 +67,42 @@ public class Game implements Listener {
         gameTime = -1;
     }
 
+    // protected constructor only used to get icons/descriptions from subtypes
+    protected Game() {
+        currentPhase = GamePhase.PREGAME;
+        this.map = null;
+        this.options = null;
+        this.scoreboard = null;
+        this.participants = new HashMap<>();
+        this.spawnPoints = new ArrayList<>();
+        this.tasks = new ArrayList<>();
+        this.bar = null;
+        openToPlayers = false;
+        gameTime = -Integer.MAX_VALUE;
+    }
+
+    public abstract String getGameTypeName();
+    public abstract String getGameDescription();
+    public abstract Material getGameIcon();
+
+    // to allow overrides if necessary
+    protected void runGameSetupProcedures() {
+    }
+
+    protected void runExtraMainPhaseProcedures() {
+    }
+
+    // this is called by the game manager after the world is copied and loaded
     public void initializeGame(World world, BghrApi api) {
         Bukkit.getPluginManager().registerEvents(this, api.getPlugin());
         this.world = world;
         this.api = api;
         gameLog = new GameLog(this, api.getPlugin());
         gameLog.addLogEntry("Starting " + options.getConfigFile().getName());
-        this.lootManager = new LootManager(this, api.getPlugin(), api.logr(), api.getGameManager());
+        if (options.isGenerateChests() || options.isFillAllChests())
+            this.lootManager = new LootManager(this, api.getPlugin(), api.logr(), api.getGameManager());
+        else
+            this.lootManager = null;
         openToPlayers = true;
         spawnPoints.addAll(getSpawnPoints(map.getBorderRadius() / 10));
         if (map.isUseBorder() && map.getBorderRadius() > 0) {
@@ -84,6 +112,7 @@ public class Game implements Listener {
         }
         // always
         world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+        world.setDifficulty(Difficulty.NORMAL);
         world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
 
         // for pregame only
@@ -94,39 +123,36 @@ public class Game implements Listener {
 
         api.getGameManager().makeThisGameAvailable(this);
         tasks.add(startPregameTimer().runTaskTimer(api.getPlugin(), 20L, 4L));
+        runGameSetupProcedures();
 
         new GameLoadedEvent(this).callEvent();
     }
 
-    public void startGame() {
+    // returns the full class name
+    public String getGameType() {
+        return getClass().getName();
+    }
+
+    private void startGame() {
         openToPlayers = false;
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
         world.setGameRule(GameRule.DO_FIRE_TICK, true);
         world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
-        lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
         lastChestRespawn = startTime = System.currentTimeMillis();
 
-        if (options.getStartType() == GameOptions.StartType.ELYTRA)
-            doElytraSpawn(success -> {
-                tasks.add(startGameTick());
-                currentPhase = GamePhase.INVINCIBILITY;
-                world.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, false);
-                new GameChangedPhaseEvent(this, "invincibility").callEvent();
-            });
-        else if (options.getStartType() == GameOptions.StartType.HUNGERGAMES) {
-            doHungergamesSpawn(success -> {
-                tasks.add(startGameTick());
-                currentPhase = GamePhase.INVINCIBILITY;
-                new GameChangedPhaseEvent(this, "invincibility").callEvent();
-            });
-        }
-        for (Player p : getActivePlayers()) {
-            p.setInvulnerable(true);
-            PlayerData data = api.getPlayerManager().getPlayerData(p);
-            if (data.getKit() == null || (!data.getKit().isEnabled() && !p.hasPermission("bghr.admin.kits.disabled"))) {
-                data.registerKit(api.getKitManager().getRandomKit(false), false);
+        if (this instanceof InvincibilityPhase) {
+            ((InvincibilityPhase) this).startInvincibilityPhase();
+            currentPhase = GamePhase.INVINCIBILITY;
+            for (Player p : getActivePlayers()) {
+                p.setInvulnerable(true);
+                PlayerData data = api.getPlayerManager().getPlayerData(p);
+                if (data.getKit() == null || (!data.getKit().isEnabled() && !p.hasPermission("bghr.admin.kits.disabled"))) {
+                    data.registerKit(api.getKitManager().getRandomKit(false), false);
+                }
             }
+        } else {
+            startMainPhase();
         }
         new GameStartEvent(this).callEvent();
     }
@@ -139,6 +165,7 @@ public class Game implements Listener {
         return (int) gameTime;
     }
 
+    // just used for displaying game info - can be overridden if necessary
     public String getPhase() {
         return currentPhase.prettyName();
     }
@@ -158,11 +185,15 @@ public class Game implements Listener {
     }
 
     public boolean isActive() {
-        return gameTime > 0 && currentPhase != GamePhase.POSTGAME;
+        return gameTime > 0;
     }
 
     public boolean isOpenToPlayers() {
         return openToPlayers;
+    }
+
+    public void setOpenToPlayer(boolean value) {
+        openToPlayers = value;
     }
 
     public boolean isPlaying(Player player) {
@@ -188,29 +219,46 @@ public class Game implements Listener {
 
     public void joinAsSpectator(Player player) {
         player.setGameMode(GameMode.SPECTATOR);
-        player.teleport(map.getSpawnCenter(world), PlayerTeleportEvent.TeleportCause.PLUGIN);
+        player.teleport(randomSpawnPoint(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         bar.addPlayer(player);
         new PlayerJoinedGameEvent(player, this, true).callEvent();
     }
 
+    private Location randomSpawnPoint() {
+        Location loc = getSpawnPoints(getActivePlayers().size()).get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
+
+        int tries = 0;
+        while (!loc.getNearbyPlayers(1).isEmpty() && tries < 10) {
+            loc = getSpawnPoints(getActivePlayers().size()).get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
+            tries++;
+        }
+        return loc;
+    }
+
     public void join(Player player) {
+        Metadata.removeAll(player);
         participants.put(player.getUniqueId(), options.getLivesPerPlayer());
-        player.setGameMode(GameMode.ADVENTURE);
-        Location spawnPoint = spawnPoints.get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
-        player.teleport(spawnPoint, PlayerTeleportEvent.TeleportCause.PLUGIN);
+        if (options.isAllowRegularBuilding())
+            player.setGameMode(GameMode.SURVIVAL);
+        else
+            player.setGameMode(GameMode.ADVENTURE);
+        player.teleport(randomSpawnPoint(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         bar.addPlayer(player);
         if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.INVINCIBILITY)
             player.setInvulnerable(true);
 
         if (api.getPlayerManager().getPlayerData(player).getKit() == null) {
-            player.sendMessage(Trans.lateToComponent("&fYou haven't selected a kit! Type &e/kit &for let the gods of randomness have their say!"));
+            player.sendMessage(Trans.lateToComponent("&fYou haven't selected a kit! Type &e/kit &fto open the menu!"));
         } else {
             api.getPlayerManager().outfitPlayer(player, api.getPlayerManager().getPlayerData(player).getKit());
         }
-        player.setScoreboard(scoreboard);
-        player.setMetadata("pregame-health", new FixedMetadataValue(api.getPlugin(), player.getHealth()));
+        if (api.getPlayerManager().getPlayerData(player).getSettings().isShowGameScoreboard()) {
+            player.setMetadata(Metadata.PREGAME_SCOREBOARD.key(), new FixedMetadataValue(api.getPlugin(), player.getScoreboard()));
+            player.setScoreboard(getScoreboard());
+        }
+        player.setMetadata(Metadata.PREGAME_HEALTH.key(), new FixedMetadataValue(api.getPlugin(), player.getHealth()));
         player.setHealth(20);
-        player.setMetadata("pregame-foodlevel", new FixedMetadataValue(api.getPlugin(), player.getFoodLevel()));
+        player.setMetadata(Metadata.PREGAME_FOOD_LEVEL.key(), new FixedMetadataValue(api.getPlugin(), player.getFoodLevel()));
         player.setFoodLevel(20);
         new PlayerJoinedGameEvent(player, this, false).callEvent();
     }
@@ -226,23 +274,24 @@ public class Game implements Listener {
         }
         new PlayerQuitGameEvent(player, this, livesRemaining).callEvent();
         PlayerData data = api.getPlayerManager().getPlayerData(player);
-        player.setAllowFlight(false);
+        bar.removePlayer(player);
         if (api.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false))
             player.teleport(api.getMapManager().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         else
             player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-        bar.removePlayer(player);
-        if (api.getPlayerManager().getPlayerData(player).getSettings().isShowMainScoreboard() && api.getPlugin().getConfig().getBoolean("show main scoreboard", true))
-            player.setScoreboard(api.getGameManager().getMainScoreboard());
-        else
-            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        restorePlayer(player);
+    }
 
-        if (player.hasMetadata("pregame-health")) {
-            player.setHealth((double) player.getMetadata("pregame-health").get(0).value());
+    protected void restorePlayer(Player player) {
+        player.setAllowFlight(false);
+        player.setInvulnerable(false);
+        if (player.hasMetadata(Metadata.PREGAME_HEALTH.key())) {
+            player.setHealth((double) player.getMetadata(Metadata.PREGAME_HEALTH.key()).get(0).value());
         }
-        if (player.hasMetadata("pregame-foodlevel")) {
-            player.setFoodLevel((int) player.getMetadata("pregame-foodlevel").get(0).value());
+        if (player.hasMetadata(Metadata.PREGAME_FOOD_LEVEL.key())) {
+            player.setFoodLevel((int) player.getMetadata(Metadata.PREGAME_FOOD_LEVEL.key()).get(0).value());
         }
+        Metadata.removeAll(player);
     }
 
     public Player getWinner() {
@@ -299,10 +348,13 @@ public class Game implements Listener {
         return activePlayers;
     }
 
-    private List<Location> getSpawnPoints(int number) {
+    protected List<Location> getSpawnPoints(int number) {
         Location center = map.getSpawnCenter(world);
         int scanRadius = map.getSpawnRadius() + 1;
         int startSize = spawnPoints.size();
+
+        // TODO - get a large number of positions (~200 maybe), remove the ones that aren't 'spawnable', then return
+        // TODO a list that is evenly spaced about those positions (every n/rth)
 
         if (startSize < number && map.getSpawnBlockType() != null) {
             for (int x = -scanRadius; x <= scanRadius; x++) {
@@ -340,80 +392,12 @@ public class Game implements Listener {
         return spawnPoints;
     }
 
-    private void doElytraSpawn(Consumer<Boolean> callback) {
-        Vector boost = new Vector(0, 1, 0);
-
-        if (spawnPoints.size() < getActivePlayers().size()) {
-            api.logr().warn("not enough spawns");
-            getSpawnPoints(getActivePlayers().size());
-        }
-
-        world.setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
-        Collections.shuffle(spawnPoints);
-        int count = 0;
-        for (Player p : getActivePlayers()) {
-            p.teleport(spawnPoints.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
-            count++;
-        }
-
-        new BukkitRunnable() {
-            int count = 0;
-
-            @Override
-            public void run() {
-                for (Player p : getActivePlayers()) {
-                    if (!isPlaying(p))
-                        return;
-
-                    if (count == 0) {
-                        p.setVelocity(boost);
-                    } else {
-                        p.setVelocity(p.getVelocity().add(boost));
-                    }
-                    p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1F, 1F + (0.1F * 2 * count));
-
-                    if (count == 2) {
-                        ItemStack elytra = new ItemStack(Material.ELYTRA);
-                        elytra.addEnchantment(Enchantment.BINDING_CURSE, 1);
-                        ItemStack current = p.getInventory().getChestplate();
-                        if (current != null && !current.getType().isAir())
-                            p.setMetadata("pre-elytra", new FixedMetadataValue(api.getPlugin(), current));
-                        p.getInventory().setChestplate(elytra);
-                        p.setGliding(true);
-                    }
-                    if (count >= 4) {
-                        cancel();
-                        callback.accept(true);
-                    }
-                }
-                count++;
-            }
-        }.runTaskTimer(api.getPlugin(), 40L, 4L);
+    protected BossBar getBossBar() {
+        return bar;
     }
 
-    private void doHungergamesSpawn(Consumer<Boolean> callback) {
-        List<Location> spawns = getSpawnPoints(getActivePlayers().size());
-
-        if (spawns.size() < getActivePlayers().size()) {
-            api.logr().warn("not enough spawns");
-            getSpawnPoints(getActivePlayers().size());
-        }
-
-        Collections.shuffle(spawns);
-        int count = 0;
-
-        PotionEffect noMove = new PotionEffect(PotionEffectType.SLOW, 50, 99999, false, false, false);
-        PotionEffect noJump = new PotionEffect(PotionEffectType.JUMP, 50, -99999, false, false, false);
-        for (Player p : getActivePlayers()) {
-            p.teleport(spawns.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
-            p.addPotionEffect(noMove);
-            p.addPotionEffect(noJump);
-            count++;
-        }
-        callback.accept(true);
-    }
-
-    private void updateBossBar() {
+    // default boss bar, can be overridden by children
+    protected void updateBossBar() {
         int[] length = {options.getPregameTime(), options.getInvincibilityTime(), options.getMainPhaseTime(), options.getBorderTime(), options.getPostGameTime()};
         BarColor[] color = {BarColor.WHITE, BarColor.PINK, BarColor.BLUE, BarColor.RED, BarColor.GREEN};
         String[] names = {"Pregame", "Invincibility", "Main Phase", "Border Shrinking", "Postgame"};
@@ -453,7 +437,10 @@ public class Game implements Listener {
         return winner != null;
     }
 
-    private void startMainPhase() {
+    protected void startMainPhase() {
+        if (this instanceof InvincibilityPhase)
+            ((InvincibilityPhase) this).endInvincibilityPhase();
+
         currentPhase = GamePhase.MAIN;
         new GameChangedPhaseEvent(this, "main").callEvent();
         List<UUID> toRemove = new ArrayList<>();
@@ -466,27 +453,10 @@ public class Game implements Listener {
             if (isPlaying(p)) {
                 p.setInvulnerable(false);
             }
-            if (options.getStartType() == GameOptions.StartType.ELYTRA && p.getInventory().getChestplate() != null &&
-                    p.getInventory().getChestplate().getType().equals(Material.ELYTRA)) {
-                if (p.hasMetadata("pre-elytra") && p.getMetadata("pre-elytra").get(0).value() instanceof ItemStack) {
-                    p.getInventory().setChestplate((ItemStack) p.getMetadata("pre-elytra").get(0).value());
-                    p.removeMetadata("pre-elytra", api.getPlugin());
-                } else
-                    p.getInventory().setChestplate(null);
-                p.setGliding(false);
-                p.setAllowFlight(false);
-            }
         }
         for (UUID id : toRemove)
             participants.remove(id);
-        api.getGameManager().updateScoreboard();
-    }
-
-    private void startBorderPhase() {
-        currentPhase = GamePhase.BORDER;
-        new GameChangedPhaseEvent(this, "border").callEvent();
-        world.getWorldBorder().setSize(10, options.getBorderTime());
-        api.getGameManager().updateScoreboard();
+        runExtraMainPhaseProcedures();
     }
 
     private void doPostGame() {
@@ -499,10 +469,12 @@ public class Game implements Listener {
         world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
     }
 
+    // just ends the game - used at end of postgame and when disabling the plugin
     public void endGame() {
         endGame(null);
     }
 
+    // ends the game and calls back when everything is unloaded
     public void endGame(Consumer<Game> callback) {
         for (BukkitTask task : tasks)
             task.cancel();
@@ -532,20 +504,19 @@ public class Game implements Listener {
         world = null;
     }
 
-    private void setupScoreboard() {
-        Objective obj = scoreboard.registerNewObjective("main", "dummy", Tools.componentalize(""));
+    protected void setupScoreboard() {
+        Objective obj = getScoreboard().registerNewObjective("main", "dummy", Tools.componentalize(""));
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+        obj.displayName(Tools.componentalize(String.format("&f&l%s", getGameTypeName())));
         for (int i = 15; i >= 0; i--) {
             String entry = ChatColor.values()[i] + "" + ChatColor.values()[i + 1];
-            Team lineText = scoreboard.registerNewTeam(String.format("line%s", i));
+            Team lineText = getScoreboard().registerNewTeam(String.format("line%s", i));
             lineText.addEntry(entry);
             obj.getScore(entry).setScore(i);
         }
     }
 
-    private void updateScoreboard() {
-        Objective obj = scoreboard.getObjective("main");
-        obj.displayName(Tools.componentalize(String.format("&f&l%s", map.getMapName())));
+    protected void updateScoreboard() {
         setScoreboardLine(15, "&6Phase: &e" + getPhase());
         setScoreboardLine(14, String.format("&6Border Size: &e%s", (int) getWorld().getWorldBorder().getSize()));
         if (gameTime > 0)
@@ -578,8 +549,8 @@ public class Game implements Listener {
         }
     }
 
-    private void setScoreboardLine(int line, String text) {
-        scoreboard.getTeam("line" + line).prefix(Tools.componentalize(text));
+    protected void setScoreboardLine(int line, String text) {
+        getScoreboard().getTeam("line" + line).prefix(Tools.componentalize(text));
     }
 
     // game tasks
@@ -607,6 +578,7 @@ public class Game implements Listener {
     }
 
     private BukkitRunnable startPregameTimer() {
+        gameTime = -options.getPregameTime();
         return new BukkitRunnable() {
             double last = System.currentTimeMillis();
 
@@ -633,7 +605,15 @@ public class Game implements Listener {
         };
     }
 
-    private BukkitTask startGameTick() {
+    public long getLastChestRespawn() {
+        return lastChestRespawn;
+    }
+
+    public void setLastChestRespawn(long value) {
+        lastChestRespawn = value;
+    }
+
+    BukkitTask startGameTick() {
         tasks.add(respawner());
 
         BukkitRunnable task = new BukkitRunnable() {
@@ -648,16 +628,17 @@ public class Game implements Listener {
 
                 if (currentPhase == GamePhase.INVINCIBILITY && gameTime >= options.getInvincibilityTime()) {
                     startMainPhase();
-                    api.getGameManager().updateScoreboard();
                 }
-                if (currentPhase == GamePhase.MAIN && gameTime >= options.getInvincibilityTime() + options.getMainPhaseTime()) {
-                    startBorderPhase();
-                    api.getGameManager().updateScoreboard();
+                if (Game.this instanceof BorderPhase && currentPhase == GamePhase.MAIN && gameTime >= options.getInvincibilityTime() + options.getMainPhaseTime()) {
+                    ((BorderPhase) Game.this).startBorderPhase(Game.this);
                 }
 
-                if ((System.currentTimeMillis() - lastChestRespawn) / 1000 / 60 >= options.getChestRespawnTime()) {
-                    lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
-                    lastChestRespawn = System.currentTimeMillis();
+                if (lootManager != null) {
+                    if ((System.currentTimeMillis() - lastChestRespawn) / 1000 / 60 >= options.getChestRespawnTime()) {
+                        // TODO add the ability to modify this 'density' number for loot chests
+                        lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
+                        lastChestRespawn = System.currentTimeMillis();
+                    }
                 }
 
                 updateBossBar();
@@ -667,6 +648,10 @@ public class Game implements Listener {
         return task.runTaskTimer(api.getPlugin(), 20L, 4L);
     }
 
+    // respawns dead players after 5 seconds
+    // TODO - make it instantly respawn, set to spectator, put a few blocks above place of death facing down
+    // TODO use title/subtitle to display a counter that will count down to respawn
+    // TODO customizable ways to respawn (elytra, random, place of death, etc)
     private BukkitTask respawner() {
         Map<UUID, Long> theDeceased = new HashMap<>();
         BukkitRunnable task = new BukkitRunnable() {
@@ -693,19 +678,26 @@ public class Game implements Listener {
     @EventHandler
     public void handleQuits(PlayerQuitEvent event) {
         Player p = event.getPlayer();
-        p.setAllowFlight(false);
-        if (isSpectating(p) || isPlaying(p))
-            quit(p);
+        if (p.getWorld().equals(getWorld())) {
+            p.setAllowFlight(false);
+            p.setInvulnerable(false);
+            if (isSpectating(p) || isPlaying(p))
+                quit(p);
+        }
     }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         if (isPlaying(event.getPlayer())) {
-            event.setRespawnLocation(world.getSpawnLocation());
-            event.getPlayer().setGameMode(GameMode.ADVENTURE);
+            event.setRespawnLocation(randomSpawnPoint());
+            if (getOptions().isAllowRegularBuilding())
+                event.getPlayer().setGameMode(GameMode.SURVIVAL);
+            else
+                event.getPlayer().setGameMode(GameMode.ADVENTURE);
+            api.getPlayerManager().outfitPlayer(event.getPlayer(), api.getPlayerManager().getPlayerData(event.getPlayer()).getKit());
         }
         if (isSpectating(event.getPlayer())) {
-            event.setRespawnLocation(world.getSpawnLocation());
+            event.setRespawnLocation(randomSpawnPoint());
             event.getPlayer().setGameMode(GameMode.SPECTATOR);
         }
     }

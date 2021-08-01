@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.types.Kit;
@@ -119,7 +120,6 @@ public class KitManager {
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
         return !pdc.isEmpty() && pdc.has(BghrApi.ABILITY_KEY, PersistentDataType.STRING);
     }
-
 
     public List<Ability> getDefaultAbilities() {
         return new ArrayList<>(defaultAbilities);

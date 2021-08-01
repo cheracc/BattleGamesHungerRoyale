@@ -1,8 +1,10 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.Metadata;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -11,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -88,14 +91,16 @@ public class PlayerManager {
         if (!loadedPlayers.contains(data)) {
             loadedPlayers.add(data);
             logr.debug("Finished loading player data for %s", data.getUuid().toString());
-        }
-        else
+        } else
             logr.warn("data for %s is already loaded", data.getName());
     }
 
     public void restorePlayerFromSavedData(Player player, PlayerData data) {
-        if (data.getSettings().isShowMainScoreboard())
-            player.setScoreboard(gameManager.getMainScoreboard());
+        if (player.hasMetadata(Metadata.PREGAME_SCOREBOARD.key())) {
+            Scoreboard sb = (Scoreboard) player.getMetadata(Metadata.PREGAME_SCOREBOARD.key()).get(0).value();
+            player.setScoreboard(sb);
+        } else if (data.getSettings().isShowMainScoreboard() && plugin.getConfig().getBoolean("show main scoreboard", true))
+            player.setScoreboard(plugin.getApi().getDisplayManager().getMainScoreboard());
         else
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
@@ -133,7 +138,7 @@ public class PlayerManager {
         }
 
         kit.getEquipment().unequip(player);
-        for (Ability ability :kit.getAbilities()) {
+        for (Ability ability : kit.getAbilities()) {
             if (ability instanceof PassiveAbility) {
                 ((PassiveAbility) ability).deactivate(player);
             }
