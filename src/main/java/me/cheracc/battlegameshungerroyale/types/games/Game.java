@@ -324,7 +324,8 @@ public abstract class Game implements Listener {
     public Set<Player> getCurrentPlayersAndSpectators() {
         Set<Player> players = getActivePlayers();
 
-        players.addAll(world.getPlayers());
+        if (world.getPlayers() != null)
+            players.addAll(world.getPlayers());
         return players;
     }
 
