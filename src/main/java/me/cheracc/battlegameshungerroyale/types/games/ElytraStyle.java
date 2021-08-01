@@ -1,0 +1,120 @@
+package me.cheracc.battlegameshungerroyale.types.games;
+
+import me.cheracc.battlegameshungerroyale.BghrApi;
+import me.cheracc.battlegameshungerroyale.events.GameChangedPhaseEvent;
+import me.cheracc.battlegameshungerroyale.types.Metadata;
+import org.bukkit.GameRule;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
+
+import java.util.Collections;
+import java.util.function.Consumer;
+
+public class ElytraStyle extends Game implements InvincibilityPhase, BorderPhase {
+    public ElytraStyle(GameOptions options) {
+        super(options);
+    }
+
+    public ElytraStyle() {
+        super();
+    }
+
+    @Override
+    public String getGameTypeName() {
+        return "Battle Royale: Elytra Style!";
+    }
+
+    @Override
+    public String getGameDescription() {
+        return "At the start of the game, players are given an elytra and launched into the air to glide back down to their desired location. The elytra is removed at the end of the invincibility phase, so make sure it is long enough!";
+    }
+
+    @Override
+    public Material getGameIcon() {
+        return Material.ELYTRA;
+    }
+
+    private void doElytraSpawn(Consumer<Boolean> callback) {
+        Vector boost = new Vector(0, 1, 0);
+
+        if (spawnPoints.size() < getActivePlayers().size()) {
+            api.logr().warn("not enough spawns");
+            getSpawnPoints(getActivePlayers().size());
+        }
+
+        getWorld().setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, true);
+        Collections.shuffle(spawnPoints);
+        int count = 0;
+        for (Player p : getActivePlayers()) {
+            p.teleport(spawnPoints.get(count), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            count++;
+        }
+
+        new BukkitRunnable() {
+            int count = 0;
+
+            @Override
+            public void run() {
+                for (Player p : getActivePlayers()) {
+                    if (!isPlaying(p))
+                        return;
+
+                    if (count == 0) {
+                        p.setVelocity(boost);
+                    } else {
+                        p.setVelocity(p.getVelocity().add(boost));
+                    }
+                    p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1F, 1F + (0.1F * 2 * count));
+
+                    if (count == 2) {
+                        ItemStack elytra = new ItemStack(Material.ELYTRA);
+                        elytra.addEnchantment(Enchantment.BINDING_CURSE, 1);
+                        ItemStack current = p.getInventory().getChestplate();
+                        if (current != null && !current.getType().isAir())
+                            p.setMetadata("pre-elytra", new FixedMetadataValue(api.getPlugin(), current));
+                        p.getInventory().setChestplate(elytra);
+                        p.setGliding(true);
+                    }
+                    if (count >= 4) {
+                        cancel();
+                        callback.accept(true);
+                    }
+                }
+                count++;
+            }
+        }.runTaskTimer(api.getPlugin(), 40L, 4L);
+    }
+
+    @Override
+    public void startInvincibilityPhase() {
+        if (lootManager != null)
+            lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
+        doElytraSpawn(success -> {
+            tasks.add(startGameTick());
+            getWorld().setGameRule(GameRule.DISABLE_ELYTRA_MOVEMENT_CHECK, false);
+            new GameChangedPhaseEvent(this, "invincibility").callEvent();
+        });
+    }
+
+    @Override
+    public void endInvincibilityPhase() {
+        for (Player p : getActivePlayers()) {
+            if (p.getInventory().getChestplate() != null && p.getInventory().getChestplate().getType().equals(Material.ELYTRA)) {
+                if (p.hasMetadata(BghrApi.PRE_ELYTRA) && p.getMetadata(BghrApi.PRE_ELYTRA).get(0).value() instanceof ItemStack) {
+                    p.getInventory().setChestplate((ItemStack) p.getMetadata(BghrApi.PRE_ELYTRA).get(0).value());
+                    p.removeMetadata(Metadata.PRE_ELYTRA.key(), api.getPlugin());
+                } else
+                    p.getInventory().setChestplate(null);
+                p.setGliding(false);
+                p.setAllowFlight(false);
+            }
+        }
+    }
+}
