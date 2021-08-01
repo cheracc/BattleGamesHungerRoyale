@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale;
+
 import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.PluginUpdater;
 import org.bstats.bukkit.Metrics;
@@ -9,19 +10,17 @@ public class BGHR extends JavaPlugin implements Listener {
     private PluginUpdater updater;
     private BghrApi api;
 
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onEnable() {
-        api = new BghrApi(this);
-        Metrics metrics = new Metrics(this, 12102);
-
-        saveDefaultConfig();
-
-    }
-
     @Override
     public void onDisable() {
         api.shutdown();
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        api = new BghrApi(this);
+        Metrics metrics = new Metrics(this, 12102);
     }
 
     public String getJarFilename() {
