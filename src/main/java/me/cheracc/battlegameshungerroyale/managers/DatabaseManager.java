@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import me.cheracc.battlegameshungerroyale.BGHR;
@@ -12,7 +13,6 @@ import java.sql.SQLException;
 
 public class DatabaseManager {
     private final static int CURRENT_DB_VERSION = 3;
-
     private final HikariConfig config = new HikariConfig();
     private final Logr logr;
     private HikariDataSource ds;
@@ -55,11 +55,16 @@ public class DatabaseManager {
             }
             if (h2Server != null) {
                 connectString = String.format("jdbc:h2:tcp://localhost/%s/plugin_data;mode=MySQL;DATABASE_TO_LOWER=TRUE",
-                                        plugin.getDataFolder().getAbsolutePath());
+                                              plugin.getDataFolder().getAbsolutePath());
                 this.user = "bghr";
                 this.pass = "bghr";
                 setupDataSource();
             }
+        }
+        try {
+            setupTables();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -83,42 +88,42 @@ public class DatabaseManager {
         getConnection();
 
         try (PreparedStatement createStats = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS player_stats (" +
-                "uuid CHAR(36) PRIMARY KEY, " +
-                "played INT," +
-                "kills INT," +
-                "killstreak INT," +
-                "deaths INT," +
-                "wins INT," +
-                "secondplaces INT," +
-                "totaltime BIGINT," +
-                "quits INT," +
-                "damagedealt BIGINT," +
-                "damagetaken BIGINT," +
-                "activeabilities INT," +
-                "chests INT," +
-                "itemslooted INT," +
-                "arrowsshot INT," +
-                "monsterskilled INT," +
-                "animalskilled INT," +
-                "foodeaten INT)");
+                                                                                         "uuid CHAR(36) PRIMARY KEY, " +
+                                                                                         "played INT," +
+                                                                                         "kills INT," +
+                                                                                         "killstreak INT," +
+                                                                                         "deaths INT," +
+                                                                                         "wins INT," +
+                                                                                         "secondplaces INT," +
+                                                                                         "totaltime BIGINT," +
+                                                                                         "quits INT," +
+                                                                                         "damagedealt BIGINT," +
+                                                                                         "damagetaken BIGINT," +
+                                                                                         "activeabilities INT," +
+                                                                                         "chests INT," +
+                                                                                         "itemslooted INT," +
+                                                                                         "arrowsshot INT," +
+                                                                                         "monsterskilled INT," +
+                                                                                         "animalskilled INT," +
+                                                                                         "foodeaten INT)");
              PreparedStatement createSettings = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS player_settings (" +
-                 "uuid CHAR(36) PRIMARY KEY," +
-                 "showmain BOOLEAN," +
-                 "showhelp BOOLEAN," +
-                 "defaultkit VARCHAR(24)" +
-                 ")");
+                                                                                            "uuid CHAR(36) PRIMARY KEY," +
+                                                                                            "showmain BOOLEAN," +
+                                                                                            "showhelp BOOLEAN," +
+                                                                                            "defaultkit VARCHAR(24)" +
+                                                                                            ")");
              PreparedStatement createVersionTable = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS db_version (" +
-                 "lockcol CHAR(1) PRIMARY KEY," +
-                 "version TINYINT NOT NULL)");
+                                                                                                "lockcol CHAR(1) PRIMARY KEY," +
+                                                                                                "version TINYINT NOT NULL)");
              PreparedStatement createDataTable = ds.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS player_data (" +
-                 "uuid CHAR(36) PRIMARY KEY," +
-                 "lastworld CHAR(36)," +
-                 "lastx INT," +
-                 "lasty INT," +
-                 "lastz INT," +
-                 "inventory TEXT," +
-                 "armor TEXT," +
-                 "enderchest TEXT)")) {
+                                                                                             "uuid CHAR(36) PRIMARY KEY," +
+                                                                                             "lastworld CHAR(36)," +
+                                                                                             "lastx INT," +
+                                                                                             "lasty INT," +
+                                                                                             "lastz INT," +
+                                                                                             "inventory TEXT," +
+                                                                                             "armor TEXT," +
+                                                                                             "enderchest TEXT)")) {
 
             createStats.execute();
             createSettings.execute();
@@ -143,8 +148,7 @@ public class DatabaseManager {
             ResultSet result = stmt.executeQuery();
             if (result.next()) {
                 foundVersion = result.getInt("version");
-            }
-            else {
+            } else {
                 PreparedStatement setVer = ds.getConnection().prepareStatement("INSERT INTO db_version (lockcol, version) VALUES (?, ?)");
                 setVer.setString(1, "v");
                 setVer.setInt(2, CURRENT_DB_VERSION);
