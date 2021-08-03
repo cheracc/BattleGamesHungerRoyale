@@ -333,7 +333,7 @@ public abstract class Game implements Listener {
         Set<UUID> activePlayerIds = new HashSet<>();
 
         participants.forEach((id, lives) -> {
-            if (lives > 0)
+            if (lives > 0 && Bukkit.getPlayer(id) != null && Bukkit.getPlayer(id).isOnline())
                 activePlayerIds.add(id);
         });
 
