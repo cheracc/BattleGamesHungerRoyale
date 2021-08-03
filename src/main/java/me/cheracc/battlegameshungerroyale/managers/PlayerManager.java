@@ -149,7 +149,7 @@ public class PlayerManager {
             return;
         }
 
-        if (!gameManager.isInAGame(p) && plugin.getConfig().getBoolean("main world.kits useable in main world", false)) {
+        if (!gameManager.isInAGame(p) && !plugin.getConfig().getBoolean("main world.kits useable in main world", false)) {
             p.sendMessage(Trans.lateToComponent("&7You will be equipped with kit &e%s &7at the start of your next game.", kit.getName()));
             return;
         }
