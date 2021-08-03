@@ -431,6 +431,9 @@ public class GameManager {
                 configs.add(opts);
             }
 
+            if (configs.isEmpty()) // either everything is disabled or set up wrong - we need to start something
+                configs.addAll(getAllConfigs());
+
             Collections.shuffle(configs);
             int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
