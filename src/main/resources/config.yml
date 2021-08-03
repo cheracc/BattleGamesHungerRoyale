@@ -9,7 +9,7 @@ main world:
 always-on games: [ ]
 games that will not start randomly: [ ]
 allow FreeForAll games to start randomly: false
-keep at least this many games running: 2
+keep at least this many games running: 1
 use mysql instead of h2: false
 mysql:
   hostname: localhost
