@@ -83,8 +83,8 @@ public class GameManager {
                     };
                 }
             }
-            // start the last game in the list with the callback we created which will start all the others in a nice sequence
         }
+        // add some random games to the callback chain if the config demands more
         if (alwaysOnGames.size() < minimumRunningGames) {
             for (int i = 0; i < minimumRunningGames - alwaysOnGames.size(); i++) {
                 if (callback == null)
@@ -101,8 +101,10 @@ public class GameManager {
         }
         if (!alwaysOnGames.isEmpty())
             createNewGameWithCallback(alwaysOnGames.get(alwaysOnGames.size() - 1), callback);
-        else
+        else if (callback != null)
             callback.accept(null);
+        else
+            createNewGame(mapDecider.selectRandomConfig());
     }
 
     public boolean isThisAGameWorld(World world) {
