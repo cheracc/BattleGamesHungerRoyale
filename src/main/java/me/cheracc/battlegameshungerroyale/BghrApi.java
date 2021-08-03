@@ -40,11 +40,11 @@ public class BghrApi implements Listener {
     private final KitManager kitManager;
     private final MapManager mapManager;
     private final DisplayManager displayManager;
+    private final TopStatsGui topStatsGui;
     private GameManager gameManager;
     private PlayerManager playerManager;
     private PluginUpdater updater;
     private TextInputListener textInputListener;
-    private final TopStatsGui topStatsGui;
 
     public BghrApi(BGHR plugin) {
         this.plugin = plugin;
@@ -118,6 +118,7 @@ public class BghrApi implements Listener {
         Bukkit.getPluginManager().registerEvents(new StatsListeners(gameManager, playerManager), plugin);
         Bukkit.getPluginManager().registerEvents(textInputListener = new TextInputListener(plugin), plugin);
         Bukkit.getPluginManager().registerEvents(new PlayerLootedChestEvent(plugin), plugin);
+        Bukkit.getPluginManager().registerEvents(displayManager, plugin);
     }
 
     public void shutdown() {
