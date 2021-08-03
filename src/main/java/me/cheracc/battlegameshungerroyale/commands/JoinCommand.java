@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.commands;
+
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
 import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.Bukkit;
@@ -25,6 +26,7 @@ public class JoinCommand implements CommandExecutor {
                     int gameNumber = Integer.parseInt(args[0]);
                     if (gameManager.getActiveGames().size() >= gameNumber)
                         gameManager.getActiveGames().get(gameNumber - 1).join(p);
+                    return true;
                 } catch (NumberFormatException ignored) {
                 }
             }
