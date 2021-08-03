@@ -87,16 +87,12 @@ public class GameManager {
         // add some random games to the callback chain if the config demands more
         if (alwaysOnGames.size() < minimumRunningGames) {
             for (int i = 0; i < minimumRunningGames - alwaysOnGames.size(); i++) {
-                if (callback == null)
-                    callback = game -> logr.debug("no more to start");
-                else {
-                    Consumer<Game> previousCallback = callback;
-                    callback = game -> {
-                        GameOptions opts = mapDecider.selectNextMap();
-                        logr.debug("starting game %s because there are not enough running", opts.getConfigFile().getName());
-                        createNewGameWithCallback(opts, previousCallback);
-                    };
-                }
+                Consumer<Game> previousCallback = callback;
+                callback = game -> {
+                    GameOptions opts = mapDecider.selectNextMap();
+                    logr.debug("starting game %s because there are not enough running", opts.getConfigFile().getName());
+                    createNewGameWithCallback(opts, previousCallback);
+                };
             }
         }
         if (!alwaysOnGames.isEmpty())
