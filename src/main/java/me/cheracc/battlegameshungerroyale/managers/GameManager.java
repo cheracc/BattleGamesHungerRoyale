@@ -99,7 +99,10 @@ public class GameManager {
                 }
             }
         }
-        createNewGameWithCallback(alwaysOnGames.get(alwaysOnGames.size() - 1), callback);
+        if (!alwaysOnGames.isEmpty())
+            createNewGameWithCallback(alwaysOnGames.get(alwaysOnGames.size() - 1), callback);
+        else
+            callback.accept(null);
     }
 
     public boolean isThisAGameWorld(World world) {
