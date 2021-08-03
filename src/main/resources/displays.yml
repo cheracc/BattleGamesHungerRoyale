@@ -3,7 +3,7 @@ templates:
     text:
       - '&e&lWelcome to Battle Games'
       - '&e&lHunger Royale!'
-      - '&b----------------------------'
+      - '&b----------------------------&f'
       - '&f&lCurrent Games:'
       - '&b----------------------------'
       - '%bghr_game1_info%'
@@ -12,8 +12,8 @@ templates:
     command: games
   game1:
     text:
-      - '&c&lBattle Game One'
-      - '&b----------------------------'
+      - '&c&lBattleGame One'
+      - '&b----------------------------&f'
       - '&eGame Type: &f%bghr_game1_type%'
       - '&eMap: &f%bghr_game1_map%'
       - '&b----------------------------'
@@ -24,8 +24,8 @@ templates:
     command: join 1
   game2:
     text:
-      - '&c&lBattle Game Two'
-      - '&b----------------------------'
+      - '&c&lBattleGame Two'
+      - '&b----------------------------&f'
       - '&eGame Type: &f%bghr_game2_type%'
       - '&eMap: &f%bghr_game2_map%'
       - '&b----------------------------'
@@ -40,9 +40,20 @@ templates:
       - '&b----------------------------&f'
       - '&5#2: &d%bghr_topstats_wins_name_2% &5(&d%bghr_topstats_wins_amount_2%&5)'
       - '&5#3: &d%bghr_topstats_wins_name_3% &5(&d%bghr_topstats_wins_amount_3%&5)'
-  topkills:
-    text:
-      - '&2&lMost Kills: &a%bghr_topstats_kills_name_1% (%bghr_topstats_kills_amount_1%)'
-      - '&b----------------------------&f'
-      - '&5#2: &d%bghr_topstats_kills_name_2% &5(&d%bghr_topstats_kills_amount_2%&5)'
-      - '&5#3: &d%bghr_topstats_kills_name_3% &5(&d%bghr_topstats_kills_amount_3%&5)'
+scoreboards:
+  main:
+    - ' &b%bghr_skorbord_bar%'
+    - '@c&f&lCurrent Games:'
+    - '&7&f&7&e&7'
+    - '%bghr_sb_game1_1%'
+    - '%bghr_sb_game1_2%'
+    - '%bghr_sb_game1_3%'
+    - '&7&f&7&c&7'
+    - '%bghr_sb_game2_1%'
+    - '%bghr_sb_game2_2%'
+    - '%bghr_sb_game2_3%'
+    - '&7&f&7&a&7'
+    - '%bghr_sb_game3_1%'
+    - '%bghr_sb_game3_2%'
+    - '%bghr_sb_game3_3%'
+    - '@c&7(you can turn this off in &e/settings&7)'
