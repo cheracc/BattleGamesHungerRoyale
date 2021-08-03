@@ -408,9 +408,11 @@ public class GameManager {
 
         private GameOptions selectRandomConfig() {
             List<GameOptions> configs = getAllConfigs();
+            plugin.getApi().logr().debug("There are %s configs", configs.size());
 
             if (mapDecider.getLastMap() != null && configs.size() > 2)
                 configs.removeIf(opts -> opts.getMap().getMapName().equals(mapDecider.getLastMap()));
+            plugin.getApi().logr().debug("There are %s configs", configs.size());
 
             // remove all of the 'always on' and 'manual only' games
             configs.stream().filter(o -> {
@@ -423,10 +425,14 @@ public class GameManager {
                    .collect(Collectors.toSet())
                    .forEach(configs::remove);
 
+            plugin.getApi().logr().debug("There are %s configs", configs.size());
+
             if (configs.size() > activeGames.size())
                 configs.stream().filter(o -> activeGames.stream().anyMatch(g -> g.getOptions().getConfigFile().equals(o.getConfigFile())))
                        .collect(Collectors.toSet())
                        .forEach(configs::remove);
+
+            plugin.getApi().logr().debug("There are %s configs", configs.size());
 
             Collections.shuffle(configs);
             int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
