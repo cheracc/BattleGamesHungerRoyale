@@ -7,7 +7,7 @@ main world:
   kits useable in main world: true
   gamemode: adventure
 always-on games: [ ]
-games that will not start randomly: [ ]
+games that will not start randomly: [ horizon_city ]
 allow FreeForAll games to start randomly: false
 keep at least this many games running: 1
 use mysql instead of h2: false

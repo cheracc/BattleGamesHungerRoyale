@@ -261,7 +261,7 @@ public class Tools {
      * @param zipResource Must end with ".zip".
      * @param destDir     The path of the destination directory, which must exist.
      */
-    public static void extractZipResource(Class myClass, String zipResource, Path destDir) {
+    public static boolean extractZipResource(Class myClass, String zipResource, Path destDir) {
         if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir)) {
             throw new IllegalArgumentException("myClass=" + myClass + " zipResource=" + zipResource + " destDir=" + destDir);
         }
@@ -269,6 +269,8 @@ public class Tools {
         try (InputStream is = myClass.getResourceAsStream(zipResource);
              BufferedInputStream bis = new BufferedInputStream(is);
              ZipInputStream zis = new ZipInputStream(bis)) {
+            if (is.available() <= 0)
+                return false;
             ZipEntry entry;
             byte[] buffer = new byte[2048];
             while ((entry = zis.getNextEntry()) != null) {
@@ -295,6 +297,7 @@ public class Tools {
             ex.printStackTrace();
             JavaPlugin.getPlugin(BGHR.class).getLogr().warn("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
+        return true;
     }
 
     public static int getLastEmptyHotbarSlot(Player p) {
