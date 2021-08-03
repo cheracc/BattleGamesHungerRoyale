@@ -417,23 +417,32 @@ public class GameManager {
                 if (opts.getGameType().toLowerCase().contains("freeforall") && !allowFfaRandoms)
                     continue;
                 for (GameOptions always : alwaysOnGames) {
-                    if (opts.getConfigFile().equals(always.getConfigFile()))
+                    if (opts.getConfigFile().equals(always.getConfigFile())) {
+                        plugin.getApi().logr().debug("skipping %s as it is 'always on'", always.getConfigFile().getName());
                         continue outer;
+                    }
                 }
                 for (GameOptions manual : manualOnlyGames) {
-                    if (opts.getConfigFile().equals(manual.getConfigFile()))
+                    if (opts.getConfigFile().equals(manual.getConfigFile())) {
+                        plugin.getApi().logr().debug("skipping %s as it is 'manual-only'", manual.getConfigFile().getName());
                         continue outer;
+                    }
                 }
                 for (Game current : activeGames) {
-                    if (current.getOptions().getConfigFile().equals(opts.getConfigFile()) && configs.size() > 0)
+                    if (current.getOptions().getConfigFile().equals(opts.getConfigFile()) && configs.size() > 0) {
+                        plugin.getApi().logr().debug("skipping %s as it is actively running", current.getOptions().getConfigFile().getName());
                         continue outer;
+                    }
                 }
+                plugin.getApi().logr().debug("adding %s to random pool", opts.getConfigFile().getName());
                 configs.add(opts);
             }
 
             if (configs.isEmpty()) // either everything is disabled or set up wrong - we need to start something
+            {
+                plugin.getApi().logr().debug("adding all configs to random pool because there aren't any");
                 configs.addAll(getAllConfigs());
-
+            }
             Collections.shuffle(configs);
             int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
