@@ -24,12 +24,12 @@ public class PlayerData {
     private final UUID uuid;
     private final PlayerStats stats;
     private final PlayerSettings settings;
+    private final boolean loaded = false;
     private String[] lastInventory;
     private Location lastLocation;
     private Kit kit;
     private long joinTime;
     private boolean modified = false;
-    private final boolean loaded = false;
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -96,6 +96,9 @@ public class PlayerData {
     }
 
     public Location getLastLocation() {
+        if (lastLocation != null)
+            return lastLocation.clone();
+        setLastLocation(getPlayer().getLocation());
         return lastLocation.clone();
     }
 
@@ -129,6 +132,8 @@ public class PlayerData {
     }
 
     public String[] getSavedInventory() {
+        if (lastInventory == null || lastInventory[0] == null)
+            saveInventory(false);
         return lastInventory;
     }
 
