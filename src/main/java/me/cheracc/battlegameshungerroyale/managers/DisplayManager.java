@@ -260,7 +260,7 @@ public class DisplayManager implements Listener {
                 new BukkitRunnable() {
                     @Override
                     public void run() {
-                        Hologram holo = new Hologram(loc, item);
+                        Hologram holo = new Hologram(loc.add(0.5, 0, 0.5), item);
                         addHologram(holo);
                         holo.build();
                         event.getPlayer().getInventory().remove(item);
