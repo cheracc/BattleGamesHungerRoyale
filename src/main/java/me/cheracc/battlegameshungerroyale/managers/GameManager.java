@@ -58,7 +58,7 @@ public class GameManager {
                 }
             }
         }
-        List<String> names = plugin.getConfig().getStringList("games that will not start automatically");
+        List<String> names = plugin.getConfig().getStringList("games that will not start randomly");
         if (names != null) {
             for (GameOptions go : getAllConfigs())
                 if (names.contains(go.getConfigFile().getName().split("\\.")[0])) {

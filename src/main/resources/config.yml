@@ -7,7 +7,7 @@ main world:
   kits useable in main world: true
   gamemode: adventure
 always-on games: [ ]
-games that will not start automatically: [ ]
+games that will not start randomly: [ ]
 allow FreeForAll games to start randomly: false
 keep at least this many games running: 2
 use mysql instead of h2: false
