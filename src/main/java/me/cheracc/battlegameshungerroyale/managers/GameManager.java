@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class GameManager {
     private final List<Game> activeGames = new ArrayList<>();
@@ -407,30 +406,26 @@ public class GameManager {
         }
 
         private GameOptions selectRandomConfig() {
-            List<GameOptions> configs = getAllConfigs();
-            plugin.getApi().logr().debug("There are %s configs", configs.size());
+            List<GameOptions> configs = new ArrayList<>();
 
-            if (mapDecider.getLastMap() != null && configs.size() > 2)
-                configs.removeIf(opts -> opts.getMap().getMapName().equals(mapDecider.getLastMap()));
-            plugin.getApi().logr().debug("There are %s configs", configs.size());
-
-            // remove all of the 'always on' and 'manual only' games
-            configs.stream().filter(o -> {
-                       if (alwaysOnGames.stream().anyMatch(go -> go.getConfigFile().equals(o.getConfigFile())))
-                           return true;
-                       if (manualOnlyGames.stream().anyMatch(go -> go.getConfigFile().equals(o.getConfigFile())))
-                           return true;
-                       return o.getGameType().toLowerCase().contains("freeforall") && configs.size() > 1;
-                   })
-                   .collect(Collectors.toSet())
-                   .forEach(configs::remove);
-
-            plugin.getApi().logr().debug("There are %s configs", configs.size());
-
-            if (configs.size() > activeGames.size())
-                configs.stream().filter(o -> activeGames.stream().anyMatch(g -> g.getOptions().getConfigFile().equals(o.getConfigFile())))
-                       .collect(Collectors.toSet())
-                       .forEach(configs::remove);
+            outer:
+            for (GameOptions opts : getAllConfigs()) {
+                if (mapDecider.getLastMap() != null && opts.getMap().getMapName().equals(mapDecider.getLastMap()))
+                    continue;
+                for (GameOptions always : alwaysOnGames) {
+                    if (opts.getConfigFile().equals(always.getConfigFile()))
+                        continue outer;
+                }
+                for (GameOptions manual : manualOnlyGames) {
+                    if (opts.getConfigFile().equals(manual.getConfigFile()))
+                        continue outer;
+                }
+                for (Game current : activeGames) {
+                    if (current.getOptions().getConfigFile().equals(opts.getConfigFile()) && configs.size() > 0)
+                        continue outer;
+                }
+                configs.add(opts);
+            }
 
             plugin.getApi().logr().debug("There are %s configs", configs.size());
 
