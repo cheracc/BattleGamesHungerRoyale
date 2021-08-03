@@ -8,6 +8,7 @@
     <artifactId>BattleGamesHungerRoyale</artifactId>
     <version>0.3.0</version>
     <build>
+        <finalName>${project.artifactId}-1.16</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -67,10 +68,6 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
-            </resource>
-            <resource>
-                <directory>src/main/binary-resources</directory>
-                <filtering>false</filtering>
             </resource>
         </resources>
     </build>
@@ -182,67 +179,24 @@
     </pluginRepositories>
 
     <profiles>
-        <profile>
-            <id>1.16</id>
+        <profile> <!-- create jar with no maps -->
+            <id>addmaps</id>
             <activation>
                 <property>
-                    <name>!1.17</name>
+                    <name>addmaps</name>
                 </property>
             </activation>
             <build>
-                <finalName>${project.artifactId}-1.16</finalName>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.8.0</version>
-                        <configuration>
-                            <source>1.8</source>
-                            <target>1.8</target>
-                        </configuration>
-                    </plugin>
-                </plugins>
+                <finalName>${project.artifactId}-1.16_with_maps</finalName>
+                <resources>
+                    <resource>
+                        <directory>src/main/binary-resources</directory>
+                        <filtering>false</filtering>
+                    </resource>
+                </resources>
             </build>
-            <dependencies>
-                <dependency>
-                    <groupId>com.destroystokyo.paper</groupId>
-                    <artifactId>paper-api</artifactId>
-                    <version>1.16.5-R0.1-SNAPSHOT</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
         </profile>
-        <profile>
-            <id>1.17</id>
-            <activation>
-                <property>
-                    <name>1.17</name>
-                </property>
-            </activation>
-            <build>
-                <finalName>${project.artifactId}-1.17</finalName>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.8.0</version>
-                        <configuration>
-                            <source>16</source>
-                            <target>16</target>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            <dependencies>
-                <dependency>
-                    <groupId>io.papermc.paper</groupId>
-                    <artifactId>paper-api</artifactId>
-                    <version>1.17.1-R0.1-SNAPSHOT</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
+        <profile> <!-- local debugging -->
             <id>debug</id>
             <activation>
                 <property>
@@ -250,6 +204,18 @@
                 </property>
             </activation>
             <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                        <directory>src/main/binary-resources</directory>
+                        <excludes>
+                            <exclude>*</exclude>
+                        </excludes>
+                    </resource>
+                </resources>
                 <finalName>bghr-test</finalName>
                 <plugins>
                     <plugin>
