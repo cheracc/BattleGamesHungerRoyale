@@ -57,16 +57,26 @@ public class FreeForAll extends Game {
         };
     }
 
+    private FfaStats getStats(UUID id) {
+        if (!ffaStats.containsKey(id) || ffaStats.get(id) == null)
+            ffaStats.put(id, new FfaStats());
+        return ffaStats.get(id);
+    }
+
+    private FfaStats getStats(Player p) {
+        return getStats(p.getUniqueId());
+    }
+
     @EventHandler
     public void updateStats(GameDamageEvent event) {
         Player a = event.getAggressor();
         Player v = event.getVictim();
 
         if (a != null) {
-            ffaStats.get(a.getUniqueId()).damage += event.getDamage();
+            getStats(a.getUniqueId()).damage += event.getDamage();
         }
         if (v != null) {
-            ffaStats.get(v.getUniqueId()).taken += event.getDamage();
+            getStats(v.getUniqueId()).taken += event.getDamage();
         }
     }
 
@@ -74,7 +84,7 @@ public class FreeForAll extends Game {
     public void countLootChests(PlayerLootedChestEvent event) {
         if (!event.getPlayer().getWorld().equals(getWorld()))
             return;
-        ffaStats.get(event.getPlayer().getUniqueId()).chests++;
+        getStats(event.getPlayer().getUniqueId()).chests++;
     }
 
     @Override
@@ -147,7 +157,7 @@ public class FreeForAll extends Game {
             if (api.getPlayerManager().getPlayerData(player).getSettings().isShowGameScoreboard()) {
                 Scoreboard scoreboard = player.getScoreboard();
                 Objective obj = scoreboard.getObjective("main");
-                FfaStats stats = ffaStats.get(player.getUniqueId());
+                FfaStats stats = getStats(player.getUniqueId());
                 obj.displayName(Tools.componentalize(String.format("&f&l%s", getGameTypeName())));
                 setScoreboardLine(scoreboard, 15, "&6Map: &e" + getMap().getMapName());
                 setScoreboardLine(scoreboard, 14, "&b==================");
@@ -166,10 +176,10 @@ public class FreeForAll extends Game {
         if (event.getGame().equals(this)) {
             Player p = event.getRecentlyDeceased();
             if (event.getKiller() != null) {
-                ffaStats.get(event.getKiller().getUniqueId()).kills++;
-                ffaStats.get(event.getKiller().getUniqueId()).streak++;
+                getStats(event.getKiller()).kills++;
+                getStats(event.getKiller()).streak++;
             }
-            FfaStats stats = ffaStats.get(p.getUniqueId());
+            FfaStats stats = getStats(p);
             stats.deaths++;
             stats.streak = 0;
             p.sendMessage(Trans.lateToComponent("&cYou died! &fYou will be automatically respawned in 5 seconds."));
