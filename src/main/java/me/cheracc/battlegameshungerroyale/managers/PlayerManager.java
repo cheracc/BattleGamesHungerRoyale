@@ -69,7 +69,6 @@ public class PlayerManager {
         if (!isPlayerDataLoaded(uuid)) {
             PlayerData unloaded = new PlayerData(uuid);
             waitingForDatabase.put(uuid, unloaded.loadAsynchronously(databaseManager, logr, plugin));
-            logr.debug("Added %s to waiting watchlist", uuid.toString());
             if (playerDataUpdater.isCancelled())
                 playerDataUpdater.runTaskTimer(plugin, 0L, 1L);
         }
@@ -90,7 +89,6 @@ public class PlayerManager {
     public void thisPlayerIsLoaded(PlayerData data) {
         if (!loadedPlayers.contains(data)) {
             loadedPlayers.add(data);
-            logr.debug("Finished loading player data for %s", data.getUuid().toString());
         } else
             logr.warn("data for %s is already loaded", data.getName());
     }
@@ -201,7 +199,6 @@ public class PlayerManager {
     }
 
     private BukkitRunnable playerDataUpdater(GameManager gm) {
-        logr.debug("Starting playerDataUpdater");
         final int[] tickCounter = {0};
         return new BukkitRunnable() {
             @Override
@@ -211,7 +208,6 @@ public class PlayerManager {
                     if (f.isDone()) {
                         PlayerData data = f.getNow(null);
                         if (data != null && data.getPlayer() != null) {
-                            logr.debug("%s is finished loading", data.getUuid());
                             restorePlayerFromSavedData(data.getPlayer(), data);
                             thisPlayerIsLoaded(data);
                             toRemove.add(data.getUuid());

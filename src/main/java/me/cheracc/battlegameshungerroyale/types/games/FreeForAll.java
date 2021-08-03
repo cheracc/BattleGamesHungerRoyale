@@ -33,7 +33,7 @@ public class FreeForAll extends Game {
         super(options);
         ffaStats = new HashMap<>();
         options.setPlayersNeededToStart(0);
-        doGameTick().runTaskTimer(JavaPlugin.getPlugin(BGHR.class), 60L, 10L);
+        doGameTick().runTaskTimer(JavaPlugin.getPlugin(BGHR.class), 200L, 10L);
     }
 
     public FreeForAll() {
@@ -141,7 +141,9 @@ public class FreeForAll extends Game {
 
     @Override
     protected void updateScoreboard() {
-        for (Player player : getCurrentPlayersAndSpectators()) {
+        if (getWorld() == null)
+            return;
+        for (Player player : getWorld().getPlayers()) {
             if (api.getPlayerManager().getPlayerData(player).getSettings().isShowGameScoreboard()) {
                 Scoreboard scoreboard = player.getScoreboard();
                 Objective obj = scoreboard.getObjective("main");

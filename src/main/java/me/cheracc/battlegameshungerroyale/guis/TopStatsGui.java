@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.guis;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -9,7 +10,6 @@ import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BghrApi;
-import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.entity.HumanEntity;
@@ -36,8 +36,8 @@ public class TopStatsGui extends Gui {
     private final BghrApi api;
     private final List<CompletableFuture<TopTenCategory>> uncompletedFutures = new ArrayList<>();
     private final LinkedHashMap<String, TopTenCategory> finishedCategories = new LinkedHashMap<>();
-    String[] columns = new String[] { "kills", "killstreak", "deaths", "wins", "secondplaces", "totaltime", "quits", "damagedealt", "damagetaken", "activeabilities", "chests", "itemslooted", "arrowsshot", "monsterskilled", "animalskilled", "foodeaten"};
-    String[] prettyNames = new String[] { "Kills", "Highest Kill Streak", "Deaths", "Wins", "Second Place Finishes", "Total Time Played", "Games Quit", "Damage Dealt", "Damage Taken", "Abilities Used", "Chests Opened", "Items Looted", "Arrows Shot", "Monsters Killed", "Animals Killed", "Food Eaten"};
+    String[] columns = new String[]{"kills", "killstreak", "deaths", "wins", "secondplaces", "totaltime", "quits", "damagedealt", "damagetaken", "activeabilities", "chests", "itemslooted", "arrowsshot", "monsterskilled", "animalskilled", "foodeaten"};
+    String[] prettyNames = new String[]{"Kills", "Highest Kill Streak", "Deaths", "Wins", "Second Place Finishes", "Total Time Played", "Games Quit", "Damage Dealt", "Damage Taken", "Abilities Used", "Chests Opened", "Items Looted", "Arrows Shot", "Monsters Killed", "Animals Killed", "Food Eaten"};
 
     public TopStatsGui(BghrApi api) {
         super(2, "Top Players", InteractionModifier.VALUES);
@@ -93,19 +93,23 @@ public class TopStatsGui extends Gui {
         return task.runTaskTimer(api.getPlugin(), 40, 5L);
     }
 
-    private class TopTenCategory {
+    public TopTenCategory getTopTen(String columnName) {
+        return finishedCategories.get(columnName);
+    }
+
+    public class TopTenCategory {
         private final String prettyName;
         private final String columnName;
-        private String topTexture;
         LinkedHashMap<String, Integer> topScores = new LinkedHashMap<>();
+        private String topTexture;
 
         public TopTenCategory(String columnName, String prettyName) {
             this.columnName = columnName;
             this.prettyName = prettyName;
 
             try (Connection con = api.getDatabaseManager().getConnection();
-            PreparedStatement stmt = con.prepareStatement("SELECT uuid," + columnName + " FROM player_stats ORDER BY " + columnName + " DESC LIMIT 10");
-            ResultSet result = stmt.executeQuery()) {
+                 PreparedStatement stmt = con.prepareStatement("SELECT uuid," + columnName + " FROM player_stats ORDER BY " + columnName + " DESC LIMIT 10");
+                 ResultSet result = stmt.executeQuery()) {
                 boolean first = true;
                 try {
                     while (result.next()) {
@@ -136,7 +140,6 @@ public class TopStatsGui extends Gui {
                             topTexture = base64Textures;
                             first = false;
                         }
-
                     }
                 } catch (SQLException | IOException e) {
                     e.printStackTrace();
@@ -160,6 +163,20 @@ public class TopStatsGui extends Gui {
             }
 
             return output;
+        }
+
+        public String getPlaceName(int place) {
+            List<String> list = new ArrayList<>(topScores.keySet());
+            if (list.size() > place - 1)
+                return list.get(place - 1);
+            return "";
+        }
+
+        public int getPlaceValue(int place) {
+            List<Integer> list = new ArrayList<>(topScores.values());
+            if (list.size() > place - 1)
+                return list.get(place - 1);
+            return 0;
         }
 
         public String getPrettyName() {

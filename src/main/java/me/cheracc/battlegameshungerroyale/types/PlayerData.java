@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.DatabaseManager;
 import me.cheracc.battlegameshungerroyale.managers.Logr;
@@ -21,14 +22,14 @@ import java.util.concurrent.CompletableFuture;
 
 public class PlayerData {
     private final UUID uuid;
-    private String[] lastInventory;
-    private Location lastLocation;
     private final PlayerStats stats;
     private final PlayerSettings settings;
+    private String[] lastInventory;
+    private Location lastLocation;
     private Kit kit;
     private long joinTime;
     private boolean modified = false;
-    private boolean loaded = false;
+    private final boolean loaded = false;
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -154,23 +155,20 @@ public class PlayerData {
         new BukkitRunnable() {
             @Override
             public void run() {
-                logr.debug("Starting load of %s", uuid);
                 load(db, logr);
-                logr.debug("Load complete");
                 future.complete(PlayerData.this);
             }
         }.runTaskAsynchronously(plugin);
         return future;
     }
 
-
     private boolean load(DatabaseManager db, Logr logr) {
         boolean found = false;
 
         try (Connection con = db.getConnection();
-        PreparedStatement loadStatsQuery = con.prepareStatement("SELECT * FROM player_stats WHERE uuid=?");
-        PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?");
-        PreparedStatement loadDataQuery = con.prepareStatement("SELECT * FROM player_data WHERE uuid=?")) {
+             PreparedStatement loadStatsQuery = con.prepareStatement("SELECT * FROM player_stats WHERE uuid=?");
+             PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?");
+             PreparedStatement loadDataQuery = con.prepareStatement("SELECT * FROM player_data WHERE uuid=?")) {
 
             loadStatsQuery.setString(1, uuid.toString());
             ResultSet result = loadStatsQuery.executeQuery();
@@ -242,7 +240,7 @@ public class PlayerData {
                 String main = result.getString("inventory");
                 String armor = result.getString("armor");
                 String enderChest = result.getString("enderchest");
-                lastInventory = new String[] {main, armor, enderChest};
+                lastInventory = new String[]{main, armor, enderChest};
                 result.close();
             }
 
@@ -329,12 +327,10 @@ public class PlayerData {
             updateData.execute();
 
             modified = false;
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-
 
     public String getName() {
         return Bukkit.getOfflinePlayer(uuid).getName();

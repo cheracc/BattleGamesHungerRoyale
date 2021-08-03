@@ -14,7 +14,6 @@ import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.ScoreboardManager;
 import org.jetbrains.annotations.Nullable;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -27,25 +26,80 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class GameManager {
     private final List<Game> activeGames = new ArrayList<>();
     private final List<GameType> loadedGameTypes = new ArrayList<>();
+    private final List<GameOptions> alwaysOnGames = new ArrayList<>();
+    private final List<GameOptions> manualOnlyGames = new ArrayList<>();
     private final MapDecider mapDecider;
     private final MapManager mapManager;
     private final BGHR plugin;
     private final Logr logr;
     private final Collection<LootTable> lootTables = new HashSet<>();
+    private final int minimumRunningGames;
 
     public GameManager(BGHR plugin, Logr logr, MapManager mapManager) {
         this.plugin = plugin;
         this.logr = logr;
         this.mapManager = mapManager;
-        ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+        minimumRunningGames = plugin.getConfig().getInt("keep at least this many games running", 1);
+        if (plugin.getConfig().isSet("always-on games")) {
+            List<String> configNames = plugin.getConfig().getStringList("always-on games");
+            if (configNames != null) {
+                for (GameOptions go : getAllConfigs()) {
+                    if (configNames.contains(go.getConfigFile().getName().split("\\.")[0])) {
+                        logr.debug("%s will be started momentarily and will be kept alive", go.getConfigFile().getName());
+                        alwaysOnGames.add(go);
+                    }
+                }
+            }
+        }
+        List<String> names = plugin.getConfig().getStringList("games that will not start automatically");
+        if (names != null) {
+            for (GameOptions go : getAllConfigs())
+                if (names.contains(go.getConfigFile().getName().split("\\.")[0])) {
+                    logr.debug("%s will not start automatically", go.getConfigFile().getName());
+                    manualOnlyGames.add(go);
+                }
+        }
         mapDecider = new MapDecider();
         getLootTables();
         getValidGameTypes();
-        createNewGame(mapDecider.selectNextMap());
+
+        Consumer<Game> callback = null;
+        if (!alwaysOnGames.isEmpty()) {
+            // create one big nested callback so we don't start all of these games at the same time
+            for (GameOptions opts : alwaysOnGames) {
+                if (callback == null)
+                    callback = game -> logr.debug("no more to start");
+                else {
+                    Consumer<Game> previousCallback = callback;
+                    callback = game -> {
+                        logr.debug("starting always-on game %s", opts.getConfigFile().getName());
+                        createNewGameWithCallback(opts, previousCallback);
+                    };
+                }
+            }
+            // start the last game in the list with the callback we created which will start all the others in a nice sequence
+        }
+        if (alwaysOnGames.size() < minimumRunningGames) {
+            for (int i = 0; i < minimumRunningGames - alwaysOnGames.size(); i++) {
+                if (callback == null)
+                    callback = game -> logr.debug("no more to start");
+                else {
+                    Consumer<Game> previousCallback = callback;
+                    callback = game -> {
+                        GameOptions opts = mapDecider.selectNextMap();
+                        logr.debug("starting game %s because there are not enough running", opts.getConfigFile().getName());
+                        createNewGameWithCallback(opts, previousCallback);
+                    };
+                }
+            }
+        }
+        createNewGameWithCallback(alwaysOnGames.get(alwaysOnGames.size() - 1), callback);
     }
 
     public boolean isThisAGameWorld(World world) {
@@ -54,6 +108,36 @@ public class GameManager {
                 return true;
         }
         return false;
+    }
+
+    // this is getting %bghr_sb_game1_1%
+    public Supplier<String> replaceScoreboardPlaceholders(String[] placeholderArgs) {
+        if (placeholderArgs.length < 4)
+            return () -> "";
+        int gameNumber = Integer.parseInt(placeholderArgs[2].substring(4)); // game3
+        int lineNumber = Integer.parseInt(placeholderArgs[3]); // 7
+
+        if (activeGames.size() < gameNumber)
+            return () -> "";
+
+        Game game = activeGames.get(gameNumber - 1);
+        switch (lineNumber) {
+            case 1:
+                return () -> Trans.late("&e\u25BA &6&n%s &7[&a/join %s&7]",
+                                        game.getGameTypeName(), gameNumber);
+            case 2:
+                return () -> Trans.late("  &bMap&3: &f%s &bPhase&3: &f%s", game.getMap().getMapName(), game.getPhase());
+            case 3:
+                if (game.getPhase().equalsIgnoreCase("pregame")) {
+                    if (game.getActivePlayers().size() >= game.getOptions().getPlayersNeededToStart()) {
+                        return () -> Trans.late("  &3Starting in %s", Math.abs(game.getCurrentGameTime()));
+                    } else {
+                        return () -> Trans.late("  &3Waiting for Players... &7(Need %s)", game.getOptions().getPlayersNeededToStart() - game.getActivePlayers().size());
+                    }
+                }
+            default:
+                return () -> "";
+        }
     }
 
     public void createNewGameWithCallback(GameOptions options, Consumer<Game> callback) {
@@ -111,8 +195,11 @@ public class GameManager {
         activeGames.add(game);
     }
 
-    public void gameIsEnding() {
-        if (activeGames.size() <= 1 && plugin.isEnabled())
+    public void gameIsEnding(Game game) {
+        mapDecider.setLastMap(game.getMap().getMapName());
+        if (alwaysOnGames.contains(game.getOptions())) {
+            createNewGame(game.getOptions());
+        } else if (activeGames.size() <= minimumRunningGames && plugin.isEnabled())
             createNewGame(mapDecider.selectNextMap());
     }
 
@@ -150,7 +237,6 @@ public class GameManager {
                 if (o instanceof Game) {
                     Game game = (Game) o;
                     loadedGameTypes.add(new GameType(c.getName(), game.getGameIcon(), game.getGameTypeName(), game.getGameDescription()));
-                    logr.debug("Added GameType %s with icon %s and description %s", game.getGameType(), game.getGameIcon().name(), game.getGameDescription());
                 }
             }
             logr.debug("Loaded %s GameTypes", loadedGameTypes.size());
@@ -260,11 +346,10 @@ public class GameManager {
 
     private class MapDecider {
         private final Map<UUID, String> outstandingVotes = new HashMap<>();
-        private final BukkitTask voteCleaner;
         private String lastMap = null;
 
         public MapDecider() {
-            this.voteCleaner = voteCleaner();
+            voteCleaner();
         }
 
         private BukkitTask voteCleaner() {
@@ -325,6 +410,22 @@ public class GameManager {
 
             if (mapDecider.getLastMap() != null && configs.size() > 2)
                 configs.removeIf(opts -> opts.getMap().getMapName().equals(mapDecider.getLastMap()));
+
+            // remove all of the 'always on' and 'manual only' games
+            configs.stream().filter(o -> {
+                       if (alwaysOnGames.stream().anyMatch(go -> go.getConfigFile().equals(o.getConfigFile())))
+                           return true;
+                       if (manualOnlyGames.stream().anyMatch(go -> go.getConfigFile().equals(o.getConfigFile())))
+                           return true;
+                       return o.getGameType().toLowerCase().contains("freeforall") && configs.size() > 1;
+                   })
+                   .collect(Collectors.toSet())
+                   .forEach(configs::remove);
+
+            if (configs.size() > activeGames.size())
+                configs.stream().filter(o -> activeGames.stream().anyMatch(g -> g.getOptions().getConfigFile().equals(o.getConfigFile())))
+                       .collect(Collectors.toSet())
+                       .forEach(configs::remove);
 
             Collections.shuffle(configs);
             int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;

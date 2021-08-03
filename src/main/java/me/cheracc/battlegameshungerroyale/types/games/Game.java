@@ -466,7 +466,7 @@ public abstract class Game implements Listener {
         tasks.add(startPostGameTimer());
         currentPhase = GamePhase.POSTGAME;
         new GameChangedPhaseEvent(this, "postgame").callEvent();
-        api.getGameManager().gameIsEnding();
+        api.getGameManager().gameIsEnding(this);
         world.getWorldBorder().setSize(world.getWorldBorder().getSize() + 4);
     }
 

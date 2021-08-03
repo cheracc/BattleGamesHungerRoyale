@@ -127,7 +127,6 @@ public class Hologram {
             if (e.hasMetadata(BghrApi.HOLOGRAM_CLICKABLE))
                 clickable = e;
         }
-        JavaPlugin.getPlugin(BGHR.class).getLogr().debug("Found %s armor stands and %s ravager", hologramLines.values().size(), clickable == null ? "no" : "one");
     }
 
     public boolean isClickable() {

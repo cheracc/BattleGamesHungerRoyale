@@ -6,6 +6,9 @@ main world:
   place players at spawn on join: false
   kits useable in main world: true
   gamemode: adventure
+always-on games: [ ]
+games that will not start automatically: [ ]
+keep at least this many games running: 2
 use mysql instead of h2: false
 mysql:
   hostname: localhost

@@ -4,6 +4,7 @@ import me.cheracc.battlegameshungerroyale.commands.*;
 import me.cheracc.battlegameshungerroyale.events.CustomEventsListener;
 import me.cheracc.battlegameshungerroyale.events.PlayerLootedChestEvent;
 import me.cheracc.battlegameshungerroyale.events.PluginLoadedEvent;
+import me.cheracc.battlegameshungerroyale.guis.TopStatsGui;
 import me.cheracc.battlegameshungerroyale.listeners.GeneralListeners;
 import me.cheracc.battlegameshungerroyale.listeners.StatsListeners;
 import me.cheracc.battlegameshungerroyale.listeners.TextInputListener;
@@ -43,6 +44,7 @@ public class BghrApi implements Listener {
     private PlayerManager playerManager;
     private PluginUpdater updater;
     private TextInputListener textInputListener;
+    private final TopStatsGui topStatsGui;
 
     public BghrApi(BGHR plugin) {
         this.plugin = plugin;
@@ -54,6 +56,7 @@ public class BghrApi implements Listener {
         registerSerializers();
         kitManager = new KitManager(plugin, logr);
         databaseManager = new DatabaseManager(plugin, logr);
+        topStatsGui = new TopStatsGui(this);
         if (plugin.getConfig().getBoolean("auto-update", true))
             updater = new PluginUpdater(plugin);
 
@@ -138,6 +141,10 @@ public class BghrApi implements Listener {
         ConfigurationSerialization.unregisterClass(AbilityTrigger.class);
         ConfigurationSerialization.unregisterClass(EnchantWrapper.class);
         ConfigurationSerialization.unregisterClass(RemoteAbility.class);
+    }
+
+    public TopStatsGui getTopStatsGui() {
+        return topStatsGui;
     }
 
     public DatabaseManager getDatabaseManager() {
