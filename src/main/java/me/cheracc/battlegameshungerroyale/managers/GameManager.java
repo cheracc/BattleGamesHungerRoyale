@@ -39,11 +39,13 @@ public class GameManager {
     private final Logr logr;
     private final Collection<LootTable> lootTables = new HashSet<>();
     private final int minimumRunningGames;
+    private final boolean allowFfaRandoms;
 
     public GameManager(BGHR plugin, Logr logr, MapManager mapManager) {
         this.plugin = plugin;
         this.logr = logr;
         this.mapManager = mapManager;
+        allowFfaRandoms = plugin.getConfig().getBoolean("allow FreeForAll games to start randomly", false);
         minimumRunningGames = plugin.getConfig().getInt("keep at least this many games running", 1);
         if (plugin.getConfig().isSet("always-on games")) {
             List<String> configNames = plugin.getConfig().getStringList("always-on games");
@@ -412,6 +414,8 @@ public class GameManager {
             for (GameOptions opts : getAllConfigs()) {
                 if (mapDecider.getLastMap() != null && opts.getMap().getMapName().equals(mapDecider.getLastMap()))
                     continue;
+                if (opts.getGameType().toLowerCase().contains("freeforall") && !allowFfaRandoms)
+                    continue;
                 for (GameOptions always : alwaysOnGames) {
                     if (opts.getConfigFile().equals(always.getConfigFile()))
                         continue outer;
@@ -427,11 +431,10 @@ public class GameManager {
                 configs.add(opts);
             }
 
-            plugin.getApi().logr().debug("There are %s configs", configs.size());
-
             Collections.shuffle(configs);
             int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
+            plugin.getApi().logr().debug("mapDecider chose %s randomly from %s choices", configs.get(index).getConfigFile().getName(), configs.size());
             return configs.get(index);
         }
 

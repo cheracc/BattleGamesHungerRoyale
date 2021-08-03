@@ -8,6 +8,7 @@ main world:
   gamemode: adventure
 always-on games: [ ]
 games that will not start automatically: [ ]
+allow FreeForAll games to start randomly: false
 keep at least this many games running: 2
 use mysql instead of h2: false
 mysql:
