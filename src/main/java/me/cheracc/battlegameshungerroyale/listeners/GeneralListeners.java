@@ -1,15 +1,18 @@
 package me.cheracc.battlegameshungerroyale.listeners;
+
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.games.Game;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import net.kyori.adventure.text.Component;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -191,29 +194,5 @@ public class GeneralListeners implements Listener {
 
         if (api.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false))
             p.teleport(api.getMapManager().getLobbyWorld().getSpawnLocation());
-    }
-
-    // Inventory handling listener
-    @EventHandler
-    public void saveOrReloadInventoryWhenChangingWorlds(PlayerChangedWorldEvent event) {
-        final World from = event.getFrom();
-        final World to = event.getPlayer().getWorld();
-
-        final boolean enteringGameFromMainWorlds = api.getGameManager().isThisAGameWorld(to) && !api.getGameManager().isThisAGameWorld(from);
-        final boolean leavingGameToMainWorlds = api.getGameManager().isThisAGameWorld(from) && !api.getGameManager().isThisAGameWorld(to);
-
-        if (enteringGameFromMainWorlds) {
-            Player p = event.getPlayer();
-            PlayerData data = api.getPlayerManager().getPlayerData(p);
-
-            data.saveInventory(true);
-        }
-
-        if (leavingGameToMainWorlds) {
-            Player p = event.getPlayer();
-            PlayerData data = api.getPlayerManager().getPlayerData(p);
-
-            api.getPlayerManager().restorePlayerFromSavedData(p, data);
-        }
     }
 }
