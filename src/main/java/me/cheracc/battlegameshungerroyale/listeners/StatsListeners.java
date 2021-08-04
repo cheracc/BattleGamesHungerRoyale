@@ -37,8 +37,8 @@ public class StatsListeners implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void recordKillsAndDeaths(GameDeathEvent event) {
-        if (event.getKiller() != null) {
-            PlayerData killer = pm.getPlayerData(event.getKiller());
+        if (event.getKiller() instanceof Player) {
+            PlayerData killer = pm.getPlayerData((Player) event.getKiller());
             killer.getStats().addKill();
             killer.setModified(true);
         }
