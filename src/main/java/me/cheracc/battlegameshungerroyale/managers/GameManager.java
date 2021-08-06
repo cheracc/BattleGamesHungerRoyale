@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class GameManager {
-    private final List<Game> activeGames = new ArrayList<>();
+    private final Map<Integer, Game> activeGames = new HashMap<>();
     private final List<GameType> loadedGameTypes = new ArrayList<>();
     private final List<GameOptions> alwaysOnGames = new ArrayList<>();
     private final List<GameOptions> manualOnlyGames = new ArrayList<>();
@@ -105,7 +105,7 @@ public class GameManager {
     }
 
     public boolean isThisAGameWorld(World world) {
-        for (Game game : getActiveGames()) {
+        for (Game game : getActiveGames().values()) {
             if (game.getWorld().equals(world))
                 return true;
         }
@@ -119,10 +119,10 @@ public class GameManager {
         int gameNumber = Integer.parseInt(placeholderArgs[2].substring(4)); // game3
         int lineNumber = Integer.parseInt(placeholderArgs[3]); // 7
 
-        if (activeGames.size() < gameNumber)
+        if (!getActiveGames().containsKey(gameNumber))
             return () -> "";
 
-        Game game = activeGames.get(gameNumber - 1);
+        Game game = getActiveGames().get(gameNumber);
         switch (lineNumber) {
             case 1:
                 return () -> Trans.late("&e\u25BA &6&n%s &7[&a/join %s&7]",
@@ -168,8 +168,17 @@ public class GameManager {
         createNewGameWithCallback(options, null);
     }
 
-    public List<Game> getActiveGames() {
-        return new ArrayList<>(activeGames);
+    public Map<Integer, Game> getActiveGames() {
+        return new HashMap<>(activeGames);
+    }
+
+    public List<Game> getGamesList() {
+        List<Game> games = new ArrayList<>();
+        for (int i = 1; i < 100; i++) {
+            if (getActiveGames().containsKey(i))
+                games.add(getActiveGames().get(i));
+        }
+        return games;
     }
 
     public boolean isActivelyPlayingAGame(Player player) {
@@ -186,7 +195,7 @@ public class GameManager {
 
     public @Nullable
     Game getPlayersCurrentGame(Player player) {
-        for (Game game : activeGames) {
+        for (Game game : getActiveGames().values()) {
             if (game.isPlaying(player) || game.isSpectating(player))
                 return game;
         }
@@ -194,21 +203,39 @@ public class GameManager {
     }
 
     public void makeThisGameAvailable(Game game) {
-        activeGames.add(game);
+        activeGames.put(firstOpenGameNumber(), game);
+    }
+
+    public void removeThisGame(Game game) {
+        int gameNumber = -1;
+        for (Map.Entry<Integer, Game> e : getActiveGames().entrySet()) {
+            if (e.getValue().equals(game))
+                gameNumber = e.getKey();
+        }
+        if (gameNumber > 0)
+            activeGames.remove(gameNumber);
+    }
+
+    private int firstOpenGameNumber() {
+        for (int i = 1; i < 100; i++) {
+            if (!getActiveGames().containsKey(i))
+                return i;
+        }
+        return -1;
     }
 
     public void gameIsEnding(Game game) {
         mapDecider.setLastMap(game.getMap().getMapName());
         if (alwaysOnGames.contains(game.getOptions())) {
             createNewGame(game.getOptions());
-        } else if (activeGames.size() <= minimumRunningGames && plugin.isEnabled())
+        } else if (getActiveGames().size() <= minimumRunningGames && plugin.isEnabled())
             createNewGame(mapDecider.selectNextMap());
     }
 
     public void gameOver(Game game, Consumer<Game> callback) {
-        activeGames.remove(game);
+        removeThisGame(game);
         mapDecider.setLastMap(game.getMap().getMapName());
-        if (activeGames.isEmpty() && plugin.isEnabled())
+        if (getActiveGames().isEmpty() && plugin.isEnabled())
             if (callback != null)
                 createNewGameWithCallback(mapDecider.selectNextMap(), callback);
             else
@@ -346,6 +373,14 @@ public class GameManager {
         return null;
     }
 
+    public Game getGameFromWorld(World world) {
+        for (Game g : getActiveGames().values()) {
+            if (g.getWorld().equals(world))
+                return g;
+        }
+        return null;
+    }
+
     private class MapDecider {
         private final Map<UUID, String> outstandingVotes = new HashMap<>();
         private String lastMap = null;
@@ -428,7 +463,7 @@ public class GameManager {
                         continue outer;
                     }
                 }
-                for (Game current : activeGames) {
+                for (Game current : getActiveGames().values()) {
                     if (current.getOptions().getConfigFile().equals(opts.getConfigFile()) && configs.size() > 0) {
                         plugin.getApi().logr().debug("skipping %s as it is actively running", current.getOptions().getConfigFile().getName());
                         continue outer;

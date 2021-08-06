@@ -134,7 +134,6 @@ public class DatabaseManager {
                 updateDb();
 
             logr.info("Successfully connected to " + (useMySql ? "MySQL" : "H2" + " database."));
-            ds.getConnection().close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -154,11 +153,9 @@ public class DatabaseManager {
                 setVer.setInt(2, CURRENT_DB_VERSION);
                 setVer.execute();
                 setVer.close();
-                ds.getConnection().close();
                 result.close();
                 return true;
             }
-            ds.getConnection().close();
             result.close();
 
             if (foundVersion < CURRENT_DB_VERSION) {

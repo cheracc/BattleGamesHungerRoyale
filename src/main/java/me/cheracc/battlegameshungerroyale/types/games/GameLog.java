@@ -1,10 +1,13 @@
 package me.cheracc.battlegameshungerroyale.types.games;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.*;
 import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -75,7 +78,7 @@ public class GameLog implements Listener {
         if (!isMyGame(event.getGame()))
             return;
 
-        GameLogDamageEntry entry = new GameLogDamageEntry(event.getAggressor(), event.getVictim(), event.getType(), event.getDamage(), event.getBestGuess());
+        GameLogDamageEntry entry = new GameLogDamageEntry(event.getAggressor(), event.getVictim(), event.getType(), event.getDamage(), "");
         entries.put(System.currentTimeMillis(), entry);
     }
 
@@ -196,20 +199,27 @@ public class GameLog implements Listener {
         private final double damagerHealth;
         private final double victimHealth;
 
-        public GameLogDamageEntry(Player damager, Player victim, EntityDamageEvent.DamageCause type, double damage, String bestGuess) {
-            if (damager == null)
-                this.damager = "";
-            else
-                this.damager = damager.getName();
-            this.victim = victim.getName();
+        public GameLogDamageEntry(Entity damager, Entity victim, EntityDamageEvent.DamageCause type, double damage, String bestGuess) {
             this.type = type;
             this.damage = damage;
-            if (damager != null)
-                this.damagerHealth = damager.getHealth();
-            else
+
+            if (damager instanceof LivingEntity) {
+                this.damager = damager.getName();
+                this.damagerHealth = ((LivingEntity) damager).getHealth();
+            } else {
+                this.damager = "";
                 this.damagerHealth = 0;
-            this.victimHealth = victim.getHealth();
-            this.bestGuess = bestGuess == null ? "" : bestGuess;
+            }
+
+            if (victim instanceof LivingEntity) {
+                this.victim = victim.getName();
+                this.victimHealth = ((LivingEntity) victim).getHealth();
+            } else {
+                this.victim = "";
+                this.victimHealth = 0;
+            }
+
+            this.bestGuess = (bestGuess == null) ? "" : bestGuess;
         }
 
         public double getDamagerHealth() {

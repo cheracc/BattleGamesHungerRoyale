@@ -8,12 +8,16 @@ import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.MapData;
 import me.cheracc.battlegameshungerroyale.types.Metadata;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -22,6 +26,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -29,6 +34,7 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
@@ -41,15 +47,16 @@ public abstract class Game implements Listener {
     private final BossBar bar;
     private final Scoreboard scoreboard;
     private final Map<UUID, Integer> participants;
+    private final boolean useLootManager;
     protected BghrApi api;
-    protected GamePhase currentPhase;
-    protected LootManager lootManager;
+    protected Respawner respawner;
+    private GamePhase currentPhase;
+    private LootManager lootManager;
     private World world;
     private GameLog gameLog;
     private boolean openToPlayers;
     private double gameTime;
     private long startTime;
-    private long lastChestRespawn;
     private Player winner = null;
 
     public Game(GameOptions options) {
@@ -60,6 +67,8 @@ public abstract class Game implements Listener {
         this.participants = new HashMap<>();
         this.spawnPoints = new ArrayList<>();
         this.tasks = new ArrayList<>();
+        this.respawner = new Respawner();
+        useLootManager = options.isGenerateChests() || options.isFillAllChests();
         setupScoreboard();
         bar = Bukkit.createBossBar("Pregame", BarColor.WHITE, BarStyle.SOLID);
         bar.setVisible(true);
@@ -78,6 +87,7 @@ public abstract class Game implements Listener {
         this.tasks = new ArrayList<>();
         this.bar = null;
         openToPlayers = false;
+        useLootManager = false;
         gameTime = -Integer.MAX_VALUE;
     }
 
@@ -85,47 +95,63 @@ public abstract class Game implements Listener {
     public abstract String getGameDescription();
     public abstract Material getGameIcon();
 
-    // to allow overrides if necessary
+    // hook methods
     protected void runGameSetupProcedures() {
     }
 
-    protected void runExtraMainPhaseProcedures() {
+    protected void runExtraGameStartProcedures() {
     }
 
     // this is called by the game manager after the world is copied and loaded
     public void initializeGame(World world, BghrApi api) {
         Bukkit.getPluginManager().registerEvents(this, api.getPlugin());
+
         this.world = world;
         this.api = api;
+
         gameLog = new GameLog(this, api.getPlugin());
         gameLog.addLogEntry("Starting " + options.getConfigFile().getName());
-        if (options.isGenerateChests() || options.isFillAllChests())
+
+        if (useLootManager)
             this.lootManager = new LootManager(this, api.getPlugin(), api.logr(), api.getGameManager());
         else
             this.lootManager = null;
-        openToPlayers = true;
-        spawnPoints.addAll(getSpawnPoints(map.getBorderRadius() / 10));
+
         if (map.isUseBorder() && map.getBorderRadius() > 0) {
             WorldBorder border = world.getWorldBorder();
             border.setCenter(map.getBorderCenter(world));
             border.setSize(map.getBorderRadius() * 2);
         }
-        // always
-        world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-        world.setDifficulty(Difficulty.NORMAL);
-        world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
 
-        // for pregame only
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        world.setGameRule(GameRule.DO_FIRE_TICK, false);
-        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+        setPregameGameRules();
+        loadPossibleSpawnPoints();
+        openGameToPlayers();
 
         api.getGameManager().makeThisGameAvailable(this);
+
         tasks.add(startPregameTimer().runTaskTimer(api.getPlugin(), 20L, 4L));
+
         runGameSetupProcedures();
 
         new GameLoadedEvent(this).callEvent();
+    }
+
+    protected LootManager getLootManager() {
+        return lootManager;
+    }
+
+    protected void setPregameGameRules() {
+        // always
+        getWorld().setDifficulty(Difficulty.NORMAL);
+        getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+        getWorld().setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
+        getWorld().setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
+
+        // for pregame only
+        getWorld().setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+        getWorld().setGameRule(GameRule.DO_FIRE_TICK, false);
+        getWorld().setGameRule(GameRule.DO_MOB_SPAWNING, false);
+        getWorld().setGameRule(GameRule.DO_WEATHER_CYCLE, false);
     }
 
     // returns the full class name
@@ -134,27 +160,68 @@ public abstract class Game implements Listener {
     }
 
     private void startGame() {
-        openToPlayers = false;
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
-        world.setGameRule(GameRule.DO_FIRE_TICK, true);
-        world.setGameRule(GameRule.DO_MOB_SPAWNING, true);
-        world.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
-        lastChestRespawn = startTime = System.currentTimeMillis();
+        setGameRulesForStartOfGame();
+        startTime = System.currentTimeMillis();
 
-        if (this instanceof InvincibilityPhase) {
-            ((InvincibilityPhase) this).startInvincibilityPhase();
-            currentPhase = GamePhase.INVINCIBILITY;
-            for (Player p : getActivePlayers()) {
-                p.setInvulnerable(true);
-                PlayerData data = api.getPlayerManager().getPlayerData(p);
-                if (data.getKit() == null || (!data.getKit().isEnabled() && !p.hasPermission("bghr.admin.kits.disabled"))) {
-                    data.registerKit(api.getKitManager().getRandomKit(false), false);
-                }
+        sendAllPlayersToSpawn();
+
+        forEachActivePlayer(p -> {
+            PlayerData data = api.getPlayerManager().getPlayerData(p);
+            if (data.getKit() == null || (!data.getKit().isEnabled() && !p.hasPermission("bghr.admin.kits.disabled"))) {
+                data.assignKit(api.getKitManager().getRandomKit(false), false);
             }
-        } else {
-            startMainPhase();
-        }
+            api.getPlayerManager().outfitPlayer(p, data.getKit());
+        });
+
         new GameStartEvent(this).callEvent();
+
+        api.logr().debug("Starting game tick task");
+        tasks.add(new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (getPhase().equalsIgnoreCase("postgame")) {
+                    closeGameToPlayers();
+                    api.logr().debug("Stopping game tick task");
+                    cancel();
+                    return;
+                }
+                doMainGameTick();
+            }
+        }.runTaskTimer(api.getPlugin(), 10L, 10L));
+    }
+
+    protected void forEachActivePlayer(Consumer<Player> doThis) {
+        for (Player p : getActivePlayers()) {
+            doThis.accept(p);
+        }
+    }
+
+    protected void setGameRulesForStartOfGame() {
+        getWorld().setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        getWorld().setGameRule(GameRule.DO_FIRE_TICK, true);
+        getWorld().setGameRule(GameRule.DO_MOB_SPAWNING, true);
+        getWorld().setGameRule(GameRule.DO_WEATHER_CYCLE, true);
+    }
+
+    protected void sendAllPlayersToSpawn() {
+        List<Player> players = new ArrayList<>(getActivePlayers());
+        List<Location> spawns = new ArrayList<>(getXSpawnPoints(players.size()));
+
+        if (players.size() > spawns.size()) {
+            int startSize = spawns.size();
+            api.logr().warn("Could not find enough spawns. Re-using spawnpoints as needed (you should fix this by re-defining your spawn center and radius)");
+            while (spawns.size() < players.size()) {
+                spawns.add(spawns.get(ThreadLocalRandom.current().nextInt(spawns.size() - 1)));
+            }
+            api.logr().warn("Added %s duplicate spawn points (this means players will spawn on top of each other)", spawns.size() - startSize);
+        }
+
+        Collections.shuffle(players);
+        Collections.shuffle(spawns);
+
+        for (Player p : players) {
+            Tools.uncheckedTeleport(p, spawns.get(players.indexOf(p)));
+        }
     }
 
     public Scoreboard getScoreboard() {
@@ -168,6 +235,10 @@ public abstract class Game implements Listener {
     // just used for displaying game info - can be overridden if necessary
     public String getPhase() {
         return currentPhase.prettyName();
+    }
+
+    protected void setPhase(GamePhase phase) {
+        currentPhase = phase;
     }
 
     public MapData getMap() {
@@ -192,8 +263,12 @@ public abstract class Game implements Listener {
         return openToPlayers;
     }
 
-    public void setOpenToPlayer(boolean value) {
-        openToPlayers = value;
+    protected void openGameToPlayers() {
+        openToPlayers = true;
+    }
+
+    protected void closeGameToPlayers() {
+        openToPlayers = false;
     }
 
     public boolean isPlaying(Player player) {
@@ -224,38 +299,46 @@ public abstract class Game implements Listener {
         new PlayerJoinedGameEvent(player, this, true).callEvent();
     }
 
-    private Location randomSpawnPoint() {
-        Location loc = getSpawnPoints(getActivePlayers().size()).get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
+    protected Location randomSpawnPoint() {
+        Location loc = spawnPoints.get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
 
         int tries = 0;
         while (!loc.getNearbyPlayers(1).isEmpty() && tries < 10) {
-            loc = getSpawnPoints(getActivePlayers().size()).get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
+            loc = spawnPoints.get(ThreadLocalRandom.current().nextInt(spawnPoints.size() - 1));
             tries++;
         }
         return loc;
     }
 
     public void join(Player player) {
+        PlayerData data = api.getPlayerManager().getPlayerData(player);
+        data.saveLocationAndInventory(true);
+
+        player.teleport(randomSpawnPoint(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         Metadata.removeAll(player);
         participants.put(player.getUniqueId(), options.getLivesPerPlayer());
+
         if (options.isAllowRegularBuilding())
             player.setGameMode(GameMode.SURVIVAL);
         else
             player.setGameMode(GameMode.ADVENTURE);
-        player.teleport(randomSpawnPoint(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+
         bar.addPlayer(player);
+
         if (currentPhase == GamePhase.PREGAME || currentPhase == GamePhase.INVINCIBILITY)
             player.setInvulnerable(true);
 
-        if (api.getPlayerManager().getPlayerData(player).getKit() == null) {
+        if (data.getKit() == null) {
             player.sendMessage(Trans.lateToComponent("&fYou haven't selected a kit! Type &e/kit &fto open the menu!"));
         } else {
-            api.getPlayerManager().outfitPlayer(player, api.getPlayerManager().getPlayerData(player).getKit());
+            player.sendMessage(Trans.lateToComponent("&fYour selected kit is &e%s&f. It will be equipped when the game starts", data.getKit().getName()));
         }
-        if (api.getPlayerManager().getPlayerData(player).getSettings().isShowGameScoreboard()) {
+
+        if (data.getSettings().isShowGameScoreboard()) {
             player.setMetadata(Metadata.PREGAME_SCOREBOARD.key(), new FixedMetadataValue(api.getPlugin(), player.getScoreboard()));
             player.setScoreboard(getScoreboard());
         }
+
         player.setMetadata(Metadata.PREGAME_HEALTH.key(), new FixedMetadataValue(api.getPlugin(), player.getHealth()));
         player.setHealth(20);
         player.setMetadata(Metadata.PREGAME_FOOD_LEVEL.key(), new FixedMetadataValue(api.getPlugin(), player.getFoodLevel()));
@@ -268,29 +351,42 @@ public abstract class Game implements Listener {
             participants.remove(player.getUniqueId());
         }
         int livesRemaining = 0;
-        if (participants.containsKey(player.getUniqueId()) && participants.get(player.getUniqueId()) > 0) {
+        if (participants.containsKey(player.getUniqueId()))
             livesRemaining = participants.get(player.getUniqueId());
-            participants.replace(player.getUniqueId(), 0);
-        }
+
+        participants.replace(player.getUniqueId(), 0);
+        player.getPassengers().forEach(player::removePassenger);
         new PlayerQuitGameEvent(player, this, livesRemaining).callEvent();
+
         PlayerData data = api.getPlayerManager().getPlayerData(player);
+
         bar.removePlayer(player);
+
         if (api.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false))
             player.teleport(api.getMapManager().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         else
             player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
+
         restorePlayer(player);
     }
 
     protected void restorePlayer(Player player) {
+        PlayerData data = api.getPlayerManager().getPlayerData(player);
+
+        api.getPlayerManager().restorePlayerFromSavedData(player, data);
+
+        player.setGameMode(Bukkit.getDefaultGameMode());
         player.setAllowFlight(false);
         player.setInvulnerable(false);
+        Arrays.stream(PotionEffectType.values()).forEach(player::removePotionEffect);
+
         if (player.hasMetadata(Metadata.PREGAME_HEALTH.key())) {
             player.setHealth((double) player.getMetadata(Metadata.PREGAME_HEALTH.key()).get(0).value());
         }
         if (player.hasMetadata(Metadata.PREGAME_FOOD_LEVEL.key())) {
             player.setFoodLevel((int) player.getMetadata(Metadata.PREGAME_FOOD_LEVEL.key()).get(0).value());
         }
+
         Metadata.removeAll(player);
     }
 
@@ -333,7 +429,10 @@ public abstract class Game implements Listener {
         Set<UUID> activePlayerIds = new HashSet<>();
 
         participants.forEach((id, lives) -> {
-            if (lives > 0 && Bukkit.getPlayer(id) != null && Bukkit.getPlayer(id).isOnline())
+            Player p = Bukkit.getPlayer(id);
+            if (lives > 0 &&
+                    p != null &&
+                    isPlaying(p))
                 activePlayerIds.add(id);
         });
 
@@ -349,48 +448,87 @@ public abstract class Game implements Listener {
         return activePlayers;
     }
 
-    protected List<Location> getSpawnPoints(int number) {
-        Location center = map.getSpawnCenter(world);
-        int scanRadius = map.getSpawnRadius() + 1;
-        int startSize = spawnPoints.size();
+    protected void loadPossibleSpawnPoints() {
+        long start = System.currentTimeMillis();
+        // first only load spawn blocks if the map is configured for them
+        if (getMap().getSpawnBlockType() == null || findSpawnBlocks() == 0) {
+            // if none were found, find our own
+            Location center = map.getSpawnCenter(world);
+            int numberOfPotentialSpawnToLocate = 200;
+            int radius = map.getSpawnRadius();
 
-        // TODO - get a large number of positions (~200 maybe), remove the ones that aren't 'spawnable', then return
-        // TODO a list that is evenly spaced about those positions (every n/rth)
+            // yay some basic trig and linear algebra! gets x locations evenly spaced around the radius of the spawn circle and sets their facing towards the center
+            for (float angle = 0; angle < 2 * Math.PI; angle += 2 * Math.PI / numberOfPotentialSpawnToLocate) {
+                Location loc = center.clone().add(radius * Math.cos(angle), 0, radius * Math.sin(angle));
+                loc = loc.getWorld().getHighestBlockAt(loc).getLocation();
 
-        if (startSize < number && map.getSpawnBlockType() != null) {
-            for (int x = -scanRadius; x <= scanRadius; x++) {
-                for (int y = -scanRadius; y <= scanRadius; y++)
-                    for (int z = -scanRadius; z <= scanRadius; z++) {
-                        Location l = center.clone().add(x, y, z);
-                        Block b = l.getBlock();
-
-                        if (b.getType() == map.getSpawnBlockType()) {
-                            l.add(0.5, 1, 0.5);
-                            l.setDirection(l.clone().subtract(center).toVector().multiply(-1));
-                            spawnPoints.add(l);
-                        }
-                    }
-            }
-            if (spawnPoints.size() > 0)
-                api.logr().info("Found " + spawnPoints.size() + " spawn points on " + map.getSpawnBlockType().name());
-        }
-
-        int spawnPointsNeeded = Math.max(getActivePlayers().size(), number);
-        int extra = 2;
-        if (spawnPoints.size() < spawnPointsNeeded) {
-            for (int i = 0; i < spawnPointsNeeded + extra; i++) {
-                double angle = (Math.PI * 2 * i) / spawnPointsNeeded + Math.PI / (ThreadLocalRandom.current().nextInt(16, 32));
-                int radius = map.getSpawnRadius();
-                Location spawnPoint = center.clone().add(radius * Math.cos(angle), 2, radius * Math.sin(angle)).toHighestLocation().add(0, 1, 0);
-                if (Math.abs(spawnPoint.getY() - center.getY()) > 5) {
-                    extra++;
+                // since we got the highest block, we want to make sure its not on a roof or something
+                // this also makes sure there is no bridge or overhang incase of elytra spawns (like in horizon city map)
+                if (Math.abs(loc.getY() - center.getY()) > 5) {
                     continue;
                 }
-                spawnPoint.setDirection(spawnPoint.clone().subtract(center).toVector().multiply(-1));
-                spawnPoints.add(spawnPoint);
+                loc.add(0, 1.5, 0);
+                loc.setDirection(center.clone().subtract(loc).toVector());
+                spawnPoints.add(loc);
             }
+            api.logr().debug("Found %s possible spawn locations %s blocks from the center of spawn (took %s ms)",
+                             spawnPoints.size(), radius, System.currentTimeMillis() - start);
         }
-        return spawnPoints;
+    }
+
+    protected int findSpawnBlocks() {
+        Location center = map.getSpawnCenter(world);
+        int scanRadius = map.getSpawnRadius() + 1;
+
+        for (int x = -scanRadius; x <= scanRadius; x++) {
+            for (int y = -scanRadius; y <= scanRadius; y++)
+                for (int z = -scanRadius; z <= scanRadius; z++) {
+                    Location l = center.clone().add(x, y, z);
+                    Block b = l.getBlock();
+
+                    if (b.getType() == map.getSpawnBlockType()) {
+                        l.add(0.5, 0, 0.5);
+                        l.setDirection(center.subtract(l).toVector());
+                        spawnPoints.add(l);
+                    }
+                }
+        }
+        if (spawnPoints.size() > 0)
+            api.logr().debug("Found " + spawnPoints.size() + " spawn points on " + map.getSpawnBlockType().name());
+        return spawnPoints.size();
+    }
+
+    protected List<Location> getXSpawnPoints(int number) {
+        List<Location> spawns = new ArrayList<>();
+
+        if (number > spawnPoints.size()) {
+            spawns.addAll(spawnPoints);
+            api.logr().warn("There are not enough spawn points. Either this map is misconfigured or it does not have enough defined spawn point blocks for the amount of players. Players are going to spawn on top of each other. You should fix this.");
+        }
+        int skip = spawnPoints.size() / ((number == 0) ? 1 : number);
+        if (skip == 0)
+            skip++;
+        spawns.add(spawnPoints.get(0));
+        while (spawns.size() < number) {
+            Location last = spawns.get(spawns.size() - 1);
+            spawns.add(getNextCircular(last, spawnPoints, skip));
+        }
+        return spawns;
+    }
+
+    private <T> T getNextCircular(T element, List<T> list, int skip) {
+        if (list == null || list.isEmpty())
+            return null;
+        if (list.size() == 1)
+            return list.get(0);
+
+        int currentIndex = list.indexOf(element);
+        int nextIndex = currentIndex + skip;
+
+        if (nextIndex > list.size() - 1)
+            nextIndex -= list.size();
+
+        return list.get(nextIndex);
     }
 
     protected BossBar getBossBar() {
@@ -439,10 +577,7 @@ public abstract class Game implements Listener {
     }
 
     protected void startMainPhase() {
-        if (this instanceof InvincibilityPhase)
-            ((InvincibilityPhase) this).endInvincibilityPhase();
-
-        currentPhase = GamePhase.MAIN;
+        setPhase(GamePhase.MAIN);
         new GameChangedPhaseEvent(this, "main").callEvent();
         List<UUID> toRemove = new ArrayList<>();
         for (UUID uuid : participants.keySet()) {
@@ -457,10 +592,11 @@ public abstract class Game implements Listener {
         }
         for (UUID id : toRemove)
             participants.remove(id);
-        runExtraMainPhaseProcedures();
+        runExtraGameStartProcedures();
     }
 
     private void doPostGame() {
+        updateScoreboard();
         map.addGamePlayed((int) gameTime);
         new GameFinishedEvent(this, getWinner()).callEvent();
         tasks.add(startPostGameTimer());
@@ -477,12 +613,16 @@ public abstract class Game implements Listener {
 
     // ends the game and calls back when everything is unloaded
     public void endGame(Consumer<Game> callback) {
-        for (BukkitTask task : tasks)
+        for (BukkitTask task : tasks) {
+            api.logr().debug("Canceling task %s", task.getTaskId());
             task.cancel();
+        }
 
         if (lootManager != null)
             lootManager.close();
+
         gameLog.finalizeLog();
+
         for (Player p : getCurrentPlayersAndSpectators())
             quit(p);
 
@@ -490,19 +630,17 @@ public abstract class Game implements Listener {
             map.addGamePlayed((int) (System.currentTimeMillis() - startTime / 1000));
         }
 
-        bar.setVisible(false);
-        bar.removeAll();
-
         gameLog = null;
         lootManager = null;
-
         winner = null;
+
+        bar.setVisible(false);
+        bar.removeAll();
         participants.clear();
         spawnPoints.clear();
         api.getMapManager().unloadWorld(world);
         api.getGameManager().gameOver(this, callback);
         HandlerList.unregisterAll(this);
-        world = null;
     }
 
     protected void setupScoreboard() {
@@ -566,6 +704,7 @@ public abstract class Game implements Listener {
                 gameTime += (System.currentTimeMillis() - last) / 1000D;
 
                 if (gameTime >= 0) {
+                    api.logr().debug("Stopping postGameTimer");
                     cancel();
                     endGame();
                     return;
@@ -585,12 +724,15 @@ public abstract class Game implements Listener {
 
             @Override
             public void run() {
-                if (currentPhase != GamePhase.PREGAME)
+                if (currentPhase != GamePhase.PREGAME) {
+                    api.logr().debug("Stopping pregame timer because it is not pregame");
                     cancel();
+                }
 
                 if (gameTime >= 0) {
                     // check if there's enough players to start
                     if (getActivePlayers().size() >= options.getPlayersNeededToStart()) {
+                        api.logr().debug("Stopping pregame timer to start the game");
                         cancel();
                         startGame();
                     } else {
@@ -606,73 +748,41 @@ public abstract class Game implements Listener {
         };
     }
 
-    public long getLastChestRespawn() {
-        return lastChestRespawn;
+    protected void setGameTime(double time) {
+        gameTime = time;
     }
 
-    public void setLastChestRespawn(long value) {
-        lastChestRespawn = value;
+    protected long getStartTime() {
+        return startTime;
     }
 
-    BukkitTask startGameTick() {
-        tasks.add(respawner());
+    // runs every 0.5 seconds
+    protected void doMainGameTick() {
+        gameTime = (System.currentTimeMillis() - startTime) / 1000D;
 
-        BukkitRunnable task = new BukkitRunnable() {
+        if (lootManager != null)
+            lootManager.tick();
+
+        if (respawner != null)
+            respawner.tick();
+
+        onTick();
+        updateBossBar();
+        updateScoreboard();
+        new GameTickEvent(this).callEvent();
+    }
+
+    // hook method
+    protected void onTick() {
+    }
+
+    private void doThisInOneTick(Consumer<Boolean> func) {
+        new BukkitRunnable() {
             @Override
             public void run() {
-                if (checkForWinner() || currentPhase == GamePhase.POSTGAME) {
-                    cancel();
-                    return;
-                }
-
-                gameTime = (System.currentTimeMillis() - startTime) / 1000D;
-
-                if (currentPhase == GamePhase.INVINCIBILITY && gameTime >= options.getInvincibilityTime()) {
-                    startMainPhase();
-                }
-                if (Game.this instanceof BorderPhase && currentPhase == GamePhase.MAIN && gameTime >= options.getInvincibilityTime() + options.getMainPhaseTime()) {
-                    ((BorderPhase) Game.this).startBorderPhase(Game.this);
-                }
-
-                if (lootManager != null) {
-                    if ((System.currentTimeMillis() - lastChestRespawn) / 1000 / 60 >= options.getChestRespawnTime()) {
-                        // TODO add the ability to modify this 'density' number for loot chests
-                        lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
-                        lastChestRespawn = System.currentTimeMillis();
-                    }
-                }
-
-                updateBossBar();
-                updateScoreboard();
+                func.accept(true);
             }
-        };
-        return task.runTaskTimer(api.getPlugin(), 20L, 4L);
-    }
-
-    // respawns dead players after 5 seconds
-    // TODO - make it instantly respawn, set to spectator, put a few blocks above place of death facing down
-    // TODO use title/subtitle to display a counter that will count down to respawn
-    // TODO customizable ways to respawn (elytra, random, place of death, etc)
-    private BukkitTask respawner() {
-        Map<UUID, Long> theDeceased = new HashMap<>();
-        BukkitRunnable task = new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (Player p : getActivePlayers()) {
-                    if (p.isDead()) {
-                        if (theDeceased.containsKey(p.getUniqueId())) {
-                            if (System.currentTimeMillis() - theDeceased.get(p.getUniqueId()) > 5000) {
-                                p.spigot().respawn();
-                                theDeceased.remove(p.getUniqueId());
-                            }
-                        } else {
-                            theDeceased.put(p.getUniqueId(), System.currentTimeMillis());
-                        }
-                    } else theDeceased.remove(p.getUniqueId());
-                }
-            }
-        };
-        return task.runTaskTimer(api.getPlugin(), getOptions().getInvincibilityTime(), 10L);
+        }.runTaskLater(api.getPlugin(), 1L);
     }
 
     // listeners
@@ -687,20 +797,40 @@ public abstract class Game implements Listener {
         }
     }
 
+    // happens immediately after death
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        if (isPlaying(event.getPlayer())) {
-            event.setRespawnLocation(randomSpawnPoint());
-            if (getOptions().isAllowRegularBuilding())
-                event.getPlayer().setGameMode(GameMode.SURVIVAL);
-            else
-                event.getPlayer().setGameMode(GameMode.ADVENTURE);
-            api.getPlayerManager().outfitPlayer(event.getPlayer(), api.getPlayerManager().getPlayerData(event.getPlayer()).getKit());
-        }
-        if (isSpectating(event.getPlayer())) {
-            event.setRespawnLocation(randomSpawnPoint());
-            event.getPlayer().setGameMode(GameMode.SPECTATOR);
-        }
+        final Player p = event.getPlayer();
+        final Entity killer;
+
+        if (!p.getWorld().equals(getWorld()))
+            return;
+
+        if (p.hasMetadata(Metadata.KILLER.key())) {
+            killer = (LivingEntity) p.getMetadata(Metadata.KILLER.key()).get(0).value();
+            if (killer != null) {
+                p.removeMetadata(Metadata.KILLER.key(), api.getPlugin());
+            }
+        } else
+            killer = p;
+
+        event.setRespawnLocation(killer.getLocation());
+
+        doThisInOneTick(b -> {
+            p.setGameMode(GameMode.SPECTATOR);
+            if (!killer.equals(p))
+                p.setSpectatorTarget(killer);
+        });
+
+        Component subtitle;
+        if (isPlaying(p))
+            subtitle = Trans.lateToComponent("&eYou will respawn in &f%s &eseconds", respawner.respawnTime);
+        else
+            subtitle = Trans.lateToComponent("&7You have no lives remaining");
+
+        p.showTitle(Title.title(Trans.lateToComponent("&c&lYou Died!"), subtitle, Title.Times.of(Duration.ofSeconds(0), Duration.ofSeconds(1), Duration.ofSeconds(0))));
+
+        respawner.add(p);
     }
 
     @EventHandler
@@ -720,18 +850,16 @@ public abstract class Game implements Listener {
     @EventHandler
     public void handleDeaths(GameDeathEvent event) {
         Player dead = event.getRecentlyDeceased();
-        Game game = api.getGameManager().getPlayersCurrentGame(dead);
+        Game game = event.getGame();
 
         if (game != null && game.equals(this)) {
-            if (participants.containsKey(dead.getUniqueId())) {
-                int livesLeft = Math.max(0, participants.get(dead.getUniqueId()) - 1);
+            int livesLeft = Math.max(0, participants.get(dead.getUniqueId()) - 1);
+            participants.replace(dead.getUniqueId(), livesLeft);
 
-                participants.replace(dead.getUniqueId(), livesLeft);
-                if (livesLeft > 0)
-                    dead.sendMessage(Trans.lateToComponent("&cYou died! &fYou may respawn &e%s &fmore time%s. You will be &eautomatically respawned &e in &a5 &eseconds.", livesLeft, livesLeft > 1 ? "s" : ""));
-                else
-                    dead.sendMessage(Tools.componentalize("&cYou died! &fYou have no respawns left."));
-            }
+            LivingEntity killer = event.getRecentlyDeceased();
+            if (event.getKiller() instanceof LivingEntity)
+                killer = (LivingEntity) event.getKiller();
+            dead.setMetadata(Metadata.KILLER.key(), new FixedMetadataValue(api.getPlugin(), killer));
         }
     }
 
@@ -740,6 +868,54 @@ public abstract class Game implements Listener {
 
         String prettyName() {
             return Trans.late(StringUtils.capitalize(name().toLowerCase()));
+        }
+    }
+
+    protected class Respawner {
+        int respawnTime = 8;
+        Map<Player, Long> watching = new HashMap<>();
+
+        void add(Player player) {
+            watching.put(player, System.currentTimeMillis());
+        }
+
+        void tick() {
+            if (watching.isEmpty())
+                return;
+            Iterator<Map.Entry<Player, Long>> iter = watching.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<Player, Long> e = iter.next();
+                if (!e.getKey().getWorld().equals(getWorld())) {
+                    // player left before respawning
+                    iter.remove();
+                    continue;
+                }
+                if (System.currentTimeMillis() - e.getValue() > respawnTime * 1000L) {
+                    iter.remove();
+                    api.logr().debug("Respawning %s", e.getKey().getName());
+                    respawn(e.getKey());
+                    continue;
+                }
+                int timeLeft = respawnTime - ((int) (System.currentTimeMillis() - e.getValue()) / 1000);
+                e.getKey().showTitle(Title.title(
+                        Trans.lateToComponent("&c&lYou Died!"),
+                        Trans.lateToComponent("&eYou will respawn in &f%s &eseconds", timeLeft),
+                        Title.Times.of(Duration.ofSeconds(0), Duration.ofSeconds(1), Duration.ofSeconds(0))));
+            }
+        }
+
+        private void respawn(Player player) {
+            Tools.uncheckedTeleport(player, Game.this.randomSpawnPoint());
+            doThisInOneTick(b -> {
+                if (getOptions().isAllowRegularBuilding())
+                    player.setGameMode(GameMode.SURVIVAL);
+                else
+                    player.setGameMode(GameMode.ADVENTURE);
+            });
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setInvulnerable(false);
+            api.getPlayerManager().clearInventoryAndRestoreKit(player);
         }
     }
 }

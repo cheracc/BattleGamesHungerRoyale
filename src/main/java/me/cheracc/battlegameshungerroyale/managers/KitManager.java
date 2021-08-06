@@ -72,7 +72,10 @@ public class KitManager {
                 toRemove.add(k);
         }
         for (Kit k : toRemove) {
-            k.getMyPlayers().forEach(data -> data.registerKit(kit, false));
+            k.getMyPlayers().forEach(data -> {
+                data.assignKit(kit, false);
+                plugin.getApi().getPlayerManager().outfitPlayer(data.getPlayer(), kit);
+            });
             loadedKits.remove(k);
         }
         loadedKits.add(kit);

@@ -1,8 +1,10 @@
 package me.cheracc.battlegameshungerroyale.commands;
+
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.guis.SelectKitGui;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -23,11 +25,17 @@ public class KitMenu implements CommandExecutor {
             PlayerData data = api.getPlayerManager().getPlayerData(p);
 
             if (api.getGameManager().isActivelyPlayingAGame(p) && !p.isOp()) {
-                p.sendMessage(Trans.lateToComponent("You cannot change your kit while playing a game"));
-                return true;
+                Game game = api.getGameManager().getPlayersCurrentGame(p);
+                if (!game.isOpenToPlayers()) {
+                    p.sendMessage(Trans.lateToComponent("You cannot change your kit while playing a game"));
+                    return true;
+                }
             }
 
-            new SelectKitGui(p, null, api.getKitManager(), kit -> data.registerKit(kit, false));
+            new SelectKitGui(p, null, api.getKitManager(), kit -> {
+                data.assignKit(kit, false);
+                api.getPlayerManager().outfitPlayer(p, kit);
+            });
         }
         return true;
     }

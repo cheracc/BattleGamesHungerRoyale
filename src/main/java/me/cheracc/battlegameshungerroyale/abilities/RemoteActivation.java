@@ -45,7 +45,7 @@ public class RemoteActivation extends Totem implements Listener {
         startTotemWatcher(device);
 
         player.setMetadata("remote_device", new FixedMetadataValue(plugin, device));
-        player.setCooldown(Material.valueOf(totemItemType.toUpperCase()), cooldown / 10);
+        player.setCooldown(Material.valueOf(totemItemType.toUpperCase()), cooldown * 2);
     }
 
     private LivingEntity getDevice(Player player) {
@@ -98,7 +98,7 @@ public class RemoteActivation extends Totem implements Listener {
 
     @Override
     public ItemStack createAbilityItem() {
-        return makeItem(Material.valueOf(totemItemType.toUpperCase()), totemItemType, itemDescription, cooldown);
+        return makeItem(Material.valueOf(totemItemType.toUpperCase()), getCustomName(), itemDescription, cooldown);
     }
 
     @Override
@@ -137,6 +137,8 @@ public class RemoteActivation extends Totem implements Listener {
 
     @Override
     public boolean doAbility(Player source) {
+        if (source.hasCooldown(Material.valueOf(totemItemType.toUpperCase())))
+            return false;
         if (isDeviceActive(source)) {
             activateDevice(source);
             return true;

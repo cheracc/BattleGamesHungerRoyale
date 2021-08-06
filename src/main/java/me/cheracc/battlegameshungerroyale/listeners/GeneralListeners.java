@@ -10,7 +10,6 @@ import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import me.cheracc.battlegameshungerroyale.types.games.Game;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -45,28 +44,6 @@ public class GeneralListeners implements Listener {
             game.quit(event.getPlayer());
     }
 
-    @EventHandler
-    public void handlePlayersChangingWorlds(PlayerTeleportEvent event) {
-        // don't care if the teleport isn't changing worlds
-        if (event.getFrom().getWorld().equals(event.getTo().getWorld()))
-            return;
-
-        Player p = event.getPlayer();
-        PlayerData pData = api.getPlayerManager().getPlayerData(p);
-
-        // check if player is leaving a game or loaded map and handle it - this should only happen if admins are using /tp commands.
-        if (event.getCause() != PlayerTeleportEvent.TeleportCause.PLUGIN && api.getGameManager().isThisAGameWorld(event.getFrom().getWorld())) {
-            Bukkit.dispatchCommand(p, "quit");
-        }
-
-        // check if player is transferring TO a main world FROM a game world
-        if (!api.getGameManager().isThisAGameWorld(p.getWorld()) && api.getGameManager().isThisAGameWorld(event.getFrom().getWorld())) {
-            GameMode defaultGameMode = GameMode.valueOf(api.getPlugin().getConfig().getString("main world.gamemode", "adventure").toUpperCase());
-            p.setGameMode(defaultGameMode);
-            pData.setLastLocation(event.getFrom());
-        }
-    }
-
     // makes players keep their ability items (and not drop them) when they die
     @EventHandler
     public void keepKitItems(PlayerDeathEvent event) {
@@ -76,7 +53,6 @@ public class GeneralListeners implements Listener {
         if (data.getKit() != null) {
             for (ItemStack item : p.getInventory()) {
                 if (Tools.isPluginItem(item)) {
-                    event.getItemsToKeep().add(item);
                     event.getDrops().remove(item);
                     if (p.hasCooldown(item.getType()))
                         p.setCooldown(item.getType(), 0);

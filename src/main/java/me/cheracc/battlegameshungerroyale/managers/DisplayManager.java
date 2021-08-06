@@ -295,10 +295,10 @@ public class DisplayManager implements Listener {
                 return () -> "";
 
             int gameNumber = Integer.parseInt(split[1].substring(4));
-            if (gm.getActiveGames().size() < gameNumber)
+            if (!gm.getActiveGames().containsKey(gameNumber))
                 return () -> "";
 
-            Game game = gm.getActiveGames().get(gameNumber - 1);
+            Game game = gm.getActiveGames().get(gameNumber);
             if (game == null)
                 return () -> "";
 

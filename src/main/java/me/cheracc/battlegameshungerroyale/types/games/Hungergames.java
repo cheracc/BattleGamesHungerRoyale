@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types.games;
 
-import me.cheracc.battlegameshungerroyale.events.GameChangedPhaseEvent;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -38,13 +37,14 @@ public class Hungergames extends Game implements InvincibilityPhase, BorderPhase
     }
 
     private void doHungergamesSpawn(Consumer<Boolean> callback) {
-        List<Location> spawns = getSpawnPoints(getActivePlayers().size());
+        closeGameToPlayers();
+        List<Location> spawns = getXSpawnPoints(getActivePlayers().size());
 
-        if (lootManager != null)
-            lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
+        if (getLootManager() != null)
+            getLootManager().placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
         if (spawns.size() < getActivePlayers().size()) {
             api.logr().warn("not enough spawns");
-            getSpawnPoints(getActivePlayers().size());
+            getXSpawnPoints(getActivePlayers().size());
         }
 
         Collections.shuffle(spawns);
@@ -62,15 +62,8 @@ public class Hungergames extends Game implements InvincibilityPhase, BorderPhase
     }
 
     @Override
-    public void startInvincibilityPhase() {
+    public void onGameStart() {
         doHungergamesSpawn(success -> {
-            tasks.add(startGameTick());
-            new GameChangedPhaseEvent(this, "invincibility").callEvent();
         });
-    }
-
-    @Override
-    public void endInvincibilityPhase() {
-
     }
 }

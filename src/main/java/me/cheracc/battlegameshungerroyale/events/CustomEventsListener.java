@@ -1,13 +1,12 @@
 package me.cheracc.battlegameshungerroyale.events;
-import me.cheracc.battlegameshungerroyale.types.DamageSource;
-import me.cheracc.battlegameshungerroyale.types.games.Game;
+
 import me.cheracc.battlegameshungerroyale.managers.GameManager;
+import me.cheracc.battlegameshungerroyale.types.DamageSource;
+import me.cheracc.battlegameshungerroyale.types.Metadata;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
-import org.bukkit.entity.AreaEffectCloud;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -15,7 +14,6 @@ import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.metadata.MetadataValue;
-import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.UUID;
 
@@ -28,9 +26,12 @@ public class CustomEventsListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void callGameDeathEvent(GameDamageEvent event) {
-        if (event.getDamage() >= event.getVictim().getHealth()) {
-            GameDeathEvent deathEvent = new GameDeathEvent(event.getVictim(), event.getAggressor(), event.getGame(), event.getDamage(), event.getType());
-            deathEvent.callEvent();
+        if (event.getVictim() instanceof Player) {
+            Player victim = (Player) event.getVictim();
+            if (event.getDamage() >= victim.getHealth()) {
+                GameDeathEvent deathEvent = new GameDeathEvent(victim, event.getAggressor(), event.getGame(), event.getDamage(), event.getType());
+                deathEvent.callEvent();
+            }
         }
     }
 
@@ -42,94 +43,64 @@ public class CustomEventsListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void callGameDamageEvent(EntityDamageEvent event) {
-        Player aggressor = null;
-        Player victim;
+        LivingEntity aggressor = null;
+        LivingEntity victim;
         Game game;
-        boolean directDamage = false;
-        String bestGuess = null;
 
-        if (event.getEntity() instanceof Player) {
-            victim = (Player) event.getEntity();
-        } else
+        // make sure this is happening inside a game
+        if (!gameManager.isThisAGameWorld(event.getEntity().getWorld()))
             return;
 
+        // get the victim
+        if (event.getEntity() instanceof LivingEntity)
+            victim = (LivingEntity) event.getEntity();
+        else
+            return;
+
+        // get the aggressor if there is one
         if (event instanceof EntityDamageByEntityEvent) {
-            Entity damager = ((EntityDamageByEntityEvent) event).getDamager();
-            if (damager instanceof Player) {
-                aggressor = (Player) damager;
-                directDamage = true;
-            } else if (damager instanceof Projectile) {
-                if (((Projectile) damager).getShooter() instanceof Player) {
-                    aggressor = (Player) ((Projectile) damager).getShooter();
-                    directDamage = true;
-                }
+            EntityDamageByEntityEvent e = (EntityDamageByEntityEvent) event;
+            Entity damager = e.getDamager();
+
+            if (damager instanceof LivingEntity)
+                aggressor = (LivingEntity) e.getDamager();
+            else if (damager instanceof Projectile) {
+                if (((Projectile) damager).getShooter() instanceof LivingEntity)
+                    aggressor = (LivingEntity) ((Projectile) damager).getShooter();
             } else if (damager instanceof AreaEffectCloud) {
-                if (((AreaEffectCloud) damager).getSource() != null) {
-                    ProjectileSource e = ((AreaEffectCloud) damager).getSource();
-
-                    if (e instanceof Player) {
-                        aggressor = (Player) e;
-                        directDamage = false;
-                    }
-                }
-            } else if (DamageSource.getFrom(victim) != null) {
-                DamageSource ds = DamageSource.getFrom(victim);
-                if (ds.isApplicable(null, event.getCause())) {
-                    aggressor = ds.getSource();
-                    directDamage = true;
-                }
-            } else
-                bestGuess = damager.getName();
-        }
-
-        // the rest of these would all be 'indirect damage' - damage from blocks placed by a player or poison/wither/etc.
-        else if (event instanceof EntityDamageByBlockEvent) {
+                if (((AreaEffectCloud) damager).getSource() instanceof LivingEntity)
+                    aggressor = (LivingEntity) ((AreaEffectCloud) damager).getSource();
+            }
+        } else if (victim instanceof Player) {
+            DamageSource ds = DamageSource.getFrom((Player) victim);
+            if (ds != null && ds.isApplicable(null, event.getCause()))
+                aggressor = ds.getSource();
+        } else if (event instanceof EntityDamageByBlockEvent) {
             Block block = ((EntityDamageByBlockEvent) event).getDamager();
             if (block != null) {
-                if (block.hasMetadata("player")) {
-                    for (MetadataValue v : block.getMetadata("player")) {
+                if (block.hasMetadata(Metadata.PLACED_BY_PLAYER.key())) {
+                    for (MetadataValue v : block.getMetadata(Metadata.PLACED_BY_PLAYER.key())) {
                         Object o = v.value();
                         if (o instanceof UUID) {
                             aggressor = Bukkit.getPlayer((UUID) o);
-                            directDamage = false;
                         }
                     }
-                } else
-                    bestGuess = String.format("%s(%s,%s,%s)", block.getType().name(), block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
+                }
             }
         }
 
-        // this damage wasn't caused by a block or an entity so must have been done by something even more indirect - hopefully if from a player it was tagged properly...
-        else {
-            switch (event.getCause()) {
-                case FIRE_TICK:
-                case POISON:
-                case WITHER:
-                case MAGIC:
-                case FALL:
-                    if (DamageSource.getFrom(victim) != null) {
-                        DamageSource ds = DamageSource.getFrom(victim);
-                        if (ds != null && ds.isApplicable(null, event.getCause())) {
-                            aggressor = ds.getSource();
-                            directDamage = false;
-                        }
-                    }
-                    break;
-            }
-        }
+        // dont bother if neither is a player
+        if (!(victim instanceof Player) && !(aggressor instanceof Player))
+            return;
 
+        // call the event
         if (event.getDamage() > 0) {
-            game = gameManager.getPlayersCurrentGame(victim);
-
-            if (victim.isDead())
-                return;
+            game = gameManager.getGameFromWorld(event.getEntity().getWorld());
 
             if (game == null) // not playing a game
                 return;
 
-            GameDamageEvent gameDamageEvent = new GameDamageEvent(aggressor, victim, game, event.getFinalDamage(), directDamage, event.getCause());
-            if (bestGuess != null)
-                gameDamageEvent.setBestGuess(bestGuess);
+            GameDamageEvent gameDamageEvent = new GameDamageEvent(aggressor, victim, game, event.getFinalDamage(), event.getCause());
             gameDamageEvent.callEvent();
 
             if (gameDamageEvent.isCancelled())

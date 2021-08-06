@@ -4,11 +4,15 @@ import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.DatabaseManager;
 import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
@@ -70,16 +74,16 @@ public class PlayerData {
         return kit;
     }
 
-    public void registerKit(Kit kit, boolean clearInventory) {
+    public void assignKit(Kit kit, boolean clearInventory) {
         Player p = getPlayer();
         if (p == null) return;
 
         if (!kit.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Trans.lateToComponent("That kit is disabled"));
+            p.sendMessage(Trans.lateToComponent("You are trying to equip a disabled kit and you do not have permission. Please report this."));
             return;
         }
         if (this.kit != null)
-            removeKit(this.kit);
+            removeKit();
 
         if (clearInventory)
             p.getInventory().clear();
@@ -87,7 +91,32 @@ public class PlayerData {
         this.kit = kit;
     }
 
-    public void removeKit(Kit kit) {
+    private void removeAllKitItems() {
+        Player player = getPlayer();
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item == null || item.getItemMeta() == null)
+                continue;
+            if (Tools.isPluginItem(item))
+                player.getInventory().remove(item);
+        }
+        ItemStack item = player.getInventory().getItemInOffHand();
+        if (item != null && item.getItemMeta() != null) {
+            if (Tools.isPluginItem(item))
+                player.getInventory().setItemInOffHand(null);
+        }
+
+        kit.getEquipment().unequip(player);
+        for (Ability ability : kit.getAbilities()) {
+            if (ability instanceof PassiveAbility) {
+                ((PassiveAbility) ability).deactivate(player);
+            }
+        }
+
+        player.updateInventory();
+    }
+
+    public void removeKit() {
+        removeAllKitItems();
         this.kit = null;
     }
 
@@ -107,6 +136,12 @@ public class PlayerData {
             lastLocation = loc;
             modified = true;
         }
+    }
+
+    public void saveLocationAndInventory(boolean clear) {
+        setLastLocation();
+        saveInventory(clear);
+        setModified(true);
     }
 
     public void setLastLocation() {

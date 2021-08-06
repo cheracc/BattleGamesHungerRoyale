@@ -31,7 +31,7 @@ public class SelectGameGui extends Gui {
     }
 
     private void fillGui(HumanEntity player) {
-        for (Game game : api.getGameManager().getActiveGames())
+        for (Game game : api.getGameManager().getActiveGames().values())
             addItem(gameIcon(player, game));
     }
 

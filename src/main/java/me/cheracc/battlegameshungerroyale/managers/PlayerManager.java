@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
 
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.events.PlayerKitOutfitEvent;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Kit;
@@ -53,7 +54,7 @@ public class PlayerManager {
             if (data.getUuid().equals(uuid) && data.isLoaded())
                 return true;
         }
-        return (waitingForDatabase.containsKey(uuid));
+        return false;
     }
 
     public CompletableFuture<PlayerData> getPlayerDataAsync(UUID uuid) {
@@ -66,7 +67,7 @@ public class PlayerManager {
     }
 
     public void loadPlayerDataAsync(UUID uuid) {
-        if (!isPlayerDataLoaded(uuid)) {
+        if (!isPlayerDataLoaded(uuid) && !waitingForDatabase.containsKey(uuid)) {
             PlayerData unloaded = new PlayerData(uuid);
             waitingForDatabase.put(uuid, unloaded.loadAsynchronously(databaseManager, logr, plugin));
             if (playerDataUpdater.isCancelled())
@@ -102,16 +103,21 @@ public class PlayerManager {
         else
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
+        player.getInventory().clear();
+        player.updateInventory();
         data.writeSavedInventoryToPlayer();
 
         if (data.getSettings().getDefaultKit() != null) {
             Kit kit = kitManager.getKit(data.getSettings().getDefaultKit());
             if (kit != null) {
-                data.registerKit(kit, false);
+                if (!kit.isEnabled() && !player.hasPermission("bghr.admin.kits.disabled")) {
+                    player.sendMessage(Trans.lateToComponent("Your favorite kit %s is marked as disabled and has been reset to 'Random'", kit.getName()));
+                    data.getSettings().setDefaultKit(null);
+                }
+
+                data.assignKit(kit, false);
                 if (gameManager.isThisAGameWorld(player.getWorld()) || plugin.getConfig().getBoolean("main world.kits useable in main world", false)) {
                     outfitPlayer(player, kit);
-                } else {
-                    player.sendMessage(Trans.lateToComponent("Kit&e %s &fwill be equipped when you join a game.", kit.getName()));
                 }
             }
         }
@@ -143,19 +149,26 @@ public class PlayerManager {
         }
     }
 
+    // clears the player's inventory then gives them back their kit stuff
+    public void clearInventoryAndRestoreKit(Player p) {
+        p.getInventory().clear();
+        p.updateInventory();
+        outfitPlayer(p, getPlayerData(p).getKit());
+    }
+
     public void outfitPlayer(Player p, Kit kit) {
+        if (kit == null)
+            kit = kitManager.getRandomKit(false);
+
         if (!kit.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Trans.lateToComponent("That kit is disabled"));
-            return;
+            p.sendMessage(Trans.lateToComponent("Trying to equip a disabled kit without permission. Please report this. You will instead be assigned a random kit."));
+            kit = kitManager.getRandomKit(false);
         }
 
         if (!gameManager.isInAGame(p) && !plugin.getConfig().getBoolean("main world.kits useable in main world", false)) {
-            p.sendMessage(Trans.lateToComponent("&7You will be equipped with kit &e%s &7at the start of your next game.", kit.getName()));
+            p.sendMessage(Trans.lateToComponent("&7You have selected kit &e%s&f. It will be equipped at the start of your next game.", kit.getName()));
             return;
         }
-
-        if (kit != null)
-            disrobePlayer(p, kit);
 
         for (Ability a : kit.getAbilities()) {
             if (a instanceof ActiveAbility) {
@@ -173,9 +186,11 @@ public class PlayerManager {
             kit.getEquipment().equip(p);
         }
         p.sendMessage(Trans.lateToComponent("You have been equipped with kit &e" + kit.getName()));
+        new PlayerKitOutfitEvent(p, kit).callEvent();
     }
 
     public void disable() {
+        plugin.getLogr().debug("Stopping PlayerManager tasks databaseUpdater and playerDataUpdater");
         databaseUpdater.cancel();
         playerDataUpdater.cancel();
     }

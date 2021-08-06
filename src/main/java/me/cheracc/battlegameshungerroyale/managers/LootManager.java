@@ -28,8 +28,6 @@ public class LootManager implements Listener {
     private final Logr logr;
     private final BGHR plugin;
     private final BukkitTask asyncChunkScanner;
-    private final BukkitTask updateChests;
-    private final BukkitTask chestRecycler;
     private final boolean generateChests;
     private final boolean loadPrePlacedChests;
     private final int maxChestsPerChunk;
@@ -40,6 +38,10 @@ public class LootManager implements Listener {
     private final Set<Location> usedChestLocations = new HashSet<>();
     private final Queue<ChunkSnapshot> toSearch = new ConcurrentLinkedQueue<>();
     private final Set<Long> loadedChunkKeys = new HashSet<>();
+    private long lastChestRespawn;
+    private int tickCounter = 0;
+
+    // TODO make a ChestScanner class and move all associated stuff into that
 
     public LootManager(Game game, BGHR plugin, Logr logr, GameManager gameManager) {
         this.plugin = plugin;
@@ -52,8 +54,7 @@ public class LootManager implements Listener {
         this.game = game;
         this.startTime = System.currentTimeMillis();
         this.asyncChunkScanner = asyncChunkScanner();
-        this.updateChests = updateChests();
-        this.chestRecycler = chestRecycler();
+        lastChestRespawn = System.currentTimeMillis();
         if (game.getOptions().getLootTable() == null)
             this.lootTable = gameManager.getDefaultLootTable();
         else
@@ -62,10 +63,24 @@ public class LootManager implements Listener {
     }
 
     public void close() {
+        plugin.getLogr().debug("Stopping async chunk scanner");
         asyncChunkScanner.cancel();
-        updateChests.cancel();
-        chestRecycler.cancel();
         ChunkLoadEvent.getHandlerList().unregister(this);
+    }
+
+    public void tick() {
+        tickCounter++;
+        if (tickCounter > 9)
+            tickCounter = 0;
+
+        if ((System.currentTimeMillis() - lastChestRespawn) / 1000 / 60 >= game.getOptions().getChestRespawnTime()) {
+            // TODO add the ability to modify this 'density' number for loot chests
+            placeLootChests((int) (game.getActivePlayers().size() * 5 * Math.sqrt(game.getMap().getBorderRadius())));
+            lastChestRespawn = System.currentTimeMillis();
+        }
+        updateChests();
+        if (tickCounter == 0)
+            recycleChests();
     }
 
     public void placeLootChests(int amount) {
@@ -93,27 +108,21 @@ public class LootManager implements Listener {
         }
     }
 
-    private BukkitTask updateChests() {
-        BukkitRunnable addShinies = new BukkitRunnable() {
-            @Override
-            public void run() {
-                Set<Location> toRemove = new HashSet<>();
-                for (Location l : usedChestLocations) {
-                    l.getBlock();
-                    if (l.getBlock().getType() != Material.CHEST) {
-                        toRemove.add(l);
-                        continue;
-                    }
-                    Chest chest = (Chest) l.getBlock().getState();
-                    if (!chest.hasBeenFilled())
-                        l.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, l.clone().add(0.5, 0.5, 0.5), 5, 0.5, 0.5, 0.5);
-                }
-                usedChestLocations.removeAll(toRemove);
-                unusedChestLocations.addAll(toRemove);
-                toRemove.clear();
+    private void updateChests() {
+        Set<Location> toRemove = new HashSet<>();
+        for (Location l : usedChestLocations) {
+            l.getBlock();
+            if (l.getBlock().getType() != Material.CHEST) {
+                toRemove.add(l);
+                continue;
             }
-        };
-        return addShinies.runTaskTimer(plugin, 10L, 8L);
+            Chest chest = (Chest) l.getBlock().getState();
+            if (!chest.hasBeenFilled())
+                l.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, l.clone().add(0.5, 0.5, 0.5), 5, 0.5, 0.5, 0.5);
+        }
+        usedChestLocations.removeAll(toRemove);
+        unusedChestLocations.addAll(toRemove);
+        toRemove.clear();
     }
 
     private BukkitTask asyncChunkScanner() {
@@ -224,22 +233,16 @@ public class LootManager implements Listener {
         }.runTaskAsynchronously(plugin);
     }
 
-    private BukkitTask chestRecycler() {
-        BukkitRunnable recycler = new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (Location l : usedChestLocations) {
-                    if (l.getBlock().getType() == Material.CHEST) {
-                        Chest chest = (Chest) l.getBlock().getState();
-                        if (chest.hasBeenFilled() && l.getNearbyPlayers(5).isEmpty()) {
-                            recycleChestAt(l);
-                            return;
-                        }
-                    }
+    private void recycleChests() {
+        for (Location l : usedChestLocations) {
+            if (l.getBlock().getType() == Material.CHEST) {
+                Chest chest = (Chest) l.getBlock().getState();
+                if (chest.hasBeenFilled() && l.getNearbyPlayers(5).isEmpty()) {
+                    recycleChestAt(l);
+                    return;
                 }
             }
-        };
-        return recycler.runTaskTimer(plugin, 200L, 100L);
+        }
     }
 
     private void recycleChestAt(Location location) {

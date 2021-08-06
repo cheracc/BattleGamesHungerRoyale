@@ -1,12 +1,13 @@
 package me.cheracc.battlegameshungerroyale.abilities;
-import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.events.GameStartEvent;
-import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
+
+import me.cheracc.battlegameshungerroyale.events.PlayerKitOutfitEvent;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
+import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.abilities.TriggeredAbility;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.AbilityTrigger;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.EnchantWrapper;
 import me.cheracc.battlegameshungerroyale.types.abilities.enums.UpgradeType;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -17,18 +18,16 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Arrays;
 
 public class UpgradeableItem extends TriggeredAbility implements Listener {
-    private ItemStack baseItem;
-    private AbilityTrigger trigger;
-    private UpgradeType upgradeType;
-    private EnchantWrapper enchantment;
-    private int neededToUpgrade;
-    private int addMoreAmount;
+    private final ItemStack baseItem;
+    private final AbilityTrigger trigger;
+    private final UpgradeType upgradeType;
+    private final EnchantWrapper enchantment;
+    private final int neededToUpgrade;
+    private final int addMoreAmount;
 
     public UpgradeableItem() {
         baseItem = new ItemStack(Material.WOODEN_SWORD);
@@ -60,20 +59,10 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
     }
 
     @EventHandler
-    public void giveItemOnGameStart(GameStartEvent event) {
-        PlayerManager playerManager = JavaPlugin.getPlugin(BGHR.class).getApi().getPlayerManager();
-        for (Player p : event.getPlayers()) {
-            if (playerManager.getPlayerData(p).hasKit(getAssignedKit()))
-                if (!p.hasMetadata("has_base_item")) {
-                    giveBaseItem(p);
-                    p.setMetadata("has_base_item", new FixedMetadataValue(plugin, true));
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            p.removeMetadata("has_base_item", plugin);
-                        }
-                    }.runTaskLater(plugin, 1);
-                }
+    public void giveItemOnOutfit(PlayerKitOutfitEvent event) {
+        if (event.getKit().equals(getAssignedKit())) {
+            Player p = event.getPlayer();
+            giveBaseItem(p);
         }
     }
 
@@ -86,9 +75,9 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
             case ENCHANT_ITEM:
                 if (item.getEnchantments().containsKey(enchantment.getEnchantment())) {
                     int enchantLevel = item.getEnchantmentLevel(enchantment.getEnchantment());
-                    enchantItem(item, Math.max(enchantLevel + 1, enchantment.getEnchantment().getMaxLevel()));
+                    enchantItem(item, Math.min(enchantLevel + 1, enchantment.getEnchantment().getMaxLevel()));
                 }
-                enchantItem(item, 1);
+                enchantItem(item, 0);
                 player.updateInventory();
                 break;
             case NEXT_BETTER_TYPE:
@@ -108,9 +97,9 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
     }
 
     private void upgradeItemType(ItemStack item) {
-        String[] toolTypes = new String[] { "WOODEN",  "GOLDEN", "STONE", "IRON", "DIAMOND", "NETHERITE" };
-        String[] armorTypes = new String[] { "LEATHER", "GOLDEN", "CHAINMAIL", "IRON", "DIAMOND", "NETHERITE" };
-        String[] armors = new String[] { "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS" };
+        String[] toolTypes = new String[]{"WOODEN", "GOLDEN", "STONE", "IRON", "DIAMOND", "NETHERITE"};
+        String[] armorTypes = new String[]{"LEATHER", "GOLDEN", "CHAINMAIL", "IRON", "DIAMOND", "NETHERITE"};
+        String[] armors = new String[]{"HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS"};
 
         String[] split = item.getType().name().split("_");
         if (split.length != 2)
@@ -159,7 +148,13 @@ public class UpgradeableItem extends TriggeredAbility implements Listener {
     private void giveBaseItem(Player player) {
         NamespacedKey key = new NamespacedKey(plugin, "upgradeable_item");
         ItemStack item = baseItem.clone();
-        Tools.tagAsPluginItem(new ItemStack(item));
+        item.editMeta(meta -> {
+            if (!meta.hasDisplayName())
+                meta.displayName(Trans.lateToComponent(getCustomName()));
+            if (!meta.hasLore())
+                meta.lore(Tools.componentalize(Tools.wrapText(Trans.late(getDescription()), ChatColor.GRAY)));
+        });
+        Tools.tagAsPluginItem(item);
         tagAbilityItem(item);
         item.editMeta(meta -> meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, getId().toString()));
         player.getInventory().addItem(item);

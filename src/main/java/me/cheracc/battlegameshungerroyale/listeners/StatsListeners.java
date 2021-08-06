@@ -50,11 +50,11 @@ public class StatsListeners implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void recordDamage(GameDamageEvent event) {
         if (event.getAggressor() instanceof Player && event.getVictim() instanceof Player) {
-            PlayerData aggressor = pm.getPlayerData(event.getAggressor());
+            PlayerData aggressor = pm.getPlayerData((Player) event.getAggressor());
             aggressor.getStats().addDamageDealt(event.getDamage());
             aggressor.setModified(true);
             if (!event.getVictim().isDead()) {
-                PlayerData victim = pm.getPlayerData(event.getVictim());
+                PlayerData victim = pm.getPlayerData((Player) event.getVictim());
                 victim.getStats().addDamageReceived(Math.min(event.getDamage(), 20));
                 victim.setModified(true);
             }

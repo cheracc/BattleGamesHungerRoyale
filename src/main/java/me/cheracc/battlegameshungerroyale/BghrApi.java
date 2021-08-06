@@ -122,7 +122,7 @@ public class BghrApi implements Listener {
     }
 
     public void shutdown() {
-        for (Game game : gameManager.getActiveGames()) {
+        for (Game game : gameManager.getActiveGames().values()) {
             game.endGame();
         }
         plugin.saveConfig();

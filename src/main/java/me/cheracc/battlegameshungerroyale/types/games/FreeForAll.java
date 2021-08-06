@@ -1,22 +1,16 @@
 package me.cheracc.battlegameshungerroyale.types.games;
 
-import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.events.GameDamageEvent;
 import me.cheracc.battlegameshungerroyale.events.GameDeathEvent;
+import me.cheracc.battlegameshungerroyale.events.GameStartEvent;
 import me.cheracc.battlegameshungerroyale.events.PlayerLootedChestEvent;
-import me.cheracc.battlegameshungerroyale.events.PlayerQuitGameEvent;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
-import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Metadata;
-import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -33,28 +27,11 @@ public class FreeForAll extends Game {
         super(options);
         ffaStats = new HashMap<>();
         options.setPlayersNeededToStart(0);
-        doGameTick().runTaskTimer(JavaPlugin.getPlugin(BGHR.class), 200L, 10L);
     }
 
     public FreeForAll() {
         super();
         ffaStats = new HashMap<>();
-    }
-
-    private BukkitRunnable doGameTick() {
-        return new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (lootManager != null) {
-                    if ((System.currentTimeMillis() - getLastChestRespawn()) / 1000 / 60 >= getOptions().getChestRespawnTime()) {
-                        // TODO add the ability to modify this 'density' number for loot chests
-                        lootManager.placeLootChests((int) (getActivePlayers().size() * 5 * Math.sqrt(getMap().getBorderRadius())));
-                        setLastChestRespawn(System.currentTimeMillis());
-                    }
-                }
-                updateScoreboard();
-            }
-        };
     }
 
     private FfaStats getStats(UUID id) {
@@ -69,13 +46,13 @@ public class FreeForAll extends Game {
 
     @EventHandler
     public void updateStats(GameDamageEvent event) {
-        Player a = event.getAggressor();
-        Player v = event.getVictim();
+        Entity a = event.getAggressor();
+        Entity v = event.getVictim();
 
-        if (a != null) {
+        if (a instanceof Player) {
             getStats(a.getUniqueId()).damage += event.getDamage();
         }
-        if (v != null) {
+        if (v instanceof Player) {
             getStats(v.getUniqueId()).taken += event.getDamage();
         }
     }
@@ -103,45 +80,13 @@ public class FreeForAll extends Game {
     }
 
     @Override
-    protected void runExtraMainPhaseProcedures() {
-        setOpenToPlayer(true);
-    }
-
-    @Override
     public void join(Player player) {
         super.join(player);
         ffaStats.put(player.getUniqueId(), new FfaStats());
         if (api.getPlayerManager().getPlayerData(player).getSettings().isShowGameScoreboard()) {
             setupScoreboard(player);
         }
-    }
-
-    @Override
-    public void quit(Player player) {
-        new PlayerQuitGameEvent(player, this, 0).callEvent();
-        PlayerData data = api.getPlayerManager().getPlayerData(player);
-        player.setAllowFlight(false);
-        player.setInvulnerable(false);
-        if (api.getPlugin().getConfig().getBoolean("main world.place players at spawn on join", false))
-            player.teleport(api.getMapManager().getLobbyWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-        else
-            player.teleport(data.getLastLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
-        getBossBar().removePlayer(player);
-        if (player.hasMetadata(Metadata.PREGAME_SCOREBOARD.key())) {
-            Scoreboard sb = (Scoreboard) player.getMetadata(Metadata.PREGAME_SCOREBOARD.key()).get(0).value();
-            player.setScoreboard(sb);
-        } else if (api.getPlugin().getConfig().getBoolean("show main scoreboard", false) && data.getSettings().isShowMainScoreboard()) {
-            player.setScoreboard(api.getDisplayManager().getMainScoreboard());
-        } else
-            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-
-        if (player.hasMetadata(Metadata.PREGAME_HEALTH.key())) {
-            player.setHealth((double) player.getMetadata(Metadata.PREGAME_HEALTH.key()).get(0).value());
-            player.removeMetadata(Metadata.PREGAME_HEALTH.key(), api.getPlugin());
-        }
-        if (player.hasMetadata(Metadata.PREGAME_FOOD_LEVEL.key())) {
-            player.setFoodLevel((int) player.getMetadata(Metadata.PREGAME_FOOD_LEVEL.key()).get(0).value());
-        }
+        api.getPlayerManager().clearInventoryAndRestoreKit(player);
     }
 
     @Override
@@ -172,25 +117,27 @@ public class FreeForAll extends Game {
     }
 
     @Override
+    protected void onTick() {
+        setGameTime((System.currentTimeMillis() - getStartTime()) / 1000D);
+    }
+
+    @Override
     public void handleDeaths(GameDeathEvent event) {
         if (event.getGame().equals(this)) {
             Player p = event.getRecentlyDeceased();
-            if (event.getKiller() != null) {
-                getStats(event.getKiller()).kills++;
-                getStats(event.getKiller()).streak++;
+            if (event.getKiller() instanceof Player) {
+                getStats((Player) event.getKiller()).kills++;
+                getStats((Player) event.getKiller()).streak++;
             }
             FfaStats stats = getStats(p);
             stats.deaths++;
             stats.streak = 0;
-            p.sendMessage(Trans.lateToComponent("&cYou died! &fYou will be automatically respawned in 5 seconds."));
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (p != null && p.isOnline() && p.isDead())
-                        p.spigot().respawn();
-                }
-            }.runTaskLater(api.getPlugin(), 20 * 5L);
         }
+    }
+
+    @EventHandler
+    public void onStart(GameStartEvent event) {
+        startMainPhase();
     }
 
     protected void setupScoreboard(Player player) {

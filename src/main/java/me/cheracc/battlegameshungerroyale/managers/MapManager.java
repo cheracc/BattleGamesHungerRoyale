@@ -86,6 +86,8 @@ public class MapManager implements Listener {
     }
 
     public MapData getMapFromWorld(World world) {
+        if (world == null)
+            return null;
         for (Map.Entry<MapData, List<UUID>> e : maps.entrySet())
             if (e.getValue().contains(world.getUID()))
                 return e.getKey();

@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.events;
+
 import me.cheracc.battlegameshungerroyale.types.games.Game;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -10,23 +11,19 @@ import org.jetbrains.annotations.Nullable;
 
 public class GameDamageEvent extends Event implements Cancellable, GameEvent {
     private static final HandlerList handlerList = new HandlerList();
-    private final Player aggressor;
-    private final Player victim;
+    private final Entity aggressor;
+    private final Entity victim;
     private final EntityDamageEvent.DamageCause type;
     private final Game game;
-    private final boolean directDamage;
-    private String bestGuess;
+    private final double damage;
     private boolean cancelled = false;
-    private double damage;
 
-    public GameDamageEvent(Player aggressor, Player victim, Game game, double damage, boolean directDamage, EntityDamageEvent.DamageCause type) {
+    public GameDamageEvent(Entity aggressor, Entity victim, Game game, double damage, EntityDamageEvent.DamageCause type) {
         this.aggressor = aggressor;
         this.victim = victim;
         this.game = game;
         this.damage = damage;
-        this.directDamage = directDamage;
         this.type = type;
-        this.bestGuess = null;
     }
 
     public static HandlerList getHandlerList() {
@@ -34,11 +31,11 @@ public class GameDamageEvent extends Event implements Cancellable, GameEvent {
     }
 
     public @Nullable
-    Player getAggressor() {
+    Entity getAggressor() {
         return aggressor;
     }
 
-    public Player getVictim() {
+    public Entity getVictim() {
         return victim;
     }
 
@@ -53,18 +50,6 @@ public class GameDamageEvent extends Event implements Cancellable, GameEvent {
 
     public EntityDamageEvent.DamageCause getType() {
         return type;
-    }
-
-    public boolean isDirectDamage() {
-        return directDamage;
-    }
-
-    public String getBestGuess() {
-        return bestGuess;
-    }
-
-    public void setBestGuess(String bestGuess) {
-        this.bestGuess = bestGuess;
     }
 
     @Override

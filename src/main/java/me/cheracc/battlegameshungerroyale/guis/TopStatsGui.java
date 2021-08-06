@@ -41,6 +41,7 @@ public class TopStatsGui extends Gui {
 
     public TopStatsGui(BghrApi api) {
         super(2, "Top Players", InteractionModifier.VALUES);
+        long start = System.currentTimeMillis();
         setOutsideClickAction(e -> e.getWhoClicked().closeInventory());
         this.api = api;
         BukkitTask completionChecker = watchForCompleted();

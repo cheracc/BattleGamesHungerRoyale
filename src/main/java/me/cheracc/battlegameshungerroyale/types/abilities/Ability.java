@@ -169,7 +169,12 @@ public abstract class Ability implements Cloneable {
                 }
             }
         }
+        runAdditionalConfigurationProcesses();
         return true;
+    }
+
+    // hook method
+    protected void runAdditionalConfigurationProcesses() {
     }
 
     public boolean hasMyAbility(Player player) {
