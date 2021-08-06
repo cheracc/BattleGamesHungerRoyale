@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.guis;
+
 import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dev.triumphteam.gui.components.InteractionModifier;
 import dev.triumphteam.gui.guis.Gui;
@@ -6,8 +7,8 @@ import dev.triumphteam.gui.guis.GuiItem;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Game;
-import org.bukkit.Material;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 
@@ -30,28 +31,30 @@ public class SelectGameGui extends Gui {
     }
 
     private void fillGui(HumanEntity player) {
-        for (Game game : api.getGameManager().getActiveGames())
+        for (Game game : api.getGameManager().getActiveGames().values())
             addItem(gameIcon(player, game));
     }
 
     private GuiItem gameIcon(HumanEntity viewer, Game game) {
-        ItemBuilder item = ItemBuilder.from(Material.HEART_OF_THE_SEA).name(Trans.lateToComponent("&eMap: &f%s", game.getMap().getMapName()));
+        ItemBuilder item = ItemBuilder.from(game.getGameIcon()).name(Tools.componentalize(StringUtils.center(Trans.late("  &a&l%s", game.getGameTypeName()), 20)));
         List<String> lore = new ArrayList<>();
         boolean hasPermission = viewer.hasPermission("bghr.admin.games");
 
-        lore.add("&ePlayers: &7" + game.getActivePlayers().size() + "/" + game.getStartingPlayersSize());
-        lore.add(String.format(" &8(&7%s required to start&8)", game.getOptions().getPlayersNeededToStart()));
+        lore.add("&eMap: &f" + game.getMap().getMapName());
+        lore.add("&ePlayers: &f" + game.getActivePlayers().size() + "/" + game.getStartingPlayersSize());
+        if (game.getPhase().equalsIgnoreCase("pregame"))
+            lore.add(String.format(" &8(&7%s required to start&8)", game.getOptions().getPlayersNeededToStart()));
         lore.add("&ePhase: &7" + game.getPhase());
         if (game.getCurrentGameTime() > 0)
             lore.add("&eGame Time: &7" + Tools.secondsToMinutesAndSeconds(game.getCurrentGameTime()));
         lore.add("");
         if (game.isOpenToPlayers())
-            lore.add("    &d&lClick to Join!");
-        lore.add("&bRight click to spectate");
+            lore.add("     &d&lClick to Join!");
+        lore.add("  &bRight click to spectate");
 
         if (hasPermission) {
             lore.add("");
-            lore.add("&4[&cShift-Click&4]:&f Close this game");
+            lore.add("&4[&cShift-Click&4]:&c Close this game");
         }
 
         item.lore(Tools.componentalize(lore));
@@ -71,8 +74,7 @@ public class SelectGameGui extends Gui {
                     e.getWhoClicked().closeInventory();
                     new SelectGameGui(e.getWhoClicked(), api);
                 });
-            }
-            else if (e.isLeftClick() && game.isOpenToPlayers())
+            } else if (e.isLeftClick() && game.isOpenToPlayers())
                 game.join(p);
             else if (e.isRightClick()) {
                 game.joinAsSpectator(p);

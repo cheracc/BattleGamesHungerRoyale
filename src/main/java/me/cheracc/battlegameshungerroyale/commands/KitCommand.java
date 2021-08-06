@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.commands;
+
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
@@ -37,11 +38,13 @@ public class KitCommand implements CommandExecutor {
                     }
 
                     if (api.getGameManager().isActivelyPlayingAGame(p) && !p.isOp()) {
-                        p.sendMessage(Trans.lateToComponent("You cannot change your kit while playing a game"));
-                        return true;
+                        if (!api.getGameManager().getPlayersCurrentGame(p).isOpenToPlayers()) {
+                            p.sendMessage(Trans.lateToComponent("You cannot change your kit while playing a game"));
+                            return true;
+                        }
                     }
 
-                    data.registerKit(kit, false);
+                    data.assignKit(kit, false);
                     api.getPlayerManager().outfitPlayer(p, kit);
                     p.closeInventory();
                     return true;

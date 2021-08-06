@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.events;
-
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -16,6 +15,10 @@ public class GameFinishedEvent extends Event implements GameEvent {
         this.winner = winner;
     }
 
+    public static HandlerList getHandlerList() {
+        return handlerList;
+    }
+
     public Player getWinner() {
         return winner;
     }
@@ -26,10 +29,8 @@ public class GameFinishedEvent extends Event implements GameEvent {
     }
 
     @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlerList;
-    }
-    public static HandlerList getHandlerList() {
+    public @NotNull
+    HandlerList getHandlers() {
         return handlerList;
     }
 }

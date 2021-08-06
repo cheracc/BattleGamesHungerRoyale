@@ -1,17 +1,18 @@
 map: ak6
-lives per player: 3
+game type: me.cheracc.battlegameshungerroyale.types.games.Hungergames
+lives per player: 1
 players needed to start: 2
+allow regular building: false
 timers:
   pregame: 60
-  invincibility: 60
-  main: 300
+  invincibility: 15
+  main: 1200
   border: 60
   postgame: 60
-start type: hungergames
 loot:
   generate chests: true
   loosen search restrictions: true
   max chests per chunk: 50
   loot table: default
-  chest respawn time: 1
+  chest respawn time: 2
   fill all chests: true

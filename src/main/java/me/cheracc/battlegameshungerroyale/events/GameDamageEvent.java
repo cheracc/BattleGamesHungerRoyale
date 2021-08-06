@@ -1,7 +1,7 @@
 package me.cheracc.battlegameshungerroyale.events;
 
-import me.cheracc.battlegameshungerroyale.types.Game;
-import org.bukkit.entity.Player;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -9,33 +9,33 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GameDamageEvent extends Event implements Cancellable,GameEvent {
+public class GameDamageEvent extends Event implements Cancellable, GameEvent {
     private static final HandlerList handlerList = new HandlerList();
-    private final Player aggressor;
-    private final Player victim;
-
+    private final Entity aggressor;
+    private final Entity victim;
     private final EntityDamageEvent.DamageCause type;
     private final Game game;
-    private String bestGuess;
+    private final double damage;
     private boolean cancelled = false;
-    private double damage;
-    private final boolean directDamage;
 
-    public GameDamageEvent(Player aggressor, Player victim, Game game, double damage, boolean directDamage, EntityDamageEvent.DamageCause type) {
+    public GameDamageEvent(Entity aggressor, Entity victim, Game game, double damage, EntityDamageEvent.DamageCause type) {
         this.aggressor = aggressor;
         this.victim = victim;
         this.game = game;
         this.damage = damage;
-        this.directDamage = directDamage;
         this.type = type;
-        this.bestGuess = null;
     }
 
-    public @Nullable Player getAggressor() {
+    public static HandlerList getHandlerList() {
+        return handlerList;
+    }
+
+    public @Nullable
+    Entity getAggressor() {
         return aggressor;
     }
 
-    public Player getVictim() {
+    public Entity getVictim() {
         return victim;
     }
 
@@ -52,24 +52,9 @@ public class GameDamageEvent extends Event implements Cancellable,GameEvent {
         return type;
     }
 
-    public boolean isDirectDamage() {
-        return directDamage;
-    }
-
-    public String getBestGuess() {
-        return bestGuess;
-    }
-
-    public void setBestGuess(String bestGuess) {
-        this.bestGuess = bestGuess;
-    }
-
     @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlerList;
-    }
-
-    public static HandlerList getHandlerList() {
+    public @NotNull
+    HandlerList getHandlers() {
         return handlerList;
     }
 

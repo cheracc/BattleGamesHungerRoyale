@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.events;
 
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -11,16 +12,20 @@ public class GameDeathEvent extends Event implements GameEvent {
     private static final HandlerList handlerList = new HandlerList();
     private final Game game;
     private final Player recentlyDeceased;
-    private final Player killer;
+    private final Entity killer;
     private final double killingBlowDamage;
     private final EntityDamageEvent.DamageCause killingBlowCause;
 
-    public GameDeathEvent(Player dead, Player killer, Game game, double damage, EntityDamageEvent.DamageCause type) {
+    public GameDeathEvent(Player dead, Entity killer, Game game, double damage, EntityDamageEvent.DamageCause type) {
         this.recentlyDeceased = dead;
         this.killer = killer;
         this.killingBlowDamage = damage;
         this.killingBlowCause = type;
         this.game = game;
+    }
+
+    public static HandlerList getHandlerList() {
+        return handlerList;
     }
 
     @Override
@@ -32,7 +37,7 @@ public class GameDeathEvent extends Event implements GameEvent {
         return recentlyDeceased;
     }
 
-    public Player getKiller() {
+    public Entity getKiller() {
         return killer;
     }
 
@@ -45,11 +50,8 @@ public class GameDeathEvent extends Event implements GameEvent {
     }
 
     @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlerList;
-    }
-
-    public static HandlerList getHandlerList() {
+    public @NotNull
+    HandlerList getHandlers() {
         return handlerList;
     }
 }

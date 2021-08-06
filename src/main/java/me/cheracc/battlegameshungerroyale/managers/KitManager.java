@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.types.Kit;
@@ -71,7 +72,10 @@ public class KitManager {
                 toRemove.add(k);
         }
         for (Kit k : toRemove) {
-            k.getMyPlayers().forEach(data -> data.registerKit(kit, false));
+            k.getMyPlayers().forEach(data -> {
+                data.assignKit(kit, false);
+                plugin.getApi().getPlayerManager().outfitPlayer(data.getPlayer(), kit);
+            });
             loadedKits.remove(k);
         }
         loadedKits.add(kit);
@@ -119,7 +123,6 @@ public class KitManager {
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
         return !pdc.isEmpty() && pdc.has(BghrApi.ABILITY_KEY, PersistentDataType.STRING);
     }
-
 
     public List<Ability> getDefaultAbilities() {
         return new ArrayList<>(defaultAbilities);

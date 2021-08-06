@@ -1,8 +1,11 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
+import me.cheracc.battlegameshungerroyale.events.PlayerKitOutfitEvent;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
 import me.cheracc.battlegameshungerroyale.types.Kit;
+import me.cheracc.battlegameshungerroyale.types.Metadata;
 import me.cheracc.battlegameshungerroyale.types.PlayerData;
 import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
 import me.cheracc.battlegameshungerroyale.types.abilities.ActiveAbility;
@@ -11,6 +14,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,7 +54,7 @@ public class PlayerManager {
             if (data.getUuid().equals(uuid) && data.isLoaded())
                 return true;
         }
-        return (waitingForDatabase.containsKey(uuid));
+        return false;
     }
 
     public CompletableFuture<PlayerData> getPlayerDataAsync(UUID uuid) {
@@ -63,10 +67,9 @@ public class PlayerManager {
     }
 
     public void loadPlayerDataAsync(UUID uuid) {
-        if (!isPlayerDataLoaded(uuid)) {
+        if (!isPlayerDataLoaded(uuid) && !waitingForDatabase.containsKey(uuid)) {
             PlayerData unloaded = new PlayerData(uuid);
             waitingForDatabase.put(uuid, unloaded.loadAsynchronously(databaseManager, logr, plugin));
-            logr.debug("Added %s to waiting watchlist", uuid.toString());
             if (playerDataUpdater.isCancelled())
                 playerDataUpdater.runTaskTimer(plugin, 0L, 1L);
         }
@@ -87,28 +90,34 @@ public class PlayerManager {
     public void thisPlayerIsLoaded(PlayerData data) {
         if (!loadedPlayers.contains(data)) {
             loadedPlayers.add(data);
-            logr.debug("Finished loading player data for %s", data.getUuid().toString());
-        }
-        else
+        } else
             logr.warn("data for %s is already loaded", data.getName());
     }
 
     public void restorePlayerFromSavedData(Player player, PlayerData data) {
-        if (data.getSettings().isShowMainScoreboard())
-            player.setScoreboard(gameManager.getMainScoreboard());
+        if (player.hasMetadata(Metadata.PREGAME_SCOREBOARD.key())) {
+            Scoreboard sb = (Scoreboard) player.getMetadata(Metadata.PREGAME_SCOREBOARD.key()).get(0).value();
+            player.setScoreboard(sb);
+        } else if (data.getSettings().isShowMainScoreboard() && plugin.getConfig().getBoolean("show main scoreboard", true))
+            player.setScoreboard(plugin.getApi().getDisplayManager().getMainScoreboard());
         else
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
 
+        player.getInventory().clear();
+        player.updateInventory();
         data.writeSavedInventoryToPlayer();
 
         if (data.getSettings().getDefaultKit() != null) {
             Kit kit = kitManager.getKit(data.getSettings().getDefaultKit());
             if (kit != null) {
-                data.registerKit(kit, false);
+                if (!kit.isEnabled() && !player.hasPermission("bghr.admin.kits.disabled")) {
+                    player.sendMessage(Trans.lateToComponent("Your favorite kit %s is marked as disabled and has been reset to 'Random'", kit.getName()));
+                    data.getSettings().setDefaultKit(null);
+                }
+
+                data.assignKit(kit, false);
                 if (gameManager.isThisAGameWorld(player.getWorld()) || plugin.getConfig().getBoolean("main world.kits useable in main world", false)) {
                     outfitPlayer(player, kit);
-                } else {
-                    player.sendMessage(Trans.lateToComponent("Kit&e %s &fwill be equipped when you join a game.", kit.getName()));
                 }
             }
         }
@@ -133,26 +142,33 @@ public class PlayerManager {
         }
 
         kit.getEquipment().unequip(player);
-        for (Ability ability :kit.getAbilities()) {
+        for (Ability ability : kit.getAbilities()) {
             if (ability instanceof PassiveAbility) {
                 ((PassiveAbility) ability).deactivate(player);
             }
         }
     }
 
+    // clears the player's inventory then gives them back their kit stuff
+    public void clearInventoryAndRestoreKit(Player p) {
+        p.getInventory().clear();
+        p.updateInventory();
+        outfitPlayer(p, getPlayerData(p).getKit());
+    }
+
     public void outfitPlayer(Player p, Kit kit) {
+        if (kit == null)
+            kit = kitManager.getRandomKit(false);
+
         if (!kit.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Trans.lateToComponent("That kit is disabled"));
-            return;
+            p.sendMessage(Trans.lateToComponent("Trying to equip a disabled kit without permission. Please report this. You will instead be assigned a random kit."));
+            kit = kitManager.getRandomKit(false);
         }
 
-        if (!gameManager.isInAGame(p) && plugin.getConfig().getBoolean("main world.kits useable in main world", false)) {
-            p.sendMessage(Trans.lateToComponent("&7You will be equipped with kit &e%s &7at the start of your next game.", kit.getName()));
+        if (!gameManager.isInAGame(p) && !plugin.getConfig().getBoolean("main world.kits useable in main world", false)) {
+            p.sendMessage(Trans.lateToComponent("&7You have selected kit &e%s&f. It will be equipped at the start of your next game.", kit.getName()));
             return;
         }
-
-        if (kit != null)
-            disrobePlayer(p, kit);
 
         for (Ability a : kit.getAbilities()) {
             if (a instanceof ActiveAbility) {
@@ -170,9 +186,11 @@ public class PlayerManager {
             kit.getEquipment().equip(p);
         }
         p.sendMessage(Trans.lateToComponent("You have been equipped with kit &e" + kit.getName()));
+        new PlayerKitOutfitEvent(p, kit).callEvent();
     }
 
     public void disable() {
+        plugin.getLogr().debug("Stopping PlayerManager tasks databaseUpdater and playerDataUpdater");
         databaseUpdater.cancel();
         playerDataUpdater.cancel();
     }
@@ -196,7 +214,6 @@ public class PlayerManager {
     }
 
     private BukkitRunnable playerDataUpdater(GameManager gm) {
-        logr.debug("Starting playerDataUpdater");
         final int[] tickCounter = {0};
         return new BukkitRunnable() {
             @Override
@@ -206,7 +223,6 @@ public class PlayerManager {
                     if (f.isDone()) {
                         PlayerData data = f.getNow(null);
                         if (data != null && data.getPlayer() != null) {
-                            logr.debug("%s is finished loading", data.getUuid());
                             restorePlayerFromSavedData(data.getPlayer(), data);
                             thisPlayerIsLoaded(data);
                             toRemove.add(data.getUuid());

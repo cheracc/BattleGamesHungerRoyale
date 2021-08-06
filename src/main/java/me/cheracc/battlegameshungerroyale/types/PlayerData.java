@@ -1,13 +1,18 @@
 package me.cheracc.battlegameshungerroyale.types;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.managers.DatabaseManager;
 import me.cheracc.battlegameshungerroyale.managers.Logr;
 import me.cheracc.battlegameshungerroyale.tools.InventorySerializer;
+import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
+import me.cheracc.battlegameshungerroyale.types.abilities.Ability;
+import me.cheracc.battlegameshungerroyale.types.abilities.PassiveAbility;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
@@ -21,14 +26,14 @@ import java.util.concurrent.CompletableFuture;
 
 public class PlayerData {
     private final UUID uuid;
-    private String[] lastInventory;
-    private Location lastLocation;
     private final PlayerStats stats;
     private final PlayerSettings settings;
+    private final boolean loaded = false;
+    private String[] lastInventory;
+    private Location lastLocation;
     private Kit kit;
     private long joinTime;
     private boolean modified = false;
-    private boolean loaded = false;
 
     public PlayerData(UUID uuid) {
         this.uuid = uuid;
@@ -69,16 +74,16 @@ public class PlayerData {
         return kit;
     }
 
-    public void registerKit(Kit kit, boolean clearInventory) {
+    public void assignKit(Kit kit, boolean clearInventory) {
         Player p = getPlayer();
         if (p == null) return;
 
         if (!kit.isEnabled() && !p.hasPermission("bghr.admin.kits.disabled")) {
-            p.sendMessage(Trans.lateToComponent("That kit is disabled"));
+            p.sendMessage(Trans.lateToComponent("You are trying to equip a disabled kit and you do not have permission. Please report this."));
             return;
         }
         if (this.kit != null)
-            removeKit(this.kit);
+            removeKit();
 
         if (clearInventory)
             p.getInventory().clear();
@@ -86,7 +91,32 @@ public class PlayerData {
         this.kit = kit;
     }
 
-    public void removeKit(Kit kit) {
+    private void removeAllKitItems() {
+        Player player = getPlayer();
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item == null || item.getItemMeta() == null)
+                continue;
+            if (Tools.isPluginItem(item))
+                player.getInventory().remove(item);
+        }
+        ItemStack item = player.getInventory().getItemInOffHand();
+        if (item != null && item.getItemMeta() != null) {
+            if (Tools.isPluginItem(item))
+                player.getInventory().setItemInOffHand(null);
+        }
+
+        kit.getEquipment().unequip(player);
+        for (Ability ability : kit.getAbilities()) {
+            if (ability instanceof PassiveAbility) {
+                ((PassiveAbility) ability).deactivate(player);
+            }
+        }
+
+        player.updateInventory();
+    }
+
+    public void removeKit() {
+        removeAllKitItems();
         this.kit = null;
     }
 
@@ -95,6 +125,9 @@ public class PlayerData {
     }
 
     public Location getLastLocation() {
+        if (lastLocation != null)
+            return lastLocation.clone();
+        setLastLocation(getPlayer().getLocation());
         return lastLocation.clone();
     }
 
@@ -103,6 +136,12 @@ public class PlayerData {
             lastLocation = loc;
             modified = true;
         }
+    }
+
+    public void saveLocationAndInventory(boolean clear) {
+        setLastLocation();
+        saveInventory(clear);
+        setModified(true);
     }
 
     public void setLastLocation() {
@@ -128,6 +167,8 @@ public class PlayerData {
     }
 
     public String[] getSavedInventory() {
+        if (lastInventory == null || lastInventory[0] == null)
+            saveInventory(false);
         return lastInventory;
     }
 
@@ -154,23 +195,20 @@ public class PlayerData {
         new BukkitRunnable() {
             @Override
             public void run() {
-                logr.debug("Starting load of %s", uuid);
                 load(db, logr);
-                logr.debug("Load complete");
                 future.complete(PlayerData.this);
             }
         }.runTaskAsynchronously(plugin);
         return future;
     }
 
-
     private boolean load(DatabaseManager db, Logr logr) {
         boolean found = false;
 
         try (Connection con = db.getConnection();
-        PreparedStatement loadStatsQuery = con.prepareStatement("SELECT * FROM player_stats WHERE uuid=?");
-        PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?");
-        PreparedStatement loadDataQuery = con.prepareStatement("SELECT * FROM player_data WHERE uuid=?")) {
+             PreparedStatement loadStatsQuery = con.prepareStatement("SELECT * FROM player_stats WHERE uuid=?");
+             PreparedStatement loadSettingsQuery = con.prepareStatement("SELECT * FROM player_settings WHERE uuid=?");
+             PreparedStatement loadDataQuery = con.prepareStatement("SELECT * FROM player_data WHERE uuid=?")) {
 
             loadStatsQuery.setString(1, uuid.toString());
             ResultSet result = loadStatsQuery.executeQuery();
@@ -242,7 +280,7 @@ public class PlayerData {
                 String main = result.getString("inventory");
                 String armor = result.getString("armor");
                 String enderChest = result.getString("enderchest");
-                lastInventory = new String[] {main, armor, enderChest};
+                lastInventory = new String[]{main, armor, enderChest};
                 result.close();
             }
 
@@ -329,12 +367,10 @@ public class PlayerData {
             updateData.execute();
 
             modified = false;
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-
 
     public String getName() {
         return Bukkit.getOfflinePlayer(uuid).getName();

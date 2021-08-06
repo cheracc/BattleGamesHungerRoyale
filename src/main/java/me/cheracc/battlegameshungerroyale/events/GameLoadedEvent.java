@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.events;
-
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -13,17 +12,18 @@ public class GameLoadedEvent extends Event implements GameEvent {
         this.game = game;
     }
 
+    public static HandlerList getHandlerList() {
+        return handlerList;
+    }
+
     @Override
     public Game getGame() {
         return game;
     }
 
     @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlerList;
-    }
-
-    public static HandlerList getHandlerList() {
+    public @NotNull
+    HandlerList getHandlers() {
         return handlerList;
     }
 }

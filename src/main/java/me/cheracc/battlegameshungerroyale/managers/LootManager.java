@@ -1,6 +1,7 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -27,19 +28,20 @@ public class LootManager implements Listener {
     private final Logr logr;
     private final BGHR plugin;
     private final BukkitTask asyncChunkScanner;
-    private final BukkitTask updateChests;
-    private final BukkitTask chestRecycler;
-
     private final boolean generateChests;
     private final boolean loadPrePlacedChests;
     private final int maxChestsPerChunk;
     private final boolean loosenChestSearchRestrictions;
     private final long startTime;
-
     private final LootTable lootTable;
     private final List<Location> unusedChestLocations = new ArrayList<>();
     private final Set<Location> usedChestLocations = new HashSet<>();
     private final Queue<ChunkSnapshot> toSearch = new ConcurrentLinkedQueue<>();
+    private final Set<Long> loadedChunkKeys = new HashSet<>();
+    private long lastChestRespawn;
+    private int tickCounter = 0;
+
+    // TODO make a ChestScanner class and move all associated stuff into that
 
     public LootManager(Game game, BGHR plugin, Logr logr, GameManager gameManager) {
         this.plugin = plugin;
@@ -52,8 +54,7 @@ public class LootManager implements Listener {
         this.game = game;
         this.startTime = System.currentTimeMillis();
         this.asyncChunkScanner = asyncChunkScanner();
-        this.updateChests = updateChests();
-        this.chestRecycler = chestRecycler();
+        lastChestRespawn = System.currentTimeMillis();
         if (game.getOptions().getLootTable() == null)
             this.lootTable = gameManager.getDefaultLootTable();
         else
@@ -62,10 +63,24 @@ public class LootManager implements Listener {
     }
 
     public void close() {
+        plugin.getLogr().debug("Stopping async chunk scanner");
         asyncChunkScanner.cancel();
-        updateChests.cancel();
-        chestRecycler.cancel();
         ChunkLoadEvent.getHandlerList().unregister(this);
+    }
+
+    public void tick() {
+        tickCounter++;
+        if (tickCounter > 9)
+            tickCounter = 0;
+
+        if ((System.currentTimeMillis() - lastChestRespawn) / 1000 / 60 >= game.getOptions().getChestRespawnTime()) {
+            // TODO add the ability to modify this 'density' number for loot chests
+            placeLootChests((int) (game.getActivePlayers().size() * 5 * Math.sqrt(game.getMap().getBorderRadius())));
+            lastChestRespawn = System.currentTimeMillis();
+        }
+        updateChests();
+        if (tickCounter == 0)
+            recycleChests();
     }
 
     public void placeLootChests(int amount) {
@@ -77,8 +92,7 @@ public class LootManager implements Listener {
 
         if (amount >= unusedChestLocations.size()) {
             selected.addAll(unusedChestLocations);
-        }
-        else {
+        } else {
             Collections.shuffle(unusedChestLocations);
             while (selected.size() < amount) {
                 int index = rand.nextInt(unusedChestLocations.size() - 1);
@@ -94,52 +108,48 @@ public class LootManager implements Listener {
         }
     }
 
-    private BukkitTask updateChests() {
-        BukkitRunnable addShinies = new BukkitRunnable() {
-            @Override
-            public void run() {
-                Set<Location> toRemove = new HashSet<>();
-                for (Location l : usedChestLocations) {
-                    l.getBlock();
-                    if (l.getBlock().getType() != Material.CHEST) {
-                        toRemove.add(l);
-                        continue;
-                    }
-                    Chest chest = (Chest) l.getBlock().getState();
-                    if (!chest.hasBeenFilled())
-                        l.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, l.clone().add(0.5,0.5,0.5), 5, 0.5, 0.5, 0.5);
-                }
-                usedChestLocations.removeAll(toRemove);
-                unusedChestLocations.addAll(toRemove);
-                toRemove.clear();
+    private void updateChests() {
+        Set<Location> toRemove = new HashSet<>();
+        for (Location l : usedChestLocations) {
+            l.getBlock();
+            if (l.getBlock().getType() != Material.CHEST) {
+                toRemove.add(l);
+                continue;
             }
-        };
-        return addShinies.runTaskTimer(plugin, 10L, 8L);
+            Chest chest = (Chest) l.getBlock().getState();
+            if (!chest.hasBeenFilled())
+                l.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, l.clone().add(0.5, 0.5, 0.5), 5, 0.5, 0.5, 0.5);
+        }
+        usedChestLocations.removeAll(toRemove);
+        unusedChestLocations.addAll(toRemove);
+        toRemove.clear();
     }
 
     private BukkitTask asyncChunkScanner() {
         BukkitRunnable asyncScanner = new BukkitRunnable() {
             long last = System.currentTimeMillis();
             int scanned = 0;
+
             @Override
             public void run() {
-                if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0 && System.currentTimeMillis() - startTime > 1000*10)) {
-                    cancel();
-                    logr.info("Finished searching, found %s loot chest locations.",
-                            unusedChestLocations.size() + usedChestLocations.size());
-                    return;
-                }
+                if (generateChests) {
+                    if (!game.getPhase().equalsIgnoreCase("pregame") || (scanned > 10 && toSearch.size() == 0 && System.currentTimeMillis() - startTime > 1000 * 10)) {
+                        cancel();
+                        logr.info("Finished searching, found %s loot chest locations.",
+                                  unusedChestLocations.size() + usedChestLocations.size());
+                        return;
+                    }
 
-                ChunkSnapshot chunk = toSearch.poll();
-                if (chunk != null) {
-                    searchChunkForChestLocations(chunk, maxChestsPerChunk);
-                    scanned++;
-                }
+                    ChunkSnapshot chunk = toSearch.poll();
+                    if (chunk != null) {
+                        searchChunkForChestLocations(chunk, maxChestsPerChunk);
+                        scanned++;
+                    }
 
-                if (System.currentTimeMillis() - last > 5000) {
-                    last = System.currentTimeMillis();
+                    if (System.currentTimeMillis() - last > 5000) {
+                        last = System.currentTimeMillis();
+                    }
                 }
-
             }
         };
         return asyncScanner.runTaskTimerAsynchronously(plugin, 20L, 2L);
@@ -165,7 +175,7 @@ public class LootManager implements Listener {
                         continue;
                     }
                     int y = rand.nextInt(yTop - 10) + 10;
-                    if (chunk.isSectionEmpty(y/16)) {
+                    if (chunk.isSectionEmpty(y / 16)) {
                         tries += 10;
                         skipSecondChance = true;
                         continue;
@@ -181,11 +191,11 @@ public class LootManager implements Listener {
                     if (checkIfGoodForChest(cluster, needed)) {
                         Consumer<Chunk> addThisLocation = ch -> {
                             Block center = ch.getBlock(x, y, z);
-                            unusedChestLocations.add(center.getLocation()); };
+                            unusedChestLocations.add(center.getLocation());
+                        };
                         count++;
                         game.getWorld().getChunkAtAsync(chunk.getX(), chunk.getZ(), addThisLocation);
-                    }
-                    else {
+                    } else {
                         tries++;
                         needed = 3;
                         if (loosenChestSearchRestrictions)
@@ -196,7 +206,8 @@ public class LootManager implements Listener {
                         if (checkIfGoodForChest(cluster, needed)) {
                             Consumer<Chunk> addThisLocation = ch -> {
                                 Block center = ch.getBlock(x, yTop, z);
-                                unusedChestLocations.add(center.getLocation()); };
+                                unusedChestLocations.add(center.getLocation());
+                            };
                             count++;
                             game.getWorld().getChunkAtAsync(chunk.getX(), chunk.getZ(), addThisLocation);
                         }
@@ -209,7 +220,8 @@ public class LootManager implements Listener {
                     BlockDataCluster cluster = new BlockDataCluster(chunk, x, yTop, z);
                     Consumer<Chunk> addThisLocation = ch -> {
                         Block center = ch.getBlock(x, yTop, z);
-                        unusedChestLocations.add(center.getLocation()); };
+                        unusedChestLocations.add(center.getLocation());
+                    };
 
                     tries++;
                     if (checkIfGoodForChest(cluster, 1)) {
@@ -219,25 +231,18 @@ public class LootManager implements Listener {
                 }
             }
         }.runTaskAsynchronously(plugin);
-
     }
 
-    private BukkitTask chestRecycler() {
-        BukkitRunnable recycler = new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (Location l : usedChestLocations) {
-                    if (l.getBlock().getType() == Material.CHEST) {
-                        Chest chest = (Chest) l.getBlock().getState();
-                        if (chest.hasBeenFilled() && l.getNearbyPlayers(5).isEmpty()) {
-                            recycleChestAt(l);
-                            return;
-                        }
-                    }
+    private void recycleChests() {
+        for (Location l : usedChestLocations) {
+            if (l.getBlock().getType() == Material.CHEST) {
+                Chest chest = (Chest) l.getBlock().getState();
+                if (chest.hasBeenFilled() && l.getNearbyPlayers(5).isEmpty()) {
+                    recycleChestAt(l);
+                    return;
                 }
             }
-        };
-        return recycler.runTaskTimer(plugin, 200L, 100L);
+        }
     }
 
     private void recycleChestAt(Location location) {
@@ -308,8 +313,6 @@ public class LootManager implements Listener {
         return count >= adjacentBlockNeeded;
     }
 
-
-    private final Set<Long> loadedChunkKeys = new HashSet<>();
     @EventHandler
     public void grabChunksAsTheyAreLoaded(ChunkLoadEvent event) {
         if (game == null || game.getWorld() == null || loadedChunkKeys.contains(event.getChunk().getChunkKey()))
@@ -325,6 +328,31 @@ public class LootManager implements Listener {
             ChunkSnapshot chunk = event.getChunk().getChunkSnapshot();
             if (!toSearch.contains(chunk)) {
                 toSearch.add(chunk);
+            }
+        }
+    }
+
+    @EventHandler
+    public void populatePrePlacedChests(InventoryOpenEvent event) {
+        if (!event.getPlayer().getWorld().equals(game.getWorld()) || !loadPrePlacedChests)
+            return;
+
+        if (game.getPhase().equalsIgnoreCase("pregame") || game.getPhase().equalsIgnoreCase("postgame"))
+            return;
+
+        Inventory inv = event.getInventory();
+        Location loc = inv.getLocation();
+
+        if (loc == null)
+            return;
+
+        Block b = loc.getBlock();
+        if (b.getState() instanceof Chest) {
+            Chest chest = (Chest) b.getState();
+            if (!chest.hasBeenFilled() && !chest.hasLootTable()) {
+                chest.setLootTable(lootTable);
+                chest.update(true);
+                usedChestLocations.add(chest.getLocation());
             }
         }
     }
@@ -352,30 +380,4 @@ public class LootManager implements Listener {
                 sides.add(chunk.getBlockData(centerX - 1, centerY, centerZ));
         }
     }
-
-    @EventHandler
-    public void populatePrePlacedChests(InventoryOpenEvent event) {
-        if (!event.getPlayer().getWorld().equals(game.getWorld()) || !loadPrePlacedChests)
-            return;
-
-        if (game.getPhase().equalsIgnoreCase("pregame") || game.getPhase().equalsIgnoreCase("postgame"))
-            return;
-
-        Inventory inv = event.getInventory();
-        Location loc = inv.getLocation();
-
-        if (loc == null)
-            return;
-
-        Block b = loc.getBlock();
-        if (b.getState() instanceof Chest)  {
-            Chest chest = (Chest) b.getState();
-            if (!chest.hasBeenFilled() && !chest.hasLootTable()) {
-                chest.setLootTable(lootTable);
-                chest.update(true);
-                usedChestLocations.add(chest.getLocation());
-            }
-        }
-    }
-
 }

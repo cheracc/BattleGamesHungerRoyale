@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.types.abilities;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.BghrApi;
 import me.cheracc.battlegameshungerroyale.managers.PlayerManager;
@@ -168,7 +169,12 @@ public abstract class Ability implements Cloneable {
                 }
             }
         }
+        runAdditionalConfigurationProcesses();
         return true;
+    }
+
+    // hook method
+    protected void runAdditionalConfigurationProcesses() {
     }
 
     public boolean hasMyAbility(Player player) {

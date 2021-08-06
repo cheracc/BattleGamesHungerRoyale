@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.types.MapData;
@@ -38,13 +39,25 @@ public class MapManager implements Listener {
         if (!mapsDirectory.exists()) {
             if (mapsDirectory.mkdirs())
                 logr.info("Unpacking sample maps into " + mapsDirectory.getPath());
-            Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.toPath());
+            if (!Tools.extractZipResource(plugin.getClass(), "/BGHR_Maps.zip", mapsDirectory.toPath())) {
+                logr.info("There are no maps configured and this plugin .jar does not include them. Disabling.");
+                Bukkit.getPluginManager().disablePlugin(plugin);
+                return;
+            }
         }
         deleteCompletedMaps();
         registerMaps();
+
+        if (getMaps().isEmpty()) {
+            logr.info("There are no maps configured and this plugin .jar does not include them. Disabling.");
+            Bukkit.getPluginManager().disablePlugin(plugin);
+            return;
+        }
+
         installDataPack();
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
+
     // public methods
     public boolean wasDatapackUpdated() {
         return updatedDatapack;
@@ -73,6 +86,8 @@ public class MapManager implements Listener {
     }
 
     public MapData getMapFromWorld(World world) {
+        if (world == null)
+            return null;
         for (Map.Entry<MapData, List<UUID>> e : maps.entrySet())
             if (e.getValue().contains(world.getUID()))
                 return e.getKey();
@@ -113,7 +128,6 @@ public class MapManager implements Listener {
                     callback.accept(world);
                 }
             }.runTask(plugin);
-
         });
     }
 
@@ -121,7 +135,7 @@ public class MapManager implements Listener {
         File oldVersionsDirectory = new File(mapsDirectory, "old_maps");
         if (!oldVersionsDirectory.exists() && oldVersionsDirectory.mkdirs())
             logr.info("Creating 'old_maps' directory for archiving old versions...");
-        String[] unwantedFiles = { "uid.dat", "session.lock", "level.dat_old", "playerdata", "advancements", "stats" };
+        String[] unwantedFiles = {"uid.dat", "session.lock", "level.dat_old", "playerdata", "advancements", "stats"};
 
         world.save();
 
@@ -144,8 +158,7 @@ public class MapManager implements Listener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-        else
+        } else
             logr.warn("Couldn't load the world folder for loaded world " + world.getName() + " map " + mapData.getMapName());
     }
 
@@ -216,7 +229,6 @@ public class MapManager implements Listener {
 
         if (mapSourceDirectory.listFiles() == null)
             return;
-
 
         new BukkitRunnable() {
             @Override
@@ -313,5 +325,4 @@ public class MapManager implements Listener {
             }
         }
     }
-
 }

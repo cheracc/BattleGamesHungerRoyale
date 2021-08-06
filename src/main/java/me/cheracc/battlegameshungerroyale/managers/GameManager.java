@@ -1,15 +1,12 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import me.cheracc.battlegameshungerroyale.BGHR;
-import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Game;
-import me.cheracc.battlegameshungerroyale.types.GameOptions;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.HoverEvent;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
+import me.cheracc.battlegameshungerroyale.types.games.GameOptions;
+import me.cheracc.battlegameshungerroyale.types.games.GameType;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -17,140 +14,171 @@ import org.bukkit.loot.LootTable;
 import org.bukkit.loot.LootTables;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.scoreboard.*;
 import org.jetbrains.annotations.Nullable;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class GameManager {
-    private final  List<Game>  activeGames       = new ArrayList<>();
-    private final  Scoreboard  mainScoreboard;
-    private final  BukkitTask  scoreboardUpdater;
-    private final  MapDecider  mapDecider;
+    private final Map<Integer, Game> activeGames = new HashMap<>();
+    private final List<GameType> loadedGameTypes = new ArrayList<>();
+    private final List<GameOptions> alwaysOnGames = new ArrayList<>();
+    private final List<GameOptions> manualOnlyGames = new ArrayList<>();
+    private final MapDecider mapDecider;
     private final MapManager mapManager;
     private final BGHR plugin;
     private final Logr logr;
+    private final Collection<LootTable> lootTables = new HashSet<>();
+    private final int minimumRunningGames;
+    private final boolean allowFfaRandoms;
 
     public GameManager(BGHR plugin, Logr logr, MapManager mapManager) {
         this.plugin = plugin;
         this.logr = logr;
         this.mapManager = mapManager;
-        ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
-        mainScoreboard = scoreboardManager.getNewScoreboard();
+        allowFfaRandoms = plugin.getConfig().getBoolean("allow FreeForAll games to start randomly", false);
+        minimumRunningGames = plugin.getConfig().getInt("keep at least this many games running", 1);
+        if (plugin.getConfig().isSet("always-on games")) {
+            List<String> configNames = plugin.getConfig().getStringList("always-on games");
+            if (configNames != null) {
+                for (GameOptions go : getAllConfigs()) {
+                    if (configNames.contains(go.getConfigFile().getName().split("\\.")[0])) {
+                        logr.debug("%s will be started momentarily and will be kept alive", go.getConfigFile().getName());
+                        alwaysOnGames.add(go);
+                    }
+                }
+            }
+        }
+        List<String> names = plugin.getConfig().getStringList("games that will not start randomly");
+        if (names != null) {
+            for (GameOptions go : getAllConfigs())
+                if (names.contains(go.getConfigFile().getName().split("\\.")[0])) {
+                    logr.debug("%s will not start automatically", go.getConfigFile().getName());
+                    manualOnlyGames.add(go);
+                }
+        }
         mapDecider = new MapDecider();
         getLootTables();
-        setupScoreboard();
-        setupScoreboardTeams();
-        scoreboardUpdater = scoreboardUpdater();
-        createNewGame(mapDecider.selectNextMap());
+        getValidGameTypes();
+
+        Consumer<Game> callback = null;
+        if (!alwaysOnGames.isEmpty()) {
+            // create one big nested callback so we don't start all of these games at the same time
+            for (GameOptions opts : alwaysOnGames) {
+                if (callback == null)
+                    callback = game -> logr.debug("no more to start");
+                else {
+                    Consumer<Game> previousCallback = callback;
+                    callback = game -> {
+                        logr.debug("starting always-on game %s", opts.getConfigFile().getName());
+                        createNewGameWithCallback(opts, previousCallback);
+                    };
+                }
+            }
+        }
+        // add some random games to the callback chain if the config demands more
+        if (alwaysOnGames.size() < minimumRunningGames) {
+            for (int i = 0; i < minimumRunningGames - alwaysOnGames.size(); i++) {
+                Consumer<Game> previousCallback = callback;
+                callback = game -> {
+                    GameOptions opts = mapDecider.selectNextMap();
+                    logr.debug("starting game %s because there are not enough running", opts.getConfigFile().getName());
+                    createNewGameWithCallback(opts, previousCallback);
+                };
+            }
+        }
+        if (!alwaysOnGames.isEmpty())
+            createNewGameWithCallback(alwaysOnGames.get(alwaysOnGames.size() - 1), callback);
+        else if (callback != null)
+            callback.accept(null);
+        else
+            createNewGame(mapDecider.selectRandomConfig());
     }
 
     public boolean isThisAGameWorld(World world) {
-        for (Game game : getActiveGames()) {
+        for (Game game : getActiveGames().values()) {
             if (game.getWorld().equals(world))
                 return true;
         }
         return false;
     }
 
-    private void setupScoreboard() {
-        Objective mainObj = mainScoreboard.registerNewObjective("mainSb", "dummy", Trans.lateToComponent("&e&lBattle Games: Hunger Royale!").hoverEvent(HoverEvent.showText(Trans.lateToComponent("Test"))));
-        mainObj.setDisplaySlot(DisplaySlot.SIDEBAR);
-        mainObj.getScore(ChatColor.AQUA + "  =======================").setScore(15);
-        mainObj.getScore(ChatColor.translateAlternateColorCodes('&', "        &l&nCurrent Games")).setScore(14);
-        mainObj.getScore("  " + ChatColor.MAGIC).setScore(13);
-    }
+    // this is getting %bghr_sb_game1_1%
+    public Supplier<String> replaceScoreboardPlaceholders(String[] placeholderArgs) {
+        if (placeholderArgs.length < 4)
+            return () -> "";
+        int gameNumber = Integer.parseInt(placeholderArgs[2].substring(4)); // game3
+        int lineNumber = Integer.parseInt(placeholderArgs[3]); // 7
 
-    public void setupScoreboardTeams() {
-        for (int i = 12; i >= 0; i--) {
-            String entry = ChatColor.values()[i] + "" + ChatColor.values()[i + 1];
-            Team lineText = mainScoreboard.registerNewTeam(String.format("line%s", i));
-            lineText.addEntry(entry);
-            mainScoreboard.getObjective("mainSb").getScore(entry).setScore(i);
+        if (!getActiveGames().containsKey(gameNumber))
+            return () -> "";
+
+        Game game = getActiveGames().get(gameNumber);
+        switch (lineNumber) {
+            case 1:
+                return () -> Trans.late("&e\u25BA &6&n%s &7[&a/join %s&7]",
+                                        game.getGameTypeName(), gameNumber);
+            case 2:
+                return () -> Trans.late("  &bMap&3: &f%s &bPhase&3: &f%s", game.getMap().getMapName(), game.getPhase());
+            case 3:
+                if (game.getPhase().equalsIgnoreCase("pregame")) {
+                    if (game.getActivePlayers().size() >= game.getOptions().getPlayersNeededToStart()) {
+                        return () -> Trans.late("  &3Starting in %s", Math.abs(game.getCurrentGameTime()));
+                    } else {
+                        return () -> Trans.late("  &3Waiting for Players... &7(Need %s)", game.getOptions().getPlayersNeededToStart() - game.getActivePlayers().size());
+                    }
+                }
+            default:
+                return () -> "";
         }
-    }
-
-    private BukkitTask scoreboardUpdater() {
-        BukkitRunnable updater = new BukkitRunnable() {
-            @Override
-            public void run() {
-                updateScoreboard();
-            }
-        };
-        return updater.runTaskTimer(plugin, 100L, 20L);
-    }
-
-    public void updateScoreboard() {
-        int lineNumber = 12;
-        for (Game game : getActiveGames()) {
-            if (lineNumber < 0)
-                break;
-            mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Tools.componentalize(
-                    String.format(" &a%s &3[&b%s&3]", game.getMap().getMapName(), StringUtils.capitalize(game.getPhase()))));
-            lineNumber--;
-            String line2;
-            int totalGameTime = game.getOptions().getInvincibilityTime() + game.getOptions().getMainPhaseTime() + game.getOptions().getBorderTime();
-            switch (game.getPhase()) {
-                case "Pregame":
-                    int needed = game.getOptions().getPlayersNeededToStart() - game.getStartingPlayersSize();
-                    if (needed > 0)
-                        line2 = String.format("&7    (Need &f%s &7more to start!&7)", needed);
-                    else
-                        line2 = String.format("&7    Starting in &f%s", Tools.secondsToAbbreviatedMinsSecs(game.getCurrentGameTime()));
-                    break;
-                case "Invincibility":
-                case "Main":
-                case "Border":
-                    line2 = String.format("    &3[&f%s/%s&3] &7(&f%s left&7)", game.getActivePlayers().size(), game.getStartingPlayersSize(),
-                                          Tools.secondsToAbbreviatedMinsSecs(totalGameTime - game.getCurrentGameTime()));
-                    break;
-                case "Postgame":
-                    line2 = String.format("    &fWinner: &e%s&f! &7[&fCloses in %s&7]", game.getWinner() != null ? game.getWinner().getName() : "&7nobody",
-                                          Tools.secondsToAbbreviatedMinsSecs(game.getCurrentGameTime()));
-                    break;
-                default:
-                    line2 = "";
-            }
-            mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Tools.componentalize(line2));
-            lineNumber--;
-        }
-        if (lineNumber > 3)
-            for (; lineNumber > 0; lineNumber--) {
-                mainScoreboard.getTeam(String.format("line%s", lineNumber)).prefix(Component.space());
-            }
-        mainScoreboard.getTeam("line2").prefix(Trans.lateToComponent(" &e/games &7to join or watch a game").hoverEvent(HoverEvent.hoverEvent(HoverEvent.Action.SHOW_TEXT, Trans.lateToComponent("/games"))));
-        mainScoreboard.getTeam("line1").prefix(Trans.lateToComponent(" &e/settings &7to turn this off"));
     }
 
     public void createNewGameWithCallback(GameOptions options, Consumer<Game> callback) {
-        Game game = new Game(options);
-        mapManager.createNewWorldAsync(options.getMap(), w -> {
-            game.initializeGame(w, plugin.getApi());
-            updateScoreboard();
+        String gameType = options.getGameType();
+        try {
+            Class<?> gameClass = Class.forName(gameType);
+            Object o = gameClass.getConstructor(GameOptions.class).newInstance(options);
+
+            if (o instanceof Game) {
+                Game game = (Game) o;
+                mapManager.createNewWorldAsync(options.getMap(), w -> {
+                    game.initializeGame(w, plugin.getApi());
+                    if (callback != null)
+                        callback.accept(game);
+                });
+            }
+        } catch (ClassNotFoundException | InstantiationException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+            logr.warn("Unknown game type found in %s (%s)", options.getConfigFile().getName(), gameType);
             if (callback != null)
-                callback.accept(game);
-        });
+                callback.accept(null);
+        }
     }
 
     public void createNewGame(GameOptions options) {
         createNewGameWithCallback(options, null);
     }
 
-
-    public List<Game> getActiveGames() {
-        return new ArrayList<>(activeGames);
+    public Map<Integer, Game> getActiveGames() {
+        return new HashMap<>(activeGames);
     }
 
-    public Scoreboard getMainScoreboard() {
-        if (plugin.getConfig().getBoolean("show main scoreboard", true))
-            return mainScoreboard;
-        else
-            return Bukkit.getScoreboardManager().getMainScoreboard();
+    public List<Game> getGamesList() {
+        List<Game> games = new ArrayList<>();
+        for (int i = 1; i < 100; i++) {
+            if (getActiveGames().containsKey(i))
+                games.add(getActiveGames().get(i));
+        }
+        return games;
     }
 
     public boolean isActivelyPlayingAGame(Player player) {
@@ -165,8 +193,9 @@ public class GameManager {
         return isThisAGameWorld(player.getWorld());
     }
 
-    public @Nullable Game getPlayersCurrentGame(Player player) {
-        for (Game game : activeGames) {
+    public @Nullable
+    Game getPlayersCurrentGame(Player player) {
+        for (Game game : getActiveGames().values()) {
             if (game.isPlaying(player) || game.isSpectating(player))
                 return game;
         }
@@ -174,25 +203,43 @@ public class GameManager {
     }
 
     public void makeThisGameAvailable(Game game) {
-        activeGames.add(game);
-        updateScoreboard();
+        activeGames.put(firstOpenGameNumber(), game);
     }
 
-    public void gameIsEnding() {
-        if (activeGames.size() <= 1 && plugin.isEnabled())
+    public void removeThisGame(Game game) {
+        int gameNumber = -1;
+        for (Map.Entry<Integer, Game> e : getActiveGames().entrySet()) {
+            if (e.getValue().equals(game))
+                gameNumber = e.getKey();
+        }
+        if (gameNumber > 0)
+            activeGames.remove(gameNumber);
+    }
+
+    private int firstOpenGameNumber() {
+        for (int i = 1; i < 100; i++) {
+            if (!getActiveGames().containsKey(i))
+                return i;
+        }
+        return -1;
+    }
+
+    public void gameIsEnding(Game game) {
+        mapDecider.setLastMap(game.getMap().getMapName());
+        if (alwaysOnGames.contains(game.getOptions())) {
+            createNewGame(game.getOptions());
+        } else if (getActiveGames().size() <= minimumRunningGames && plugin.isEnabled())
             createNewGame(mapDecider.selectNextMap());
-        updateScoreboard();
     }
 
     public void gameOver(Game game, Consumer<Game> callback) {
-        activeGames.remove(game);
+        removeThisGame(game);
         mapDecider.setLastMap(game.getMap().getMapName());
-        if (activeGames.isEmpty() && plugin.isEnabled())
+        if (getActiveGames().isEmpty() && plugin.isEnabled())
             if (callback != null)
                 createNewGameWithCallback(mapDecider.selectNextMap(), callback);
             else
                 createNewGame(mapDecider.selectNextMap());
-        updateScoreboard();
     }
 
     public void addVote(Player player, String mapName) {
@@ -203,8 +250,41 @@ public class GameManager {
         return mapDecider.getVotes(mapName);
     }
 
-    public void stopUpdater() {
-        scoreboardUpdater.cancel();
+    public List<GameType> getValidGameTypes() {
+        if (loadedGameTypes.isEmpty()) {
+            Set<Class<?>> gameSubTypes = new HashSet<>((new Reflections("me.cheracc.battlegameshungerroyale.types.games", new SubTypesScanner(false))).getSubTypesOf(Game.class));
+
+            for (Class<?> c : gameSubTypes) {
+                if (c == null || Modifier.isAbstract(c.getModifiers()))
+                    continue;
+                Object o = null;
+                try {
+                    o = c.getDeclaredConstructor().newInstance();
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+                if (o instanceof Game) {
+                    Game game = (Game) o;
+                    loadedGameTypes.add(new GameType(c.getName(), game.getGameIcon(), game.getGameTypeName(), game.getGameDescription()));
+                }
+            }
+            logr.debug("Loaded %s GameTypes", loadedGameTypes.size());
+        }
+        return new ArrayList<>(loadedGameTypes);
+    }
+
+    public GameType getGameType(String string) {
+        for (GameType type : getValidGameTypes()) {
+            if (type.getClassName().equals(string)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    public void addGameType(GameType type) {
+        loadedGameTypes.add(type);
+        logr.debug("Added GameType: %s", type.getClassName());
     }
 
     public List<GameOptions> getAllConfigs() {
@@ -245,13 +325,68 @@ public class GameManager {
         return configs;
     }
 
+    private void loadLootTables() {
+
+        for (String s : mapManager.getLootTableNames()) {
+            LootTable t = Bukkit.getLootTable(new NamespacedKey(plugin, s));
+            if (t != null)
+                lootTables.add(t);
+        }
+
+        if (!lootTables.isEmpty()) {
+            StringBuilder names = new StringBuilder(" ");
+            for (LootTable t : lootTables) {
+                names.append(t.getKey().getKey());
+                names.append(" ");
+            }
+            logr.info("Loaded custom loot tables: [%s]", names);
+        } else {
+            // default loot tables
+            for (LootTables t : LootTables.values()) {
+                if (t.getKey().getKey().contains("chest"))
+                    lootTables.add(t.getLootTable());
+            }
+        }
+    }
+
+    public List<LootTable> getLootTables() {
+        if (lootTables.isEmpty())
+            loadLootTables();
+        return new ArrayList<>(lootTables);
+    }
+
+    public LootTable getDefaultLootTable() {
+        LootTable lt = Bukkit.getLootTable(new NamespacedKey(plugin, "default"));
+        if (lt == null) {
+            logr.warn("Could not find default loot table");
+        }
+        return lt;
+    }
+
+    public LootTable getLootTableFromKey(String key) {
+        if (lootTables.isEmpty())
+            loadLootTables();
+        for (LootTable lt : lootTables) {
+            if (lt.getKey().getKey().equalsIgnoreCase(key))
+                return lt;
+        }
+        return null;
+    }
+
+    public Game getGameFromWorld(World world) {
+        for (Game g : getActiveGames().values()) {
+            if (g.getWorld().equals(world))
+                return g;
+        }
+        return null;
+    }
+
     private class MapDecider {
         private final Map<UUID, String> outstandingVotes = new HashMap<>();
-        private       String            lastMap          = null;
-        private final BukkitTask        voteCleaner;
+        private String lastMap = null;
 
         public MapDecider() {
-            this.voteCleaner = voteCleaner();
+            voteCleaner();
         }
 
         private BukkitTask voteCleaner() {
@@ -308,14 +443,45 @@ public class GameManager {
         }
 
         private GameOptions selectRandomConfig() {
-            List<GameOptions> configs = getAllConfigs();
+            List<GameOptions> configs = new ArrayList<>();
 
-            if (mapDecider.getLastMap() != null && configs.size() > 2)
-                configs.removeIf(opts -> opts.getMap().getMapName().equals(mapDecider.getLastMap()));
+            outer:
+            for (GameOptions opts : getAllConfigs()) {
+                if (mapDecider.getLastMap() != null && opts.getMap().getMapName().equals(mapDecider.getLastMap()))
+                    continue;
+                if (opts.getGameType().toLowerCase().contains("freeforall") && !allowFfaRandoms)
+                    continue;
+                for (GameOptions always : alwaysOnGames) {
+                    if (opts.getConfigFile().equals(always.getConfigFile())) {
+                        plugin.getApi().logr().debug("skipping %s as it is 'always on'", always.getConfigFile().getName());
+                        continue outer;
+                    }
+                }
+                for (GameOptions manual : manualOnlyGames) {
+                    if (opts.getConfigFile().equals(manual.getConfigFile())) {
+                        plugin.getApi().logr().debug("skipping %s as it is 'manual-only'", manual.getConfigFile().getName());
+                        continue outer;
+                    }
+                }
+                for (Game current : getActiveGames().values()) {
+                    if (current.getOptions().getConfigFile().equals(opts.getConfigFile()) && configs.size() > 0) {
+                        plugin.getApi().logr().debug("skipping %s as it is actively running", current.getOptions().getConfigFile().getName());
+                        continue outer;
+                    }
+                }
+                plugin.getApi().logr().debug("adding %s to random pool", opts.getConfigFile().getName());
+                configs.add(opts);
+            }
 
+            if (configs.isEmpty()) // either everything is disabled or set up wrong - we need to start something
+            {
+                plugin.getApi().logr().debug("adding all configs to random pool because there aren't any");
+                configs.addAll(getAllConfigs());
+            }
             Collections.shuffle(configs);
             int index = configs.size() > 1 ? ThreadLocalRandom.current().nextInt(0, configs.size() - 1) : 0;
 
+            plugin.getApi().logr().debug("mapDecider chose %s randomly from %s choices", configs.get(index).getConfigFile().getName(), configs.size());
             return configs.get(index);
         }
 
@@ -327,56 +493,4 @@ public class GameManager {
             this.lastMap = mapName;
         }
     }
-
-    private final Collection<LootTable> lootTables = new HashSet<>();
-
-    private void loadLootTables() {
-
-        for (String s : mapManager.getLootTableNames()) {
-            LootTable t = Bukkit.getLootTable(new NamespacedKey(plugin, s));
-            if (t != null)
-                lootTables.add(t);
-        }
-
-        if (!lootTables.isEmpty()) {
-            StringBuilder names = new StringBuilder(" ");
-            for (LootTable t : lootTables) {
-                names.append(t.getKey().getKey());
-                names.append(" ");
-            }
-            logr.info("Loaded custom loot tables: [%s]", names);
-        }
-        else {
-            // default loot tables
-            for (LootTables t : LootTables.values()) {
-                if (t.getKey().getKey().contains("chest"))
-                    lootTables.add(t.getLootTable());
-            }
-        }
-    }
-
-    public List<LootTable> getLootTables() {
-        if (lootTables.isEmpty())
-            loadLootTables();
-        return new ArrayList<>(lootTables);
-    }
-
-    public LootTable getDefaultLootTable() {
-        LootTable lt = Bukkit.getLootTable(new NamespacedKey(plugin, "default"));
-        if (lt == null) {
-            logr.warn("Could not find default loot table");
-        }
-        return lt;
-    }
-
-    public LootTable getLootTableFromKey(String key) {
-        if (lootTables.isEmpty())
-            loadLootTables();
-        for (LootTable lt : lootTables) {
-            if (lt.getKey().getKey().equalsIgnoreCase(key))
-                return lt;
-        }
-        return null;
-    }
-
 }

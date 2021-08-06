@@ -1,4 +1,5 @@
 package me.cheracc.battlegameshungerroyale.tools;
+
 import com.destroystokyo.paper.Namespaced;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import net.kyori.adventure.text.Component;
@@ -44,6 +45,13 @@ public class Tools {
         meta.getPersistentDataContainer().set(PLUGIN_KEY, PersistentDataType.LONG, System.currentTimeMillis());
         item.setItemMeta(meta);
         return item;
+    }
+
+    public static <T> T getNext(T object, List<T> objects) {
+        int index = objects.indexOf(object);
+        if (objects.size() > index + 1)
+            return objects.get(index + 1);
+        return objects.get(0);
     }
 
     public static String getTimestamp() {
@@ -161,7 +169,7 @@ public class Tools {
         int i = Math.abs(timeInSeconds);
         int remainder = i % 3600, minutes = remainder / 60, seconds = remainder % 60;
         if (seconds == 0 && minutes == 0)
-            return Trans.late("No time at all");
+            return Trans.late("N/A");
         if (minutes == 0) {
             if (seconds == 1)
                 return String.format(Trans.late("%s second"), seconds);
@@ -253,7 +261,7 @@ public class Tools {
      * @param zipResource Must end with ".zip".
      * @param destDir     The path of the destination directory, which must exist.
      */
-    public static void extractZipResource(Class myClass, String zipResource, Path destDir) {
+    public static boolean extractZipResource(Class myClass, String zipResource, Path destDir) {
         if (myClass == null || zipResource == null || !zipResource.toLowerCase().endsWith(".zip") || !Files.isDirectory(destDir)) {
             throw new IllegalArgumentException("myClass=" + myClass + " zipResource=" + zipResource + " destDir=" + destDir);
         }
@@ -261,6 +269,8 @@ public class Tools {
         try (InputStream is = myClass.getResourceAsStream(zipResource);
              BufferedInputStream bis = new BufferedInputStream(is);
              ZipInputStream zis = new ZipInputStream(bis)) {
+            if (is.available() <= 0)
+                return false;
             ZipEntry entry;
             byte[] buffer = new byte[2048];
             while ((entry = zis.getNextEntry()) != null) {
@@ -287,6 +297,7 @@ public class Tools {
             ex.printStackTrace();
             JavaPlugin.getPlugin(BGHR.class).getLogr().warn("extractZipResource() problem extracting resource for myClass=" + myClass + " zipResource=" + zipResource);
         }
+        return true;
     }
 
     public static int getLastEmptyHotbarSlot(Player p) {

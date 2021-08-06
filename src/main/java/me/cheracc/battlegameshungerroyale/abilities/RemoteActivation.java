@@ -13,13 +13,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 
 public class RemoteActivation extends Totem implements Listener {
-    private TotemType totemType;
-    private RemoteAbility remoteAbility;
-    private boolean isDestroyable;
-    private String totemItemType;
-    private String itemDescription;
-    private int cooldown;
-    private int explosionPower;
+    private final TotemType totemType;
+    private final RemoteAbility remoteAbility;
+    private final boolean isDestroyable;
+    private final String totemItemType;
+    private final String itemDescription;
+    private final int cooldown;
+    private final int explosionPower;
 
     public RemoteActivation() {
         totemType = TotemType.BASIC;
@@ -45,7 +45,7 @@ public class RemoteActivation extends Totem implements Listener {
         startTotemWatcher(device);
 
         player.setMetadata("remote_device", new FixedMetadataValue(plugin, device));
-        player.setCooldown(Material.valueOf(totemItemType.toUpperCase()), cooldown/10);
+        player.setCooldown(Material.valueOf(totemItemType.toUpperCase()), cooldown * 2);
     }
 
     private LivingEntity getDevice(Player player) {
@@ -59,7 +59,6 @@ public class RemoteActivation extends Totem implements Listener {
             return device;
         }
         return null;
-
     }
 
     private boolean isDeviceActive(Player player) {
@@ -77,7 +76,7 @@ public class RemoteActivation extends Totem implements Listener {
 
     private void activateDevice(Player player) {
         LivingEntity device = getDevice(player);
-        if (device == null)
+        if (device == null || player.hasCooldown(Material.valueOf(totemItemType.toUpperCase())))
             return;
 
         switch (remoteAbility) {
@@ -87,7 +86,7 @@ public class RemoteActivation extends Totem implements Listener {
                     getSound().play(player.getLocation());
                 break;
             case TELEPORT_SELF:
-                Tools.uncheckedTeleport(player, device.getLocation().add(0,1,0));
+                Tools.uncheckedTeleport(player, device.getLocation().add(0, 1, 0));
                 if (getSound() != null) {
                     getSound().play(player.getLocation());
                     getSound().play(device.getLocation());
@@ -98,23 +97,13 @@ public class RemoteActivation extends Totem implements Listener {
     }
 
     @Override
-    public boolean doAbility(Player source) {
-        if (isDeviceActive(source)) {
-            activateDevice(source);
-            return true;
-        } else {
-            placeDevice(source);
-            return false;
-        }
-    }
-
-    @Override
     public ItemStack createAbilityItem() {
-        return makeItem(Material.valueOf(totemItemType.toUpperCase()), totemItemType, itemDescription, cooldown);
+        return makeItem(Material.valueOf(totemItemType.toUpperCase()), getCustomName(), itemDescription, cooldown);
     }
 
     @Override
-    public void doTotemAbility(LivingEntity totem, Player owner) {
+    public int getCooldown() {
+        return cooldown;
     }
 
     @Override
@@ -143,7 +132,19 @@ public class RemoteActivation extends Totem implements Listener {
     }
 
     @Override
-    public int getCooldown() {
-        return cooldown;
+    public void doTotemAbility(LivingEntity totem, Player owner) {
+    }
+
+    @Override
+    public boolean doAbility(Player source) {
+        if (source.hasCooldown(Material.valueOf(totemItemType.toUpperCase())))
+            return false;
+        if (isDeviceActive(source)) {
+            activateDevice(source);
+            return true;
+        } else {
+            placeDevice(source);
+            return false;
+        }
     }
 }

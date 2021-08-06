@@ -1,6 +1,5 @@
 package me.cheracc.battlegameshungerroyale.events;
-
-import me.cheracc.battlegameshungerroyale.types.Game;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -18,6 +17,10 @@ public class PlayerJoinedGameEvent extends Event implements GameEvent {
         this.asSpectator = asSpectator;
     }
 
+    public static HandlerList getHandlerList() {
+        return handlerList;
+    }
+
     public boolean isJoiningAsSpectator() {
         return asSpectator;
     }
@@ -32,11 +35,8 @@ public class PlayerJoinedGameEvent extends Event implements GameEvent {
     }
 
     @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlerList;
-    }
-
-    public static HandlerList getHandlerList() {
+    public @NotNull
+    HandlerList getHandlers() {
         return handlerList;
     }
 }

@@ -19,13 +19,13 @@ import java.util.stream.Collectors;
 
 public class PluginUpdater {
     private final BGHR plugin;
+    private final BukkitTask updateChecker;
+    private final boolean useSnapshotBuilds;
     private int currentBuildNumber = 0;
     private int mostRecentBuildAvailable = 0;
     private String urlToMostRecentBuild = null;
     private String apiVersion = null;
-    private final BukkitTask updateChecker;
     private CompletableFuture<Boolean> downloadStatus = null;
-    private final boolean useSnapshotBuilds;
     private boolean isSnapshotBuild = false;
     private boolean notified = false;
 
@@ -43,8 +43,10 @@ public class PluginUpdater {
     }
 
     public void disable() {
-        if (updateChecker != null && !updateChecker.isCancelled())
+        if (updateChecker != null && !updateChecker.isCancelled()) {
+            plugin.getLogr().debug("Stopping updateChecker");
             updateChecker.cancel();
+        }
         if (downloadStatus != null && !downloadStatus.isDone()) {
             // there is a download in progress, going to hold the thread...
             try {
@@ -67,7 +69,6 @@ public class PluginUpdater {
             } catch (IOException | InvalidConfigurationException e) {
                 e.printStackTrace();
             }
-
 
             apiVersion = Double.toString(pluginYml.getDouble("api-version"));
             currentBuildNumber = pluginYml.getInt("build-number", 0);
@@ -134,14 +135,14 @@ public class PluginUpdater {
             public void run() {
                 String projectName = useSnapshotBuilds ? "BGHR-SNAPSHOT" : "BattleGamesHungerRoyale";
                 String urlString = String.format("https://jenkins.cheracc.me/job/%s/%s/artifact/target/BattleGamesHungerRoyale-%s.jar",
-                        projectName, mostRecentBuildAvailable, apiVersion);
+                                                 projectName, mostRecentBuildAvailable, apiVersion);
                 File toSave = new File(Bukkit.getUpdateFolderFile(), plugin.getJarFilename());
 
                 if (toSave.exists())
                     toSave.delete();
                 toSave.getParentFile().mkdirs();
 
-                plugin.getLogr().info(String.format("Updater found a new update (%s build #%s): preparing to download", useSnapshotBuilds ? "SNAPSHOT" : "" ,mostRecentBuildAvailable));
+                plugin.getLogr().info(String.format("Updater found a new update (%s build #%s): preparing to download", useSnapshotBuilds ? "SNAPSHOT" : "", mostRecentBuildAvailable));
 
                 try {
                     toSave.createNewFile();
@@ -168,14 +169,14 @@ public class PluginUpdater {
     private BukkitTask runUpdateChecker() {
         BukkitRunnable task = new BukkitRunnable() {
             long last = 0;
+
             @Override
             public void run() {
                 if (downloadStatus != null && downloadStatus.isDone()) {
                     if (downloadStatus.getNow(false)) {
                         plugin.getLogr().info("Updater finished downloading plugin update. it will be installed on restart");
                         cancel();
-                    }
-                    else {
+                    } else {
                         plugin.getLogr().info("Updater failed to download update!");
                         downloadStatus = null;
                         File failure = new File(Bukkit.getUpdateFolderFile(), plugin.getJarFilename());
@@ -184,12 +185,12 @@ public class PluginUpdater {
                     }
                     return;
                 }
-                if (System.currentTimeMillis() - last > 1000*60*15 && !isLatestVersion()) {
+                if (System.currentTimeMillis() - last > 1000 * 60 * 15 && !isLatestVersion()) {
                     downloadStatus = downloadLatest();
                 }
                 last = System.currentTimeMillis();
             }
         };
-        return task.runTaskTimer(plugin, 20*60, 20*30);
+        return task.runTaskTimer(plugin, 20 * 60, 20 * 30);
     }
 }

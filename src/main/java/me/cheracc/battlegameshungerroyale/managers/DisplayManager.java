@@ -1,11 +1,15 @@
 package me.cheracc.battlegameshungerroyale.managers;
+
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import me.cheracc.battlegameshungerroyale.BGHR;
 import me.cheracc.battlegameshungerroyale.BghrApi;
+import me.cheracc.battlegameshungerroyale.guis.TopStatsGui;
 import me.cheracc.battlegameshungerroyale.tools.Tools;
 import me.cheracc.battlegameshungerroyale.tools.Trans;
-import me.cheracc.battlegameshungerroyale.types.Game;
 import me.cheracc.battlegameshungerroyale.types.Hologram;
+import me.cheracc.battlegameshungerroyale.types.Metadata;
+import me.cheracc.battlegameshungerroyale.types.Skorbord;
+import me.cheracc.battlegameshungerroyale.types.games.Game;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,21 +28,24 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.scoreboard.Scoreboard;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class DisplayManager implements Listener {
     private final static String CONFIG_FILE = "displays.yml";
-    private final Map<String, Supplier<String>> placeholders = new HashMap<>();
     private final List<Hologram> holograms;
     private final List<HologramTemplate> holoTemplates;
     private final BGHR plugin;
     private final Logr logr;
     private final FileConfiguration config;
     private final boolean useHolograms;
+    private Skorbord skorbord = null;
     private BukkitTask updater;
 
     public DisplayManager(BGHR plugin, Logr logr) {
@@ -49,20 +56,27 @@ public class DisplayManager implements Listener {
         holoTemplates = new ArrayList<>();
         useHolograms = plugin.getConfig().getBoolean("enable holograms", true);
         updater = updater().runTaskTimer(plugin, 100L, 10L);
-        Bukkit.getPluginManager().registerEvents(this, plugin);
+    }
+
+    public Scoreboard getMainScoreboard() {
+        if (skorbord == null)
+            return Bukkit.getScoreboardManager().getMainScoreboard();
+        return skorbord.getScoreboard();
     }
 
     private BukkitRunnable updater() {
-        logr.debug("Starting Hologram Updater...");
+        logr.debug("Starting DisplayManager Updater...");
         return new BukkitRunnable() {
             @Override
             public void run() {
-                if (holograms.isEmpty()) {
+                if (holograms.isEmpty() && !plugin.getConfig().getBoolean("show main scoreboard", true)) {
                     cancel();
-                    logr.debug("No Holograms, stopping Updater...");
+                    logr.debug("Nothing to update, stopping updater...");
                     return;
                 }
                 updateHolograms();
+                if (skorbord != null)
+                    skorbord.update();
             }
         };
     }
@@ -88,6 +102,13 @@ public class DisplayManager implements Listener {
             e.printStackTrace();
         }
 
+        ConfigurationSection scoreboards = config.getConfigurationSection("scoreboards");
+        if (scoreboards != null) {
+            List<String> scoreboardText = scoreboards.getStringList("main");
+            if (scoreboardText != null)
+                skorbord = new Skorbord("&e&lBattle Games: Hunger Royale!", scoreboardText, plugin.getApi());
+        }
+
         ConfigurationSection templates = config.getConfigurationSection("templates");
         if (templates != null) {
             for (String s : templates.getKeys(false)) {
@@ -110,13 +131,9 @@ public class DisplayManager implements Listener {
                 if (holoSection == null)
                     continue;
                 UUID uuid = UUID.fromString(s);
-                logr.debug(uuid.toString());
                 Location loc = (Location) holoSection.get("location");
-                logr.debug(holoSection.get("location").toString());
                 List<String> text = holoSection.getStringList("text");
-                logr.debug(text.toString());
                 String command = holoSection.getString("command", "");
-                logr.debug(command);
 
                 addHologram(new Hologram(uuid, loc, text, command));
                 logr.debug("Hologram registered at (%s,%s,%s) in %s", loc.getX(), loc.getY(), loc.getZ(), loc.getWorld().getName());
@@ -168,12 +185,12 @@ public class DisplayManager implements Listener {
     }
 
     public boolean isHologramEntity(Entity e) {
-        return e.hasMetadata(BghrApi.HOLOGRAM_TAG) && e.hasMetadata(BghrApi.HOLOGRAM_ID_TAG);
+        return e.hasMetadata(Metadata.HOLOGRAM_TAG.key()) || e.hasMetadata(Metadata.HOLOGRAM_ID_TAG.key());
     }
 
     public Hologram getHoloFromEntity(Entity e) {
         if (isHologramEntity(e)) {
-            UUID uuid = (UUID) e.getMetadata(BghrApi.HOLOGRAM_ID_TAG).get(0).value();
+            UUID uuid = (UUID) e.getMetadata(Metadata.HOLOGRAM_ID_TAG.key()).get(0).value();
 
             if (uuid == null)
                 return null;
@@ -243,12 +260,12 @@ public class DisplayManager implements Listener {
                 new BukkitRunnable() {
                     @Override
                     public void run() {
-                        Hologram holo = new Hologram(loc, item);
+                        Hologram holo = new Hologram(loc.add(0.5, 0, 0.5), item);
                         addHologram(holo);
                         holo.build();
                         event.getPlayer().getInventory().remove(item);
                         event.getPlayer().removeMetadata("placed_holo", plugin);
-                        logr.debug("Place hologram at (%s,%s,%s) in %s. Command: %s",
+                        logr.debug("Placed new hologram at (%s,%s,%s) in %s. Command: %s",
                                    loc.getX(), loc.getY(), loc.getZ(), loc.getWorld().getName(), holo.getCommand());
                         event.setCancelled(true);
                     }
@@ -258,17 +275,17 @@ public class DisplayManager implements Listener {
     }
 
     public String replacePlaceholders(String string) {
-        if (string.contains("%")) {
+        int count = 0;
+        while (string.contains("%") && count < 5) {
             String[] split = string.split("%");
-            String placeholder = split[1];
-
-            return string.replace("%" + placeholder + "%", placeholderReplacement(placeholder).get());
+            string = string.replace("%" + split[1] + "%", placeholderReplacement(split[1]).get());
+            count++;
         }
         return string;
     }
 
     private Supplier<String> placeholderReplacement(String string) {
-        String[] split = string.split("_");
+        String[] split = string.replace("%", "").split("_");
         if (split.length < 3 || !split[0].equals("bghr"))
             return () -> "";
 
@@ -278,10 +295,10 @@ public class DisplayManager implements Listener {
                 return () -> "";
 
             int gameNumber = Integer.parseInt(split[1].substring(4));
-            if (gm.getActiveGames().size() < gameNumber)
+            if (!gm.getActiveGames().containsKey(gameNumber))
                 return () -> "";
 
-            Game game = gm.getActiveGames().get(gameNumber - 1);
+            Game game = gm.getActiveGames().get(gameNumber);
             if (game == null)
                 return () -> "";
 
@@ -289,13 +306,13 @@ public class DisplayManager implements Listener {
                 case "info":
                     return () -> String.format("&7[&e%s&7] &7(&6%s&7) &7[&3%s&7/&3%s&7]",
                                                game.getMap().getMapName(),
-                                               game.getOptions().getStartType().prettyName(),
+                                               game.getGameTypeName(),
                                                game.getActivePlayers().size(),
                                                game.getStartingPlayersSize());
                 case "map":
                     return () -> game.getMap().getMapName();
                 case "type":
-                    return () -> game.getOptions().getStartType().prettyName();
+                    return game::getGameTypeName;
                 case "phase":
                     return game::getPhase;
                 case "playercount":
@@ -303,11 +320,30 @@ public class DisplayManager implements Listener {
                 case "elapsed":
                     return () -> Tools.secondsToAbbreviatedMinsSecs(game.getCurrentGameTime());
             }
-        }
+            // %bghr_topstats_wins_name_1%
+            // %bghr_topstats_kills_amount_3%
+        } else if (split[1].contains("topstats")) {
+            TopStatsGui.TopTenCategory result = plugin.getApi().getTopStatsGui().getTopTen(split[2]);
+            if (result != null) {
+                if (split.length > 4) {
+                    try {
+                        int place = Integer.parseInt(split[4]);
+                        if (split[3].equalsIgnoreCase("name"))
+                            return () -> result.getPlaceName(place);
+                        else
+                            return () -> String.valueOf(result.getPlaceValue(place));
+                    } catch (NumberFormatException e) {
+                        return () -> "";
+                    }
+                }
+            }
+            // %bghr_sb_game1_1%
+        } else if (split[1].contains("sb"))
+            return plugin.getApi().getGameManager().replaceScoreboardPlaceholders(split);
         return () -> "";
     }
 
-    public class HologramTemplate {
+    public static class HologramTemplate {
         private final List<String> text;
         private final String command;
         private final String name;
